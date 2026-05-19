@@ -10,6 +10,7 @@ type Service = {
   name: string;
   price: number;
   duration: string;
+  protocol_url?: string;
 };
 
 export default function ServicesPage() {
@@ -19,6 +20,7 @@ export default function ServicesPage() {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [duration, setDuration] = useState("");
+  const [protocolUrl, setProtocolUrl] = useState("");
 
   const [editingId, setEditingId] =
     useState<number | null>(null);
@@ -46,7 +48,11 @@ export default function ServicesPage() {
   // GUARDAR
   const saveService = async () => {
 
-    if (!name || !price || !duration) return;
+    if (
+      !name ||
+      !price ||
+      !duration
+    ) return;
 
     // EDITAR
     if (editingId) {
@@ -57,6 +63,7 @@ export default function ServicesPage() {
           name,
           price,
           duration,
+          protocol_url: protocolUrl,
         })
         .eq("id", editingId);
 
@@ -72,13 +79,16 @@ export default function ServicesPage() {
             name,
             price,
             duration,
+            protocol_url: protocolUrl,
           },
         ]);
     }
 
+    // LIMPIAR
     setName("");
     setPrice("");
     setDuration("");
+    setProtocolUrl("");
 
     fetchServices();
   };
@@ -102,6 +112,7 @@ export default function ServicesPage() {
     setName(service.name);
     setPrice(String(service.price));
     setDuration(service.duration);
+    setProtocolUrl(service.protocol_url || "");
   };
 
   return (
@@ -131,7 +142,7 @@ export default function ServicesPage() {
 
         </h3>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-4">
 
           <input
             type="text"
@@ -154,6 +165,16 @@ export default function ServicesPage() {
             placeholder="Duración"
             value={duration}
             onChange={(e) => setDuration(e.target.value)}
+            className="border p-4 rounded-2xl"
+          />
+
+          <input
+            type="text"
+            placeholder="URL del protocolo PDF"
+            value={protocolUrl}
+            onChange={(e) =>
+              setProtocolUrl(e.target.value)
+            }
             className="border p-4 rounded-2xl"
           />
 
@@ -219,6 +240,10 @@ export default function ServicesPage() {
               </th>
 
               <th className="text-left p-5">
+                Protocolo
+              </th>
+
+              <th className="text-left p-5">
                 Acciones
               </th>
 
@@ -262,6 +287,29 @@ export default function ServicesPage() {
                     {service.duration}
                   </td>
 
+                  {/* PDF */}
+                  <td className="p-5">
+
+                    {service.protocol_url ? (
+
+                      <a
+                        href={service.protocol_url}
+                        target="_blank"
+                        className="bg-[#243847] text-white px-4 py-2 rounded-xl"
+                      >
+                        Ver PDF
+                      </a>
+
+                    ) : (
+
+                      <span className="text-gray-400">
+                        Sin protocolo
+                      </span>
+
+                    )}
+
+                  </td>
+
                   <td className="p-5">
 
                     <div className="flex gap-3">
@@ -300,4 +348,4 @@ export default function ServicesPage() {
 
     </div>
   );
-}
+}s
