@@ -16,6 +16,8 @@ import ServicesPage from "@/modules/services/ServicesPage";
 
 import ClientsPage from "@/modules/clients/ClientsPage";
 
+import InventoryPage from "@/modules/inventory/InventoryPage";
+
 import AppointmentsPage from "@/modules/appointments/AppointmentsPage";
 
 export default function Home() {
@@ -166,6 +168,10 @@ export default function Home() {
         {/* CLIENTES */}
         {page === "clientes" &&
         <ClientsPage />}
+
+         {/* INVENTARIO*/}
+        {page === "inventario" &&
+        <InventoryPage />}
 
         {/* RESERVAS */}
         {page === "appointments" && (
