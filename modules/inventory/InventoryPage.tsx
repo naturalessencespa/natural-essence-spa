@@ -12,6 +12,13 @@ export default function InventoryPage() {
   const [categories, setCategories] =
     useState<any[]>([]);
 
+  const [search, setSearch] =
+    useState("");
+
+  const [filterCategory,
+    setFilterCategory] =
+    useState("");
+
   const [showModal, setShowModal] =
     useState(false);
 
@@ -57,6 +64,8 @@ export default function InventoryPage() {
           inventory_categories(name)
         `)
 
+        .eq("active", true)
+
         .order("id", {
           ascending: false,
         });
@@ -68,7 +77,40 @@ export default function InventoryPage() {
       return;
     }
 
-    setProducts(data || []);
+    let filteredProducts =
+      data || [];
+
+    // BUSCAR PRODUCTO
+    if (search) {
+
+      filteredProducts =
+        filteredProducts.filter(
+          (product) =>
+
+            product.name
+              ?.toLowerCase()
+
+              .includes(
+                search.toLowerCase()
+              )
+        );
+    }
+
+    // FILTRAR CATEGORIA
+    if (filterCategory) {
+
+      filteredProducts =
+        filteredProducts.filter(
+          (product) =>
+
+            product.category_id
+              ?.toString()
+
+              === filterCategory
+        );
+    }
+
+    setProducts(filteredProducts);
   };
 
   // OBTENER CATEGORIAS
@@ -235,9 +277,56 @@ export default function InventoryPage() {
     fetchProducts();
   };
 
+  // ELIMINAR (INACTIVAR)
+  const deleteProduct = async (
+    id: number
+  ) => {
+
+    const confirmDelete =
+      confirm(
+        "¿Eliminar producto?"
+      );
+
+    if (!confirmDelete) return;
+
+    const { error } =
+      await supabase
+
+        .from("inventory_products")
+
+        .update({
+          active: false,
+        })
+
+        .eq("id", id);
+
+    if (error) {
+
+      console.log(error);
+
+      alert(
+        "Error al eliminar"
+      );
+
+      return;
+    }
+
+    alert(
+      "Producto eliminado"
+    );
+
+    fetchProducts();
+  };
+
+  // FILTROS AUTOMATICOS
   useEffect(() => {
 
     fetchProducts();
+
+  }, [search, filterCategory]);
+
+  // CATEGORIAS
+  useEffect(() => {
 
     fetchCategories();
 
@@ -298,6 +387,54 @@ export default function InventoryPage() {
           + Nuevo Producto
 
         </button>
+
+      </div>
+
+      {/* FILTROS */}
+      <div className="flex gap-4 mb-6">
+
+        {/* BUSCAR */}
+        <input
+          type="text"
+          placeholder="Buscar producto..."
+          value={search}
+          onChange={(e) =>
+            setSearch(
+              e.target.value
+            )
+          }
+          className="border p-4 rounded-2xl w-[300px]"
+        />
+
+        {/* CATEGORIA */}
+        <select
+          value={filterCategory}
+          onChange={(e) =>
+            setFilterCategory(
+              e.target.value
+            )
+          }
+          className="border p-4 rounded-2xl"
+        >
+
+          <option value="">
+            Todas categorías
+          </option>
+
+          {categories.map((category) => (
+
+            <option
+              key={category.id}
+              value={category.id}
+            >
+
+              {category.name}
+
+            </option>
+
+          ))}
+
+        </select>
 
       </div>
 
@@ -381,8 +518,9 @@ export default function InventoryPage() {
 
                 </td>
 
-                <td className="p-5">
+                <td className="p-5 flex gap-3">
 
+                  {/* EDITAR */}
                   <button
                     onClick={() => {
 
@@ -429,6 +567,20 @@ export default function InventoryPage() {
                   >
 
                     Editar
+
+                  </button>
+
+                  {/* ELIMINAR */}
+                  <button
+                    onClick={() =>
+                      deleteProduct(
+                        product.id
+                      )
+                    }
+                    className="bg-red-500 text-white px-4 py-2 rounded-xl"
+                  >
+
+                    Eliminar
 
                   </button>
 
