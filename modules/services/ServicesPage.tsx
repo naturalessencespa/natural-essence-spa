@@ -20,8 +20,12 @@ export default function ServicesPage() {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [duration, setDuration] = useState("");
-  const [protocolUrl, setProtocolUrl] = useState("");
-  const [protocolFile, setProtocolFile] = useState<File | null>(null);
+
+  const [protocolUrl, setProtocolUrl] =
+    useState("");
+
+  const [protocolFile, setProtocolFile] =
+    useState<File | null>(null);
 
   const [editingId, setEditingId] =
     useState<number | null>(null);
@@ -49,41 +53,41 @@ export default function ServicesPage() {
   // GUARDAR
   const saveService = async () => {
 
-    let uploadedProtocolUrl = protocolUrl;
-
     if (
       !name ||
       !price ||
       !duration
     ) return;
 
-        // SUBIR PDF
-if (protocolFile) {
+    let uploadedProtocolUrl = protocolUrl;
 
-  const fileName =
-    `${Date.now()}-${protocolFile.name}`;
+    // SUBIR PDF
+    if (protocolFile) {
 
-  const { error } = await supabase.storage
+      const fileName =
+        `${Date.now()}-${protocolFile.name}`;
 
-    .from("protocols")
+      const { error } = await supabase.storage
 
-    .upload(
-      fileName,
-      protocolFile
-    );
+        .from("protocols")
 
-  if (!error) {
+        .upload(
+          fileName,
+          protocolFile
+        );
 
-    const { data } = supabase.storage
+      if (!error) {
 
-      .from("protocols")
+        const { data } = supabase.storage
 
-      .getPublicUrl(fileName);
+          .from("protocols")
 
-    uploadedProtocolUrl =
-      data.publicUrl;
-  }
-}
+          .getPublicUrl(fileName);
+
+        uploadedProtocolUrl =
+          data.publicUrl;
+      }
+    }
 
     // EDITAR
     if (editingId) {
@@ -120,6 +124,7 @@ if (protocolFile) {
     setPrice("");
     setDuration("");
     setProtocolUrl("");
+    setProtocolFile(null);
 
     fetchServices();
   };
@@ -143,7 +148,10 @@ if (protocolFile) {
     setName(service.name);
     setPrice(String(service.price));
     setDuration(service.duration);
-    setProtocolUrl(service.protocol_url || "");
+
+    setProtocolUrl(
+      service.protocol_url || ""
+    );
   };
 
   return (
@@ -175,6 +183,7 @@ if (protocolFile) {
 
         <div className="grid grid-cols-4 gap-4">
 
+          {/* Nombre */}
           <input
             type="text"
             placeholder="Nombre del servicio"
@@ -183,6 +192,7 @@ if (protocolFile) {
             className="border p-4 rounded-2xl"
           />
 
+          {/* Precio */}
           <input
             type="number"
             placeholder="Precio"
@@ -191,6 +201,7 @@ if (protocolFile) {
             className="border p-4 rounded-2xl"
           />
 
+          {/* Duración */}
           <input
             type="text"
             placeholder="Duración"
@@ -199,21 +210,45 @@ if (protocolFile) {
             className="border p-4 rounded-2xl"
           />
 
-          <input
-            type="file"
-            accept="application/pdf"
-            onChange={(e) => {
+          {/* PDF */}
+          <label className="border p-4 rounded-2xl flex items-center justify-center cursor-pointer bg-[#f4f7f9] hover:bg-[#e8eef2] transition text-[#243847] font-medium shadow-sm">
 
-              if (e.target.files?.[0]) {
-                setProtocolFile(e.target.files[0]);
-              }
+            <div className="flex flex-col items-center">
 
-            }}
-            className="border p-4 rounded-2xl"
-          />
+              <span className="text-2xl mb-1">
+                📄
+              </span>
+
+              <span className="text-sm text-center">
+
+                {protocolFile
+                  ? protocolFile.name
+                  : "Subir Protocolo PDF"}
+
+              </span>
+
+            </div>
+
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => {
+
+                if (e.target.files?.[0]) {
+                  setProtocolFile(
+                    e.target.files[0]
+                  );
+                }
+
+              }}
+              className="hidden"
+            />
+
+          </label>
 
         </div>
 
+        {/* Botón */}
         <button
           onClick={saveService}
           className="mt-6 bg-[#243847] text-white px-6 py-3 rounded-2xl hover:opacity-90 transition"
@@ -329,7 +364,7 @@ if (protocolFile) {
                       <a
                         href={service.protocol_url}
                         target="_blank"
-                        className="bg-[#243847] text-white px-4 py-2 rounded-xl"
+                        className="bg-[#243847] text-white px-4 py-2 rounded-xl hover:opacity-90 transition"
                       >
                         Ver PDF
                       </a>
@@ -344,6 +379,7 @@ if (protocolFile) {
 
                   </td>
 
+                  {/* Acciones */}
                   <td className="p-5">
 
                     <div className="flex gap-3">
