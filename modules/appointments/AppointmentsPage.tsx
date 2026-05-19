@@ -24,6 +24,30 @@ export default function AppointmentsPage() {
   const [showModal, setShowModal] =
     useState(false);
 
+  const [clientId, setClientId] =
+    useState("");
+
+  const [serviceId, setServiceId] =
+    useState("");
+
+  const [workerId, setWorkerId] =
+    useState("");
+
+  const [branchId, setBranchId] =
+    useState("");
+
+  const [clients, setClients] =
+    useState<any[]>([]);
+
+  const [services, setServices] =
+    useState<any[]>([]);
+
+  const [workers, setWorkers] =
+    useState<any[]>([]);
+
+  const [branches, setBranches] =
+    useState<any[]>([]);
+
   // OBTENER CITAS
   const fetchAppointments = async () => {
 
@@ -64,10 +88,92 @@ export default function AppointmentsPage() {
     }
   };
 
+  // OBTENER DATOS FORMULARIO
+  const fetchFormData = async () => {
+
+    const { data: clientsData } =
+      await supabase
+        .from("clients")
+        .select("*");
+
+    const { data: servicesData } =
+      await supabase
+        .from("services")
+        .select("*");
+
+    const { data: workersData } =
+      await supabase
+        .from("workers")
+        .select("*");
+
+    const { data: branchesData } =
+      await supabase
+        .from("branches")
+        .select("*");
+
+    setClients(clientsData || []);
+
+    setServices(servicesData || []);
+
+    setWorkers(workersData || []);
+
+    setBranches(branchesData || []);
+  };
+
+  // GUARDAR CITA
+  const saveAppointment = async () => {
+
+    if (
+      !clientId ||
+      !serviceId ||
+      !workerId ||
+      !branchId
+    ) return;
+
+    const start = new Date(selectedDate);
+
+    const end = new Date(start);
+
+    end.setHours(end.getHours() + 1);
+
+    await supabase
+
+      .from("appointments")
+
+      .insert([
+        {
+          client_id: Number(clientId),
+
+          service_id: Number(serviceId),
+
+          worker_id: Number(workerId),
+
+          branch_id: Number(branchId),
+
+          appointment_date:
+            start.toISOString().split("T")[0],
+
+          start_time:
+            start.toTimeString().slice(0, 5),
+
+          end_time:
+            end.toTimeString().slice(0, 5),
+
+          status: "confirmed",
+        },
+      ]);
+
+    setShowModal(false);
+
+    fetchAppointments();
+  };
+
   // CARGAR
   useEffect(() => {
 
     fetchAppointments();
+
+    fetchFormData();
 
   }, []);
 
@@ -158,26 +264,134 @@ export default function AppointmentsPage() {
 
           <div className="bg-white p-8 rounded-3xl w-[500px] shadow-2xl">
 
-            <h3 className="text-2xl font-bold text-[#243847] mb-4">
+            <h3 className="text-2xl font-bold text-[#243847] mb-6">
 
               Nueva Reserva
 
             </h3>
 
-            <p className="mb-6 text-gray-600">
+            <div className="space-y-4">
 
-              Fecha seleccionada:
+              {/* CLIENTE */}
+              <select
+                value={clientId}
+                onChange={(e) =>
+                  setClientId(e.target.value)
+                }
+                className="w-full border p-4 rounded-2xl"
+              >
 
-              <br />
+                <option value="">
+                  Seleccionar cliente
+                </option>
 
-              {selectedDate}
+                {clients.map((client) => (
 
-            </p>
+                  <option
+                    key={client.id}
+                    value={client.id}
+                  >
 
-            <div className="flex gap-4">
+                    {client.full_name}
+
+                  </option>
+
+                ))}
+
+              </select>
+
+              {/* SERVICIO */}
+              <select
+                value={serviceId}
+                onChange={(e) =>
+                  setServiceId(e.target.value)
+                }
+                className="w-full border p-4 rounded-2xl"
+              >
+
+                <option value="">
+                  Seleccionar servicio
+                </option>
+
+                {services.map((service) => (
+
+                  <option
+                    key={service.id}
+                    value={service.id}
+                  >
+
+                    {service.name}
+
+                  </option>
+
+                ))}
+
+              </select>
+
+              {/* TRABAJADORA */}
+              <select
+                value={workerId}
+                onChange={(e) =>
+                  setWorkerId(e.target.value)
+                }
+                className="w-full border p-4 rounded-2xl"
+              >
+
+                <option value="">
+                  Seleccionar trabajadora
+                </option>
+
+                {workers.map((worker) => (
+
+                  <option
+                    key={worker.id}
+                    value={worker.id}
+                  >
+
+                    {worker.name}
+
+                  </option>
+
+                ))}
+
+              </select>
+
+              {/* SEDE */}
+              <select
+                value={branchId}
+                onChange={(e) =>
+                  setBranchId(e.target.value)
+                }
+                className="w-full border p-4 rounded-2xl"
+              >
+
+                <option value="">
+                  Seleccionar sede
+                </option>
+
+                {branches.map((branch) => (
+
+                  <option
+                    key={branch.id}
+                    value={branch.id}
+                  >
+
+                    {branch.name}
+
+                  </option>
+
+                ))}
+
+              </select>
+
+            </div>
+
+            <div className="flex gap-4 mt-8">
 
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() =>
+                  setShowModal(false)
+                }
                 className="bg-gray-200 px-5 py-3 rounded-2xl"
               >
 
@@ -186,10 +400,11 @@ export default function AppointmentsPage() {
               </button>
 
               <button
+                onClick={saveAppointment}
                 className="bg-[#243847] text-white px-5 py-3 rounded-2xl"
               >
 
-                Guardar
+                Guardar Reserva
 
               </button>
 
