@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import FullCalendar from "@fullcalendar/react";
 
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -10,7 +12,58 @@ import interactionPlugin from "@fullcalendar/interaction";
 
 import esLocale from "@fullcalendar/core/locales/es";
 
+import { supabase } from "@/lib/supabase";
+
 export default function AppointmentsPage() {
+
+  const [events, setEvents] = useState<any[]>([]);
+
+  // OBTENER CITAS
+  const fetchAppointments = async () => {
+
+    const { data, error } = await supabase
+
+      .from("appointments")
+
+      .select("*");
+
+    if (!error && data) {
+
+      const formattedEvents = data.map(
+        (appointment) => ({
+
+          title: "Reserva",
+
+          start: new Date(
+            appointment.appointment_date +
+            "T" +
+            appointment.start_time
+          ),
+
+          end: new Date(
+            appointment.appointment_date +
+            "T" +
+            appointment.end_time
+          ),
+
+        })
+      );
+
+      setEvents(formattedEvents);
+
+    } else {
+
+      console.log(error);
+
+    }
+  };
+
+  // CARGAR
+  useEffect(() => {
+
+    fetchAppointments();
+
+  }, []);
 
   return (
 
@@ -78,21 +131,7 @@ export default function AppointmentsPage() {
             day: "Día",
           }}
 
-          events={[
-
-            {
-              title: "Head Spa - María",
-              start: "2026-05-20T10:00:00",
-              end: "2026-05-20T12:00:00",
-            },
-
-            {
-              title: "Hydralips - Juana",
-              start: "2026-05-21T15:00:00",
-              end: "2026-05-21T16:00:00",
-            },
-
-          ]}
+          events={events}
 
         />
 
