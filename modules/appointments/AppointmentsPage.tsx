@@ -24,6 +24,10 @@ export default function AppointmentsPage() {
   const [showModal, setShowModal] =
     useState(false);
 
+  const [editingAppointmentId,
+    setEditingAppointmentId] =
+    useState<number | null>(null);
+
   const [clientId, setClientId] =
     useState("");
 
@@ -72,10 +76,14 @@ export default function AppointmentsPage() {
     const formattedEvents = (data || []).map(
       (appointment) => ({
 
+        id: appointment.id,
+
         title:
           appointment.clients?.full_name +
           " - " +
-          appointment.services?.name,
+          appointment.services?.name +
+          " - " +
+          appointment.workers?.name,
 
         start: new Date(
           appointment.appointment_date +
@@ -92,6 +100,14 @@ export default function AppointmentsPage() {
         backgroundColor: "#243847",
 
         borderColor: "#243847",
+
+        extendedProps: {
+          id: appointment.id,
+          client_id: appointment.client_id,
+          service_id: appointment.service_id,
+          worker_id: appointment.worker_id,
+          branch_id: appointment.branch_id,
+        },
 
       })
     );
@@ -131,7 +147,7 @@ export default function AppointmentsPage() {
     setBranches(branchesData || []);
   };
 
-  // GUARDAR CITA
+  // GUARDAR / EDITAR CITA
   const saveAppointment = async () => {
 
     if (
@@ -152,20 +168,73 @@ export default function AppointmentsPage() {
 
     end.setHours(end.getHours() + 1);
 
-    const { error } = await supabase
+    // VALIDAR SOLAPAMIENTO
+    const { data: existingAppointments } =
+      await supabase
 
-      .from("appointments")
+        .from("appointments")
 
-      .insert([
-        {
+        .select("*")
 
-          client_id: parseInt(clientId),
+        .eq(
+          "worker_id",
+          parseInt(workerId)
+        )
 
-          service_id: parseInt(serviceId),
+        .eq(
+          "appointment_date",
+          start.toISOString().split("T")[0]
+        )
 
-          worker_id: parseInt(workerId),
+        .gte(
+          "end_time",
+          start.toTimeString().slice(0, 5)
+        )
 
-          branch_id: parseInt(branchId),
+        .lte(
+          "start_time",
+          end.toTimeString().slice(0, 5)
+        );
+
+    const filteredAppointments =
+      existingAppointments?.filter(
+        (appointment) =>
+          appointment.id !==
+          editingAppointmentId
+      );
+
+    if (
+      filteredAppointments &&
+      filteredAppointments.length > 0
+    ) {
+
+      alert(
+        "La trabajadora ya tiene una reserva en ese horario"
+      );
+
+      return;
+    }
+
+    // EDITAR
+    if (editingAppointmentId) {
+
+      const { error } = await supabase
+
+        .from("appointments")
+
+        .update({
+
+          client_id:
+            parseInt(clientId),
+
+          service_id:
+            parseInt(serviceId),
+
+          worker_id:
+            parseInt(workerId),
+
+          branch_id:
+            parseInt(branchId),
 
           appointment_date:
             start.toISOString().split("T")[0],
@@ -176,25 +245,77 @@ export default function AppointmentsPage() {
           end_time:
             end.toTimeString().slice(0, 5),
 
-          status: "confirmed",
+        })
 
-          notes: "",
+        .eq(
+          "id",
+          editingAppointmentId
+        );
 
-        },
-      ]);
+      if (error) {
 
-    if (error) {
+        console.log(error);
 
-      console.log(error);
+        alert("Error al editar");
 
-      alert("Error al guardar reserva");
+        return;
+      }
 
-      return;
+      alert("Reserva actualizada");
+
+    } else {
+
+      // CREAR
+      const { error } = await supabase
+
+        .from("appointments")
+
+        .insert([
+          {
+
+            client_id:
+              parseInt(clientId),
+
+            service_id:
+              parseInt(serviceId),
+
+            worker_id:
+              parseInt(workerId),
+
+            branch_id:
+              parseInt(branchId),
+
+            appointment_date:
+              start.toISOString().split("T")[0],
+
+            start_time:
+              start.toTimeString().slice(0, 5),
+
+            end_time:
+              end.toTimeString().slice(0, 5),
+
+            status: "confirmed",
+
+            notes: "",
+
+          },
+        ]);
+
+      if (error) {
+
+        console.log(error);
+
+        alert("Error al guardar");
+
+        return;
+      }
+
+      alert("Reserva guardada");
     }
 
-    alert("Reserva guardada");
-
     setShowModal(false);
+
+    setEditingAppointmentId(null);
 
     setClientId("");
 
@@ -268,11 +389,156 @@ export default function AppointmentsPage() {
 
           nowIndicator={true}
 
+          // CREAR
           select={(info) => {
 
-            setSelectedDate(info.startStr);
+            setEditingAppointmentId(
+              null
+            );
+
+            setSelectedDate(
+              info.startStr
+            );
 
             setShowModal(true);
+
+          }}
+
+          // EDITAR
+          eventClick={(info) => {
+
+            const appointment =
+              info.event.extendedProps;
+
+            setEditingAppointmentId(
+              appointment.id
+            );
+
+            setClientId(
+              appointment.client_id?.toString()
+            );
+
+            setServiceId(
+              appointment.service_id?.toString()
+            );
+
+            setWorkerId(
+              appointment.worker_id?.toString()
+            );
+
+            setBranchId(
+              appointment.branch_id?.toString()
+            );
+
+            setSelectedDate(
+              info.event.start?.toISOString() || ""
+            );
+
+            setShowModal(true);
+
+          }}
+
+          // DRAG & DROP
+          eventDrop={async (info) => {
+
+            const event = info.event;
+
+            const start = event.start;
+
+            const end = event.end;
+
+            if (!start || !end) return;
+
+            const { error } = await supabase
+
+              .from("appointments")
+
+              .update({
+
+                appointment_date:
+                  start.toISOString().split("T")[0],
+
+                start_time:
+                  start.toTimeString().slice(0, 5),
+
+                end_time:
+                  end.toTimeString().slice(0, 5),
+
+              })
+
+              .eq(
+                "id",
+                Number(event.id)
+              );
+
+            if (error) {
+
+              console.log(error);
+
+              alert(
+                "Error al mover reserva"
+              );
+
+              info.revert();
+
+              return;
+            }
+
+            alert(
+              "Reserva actualizada"
+            );
+
+          }}
+
+          // RESIZE
+          eventResize={async (info) => {
+
+            const event = info.event;
+
+            const start = event.start;
+
+            const end = event.end;
+
+            if (!start || !end) return;
+
+            const { error } = await supabase
+
+              .from("appointments")
+
+              .update({
+
+                appointment_date:
+                  start.toISOString().split("T")[0],
+
+                start_time:
+                  start.toTimeString().slice(0, 5),
+
+                end_time:
+                  end.toTimeString().slice(0, 5),
+
+              })
+
+              .eq(
+                "id",
+                Number(event.id)
+              );
+
+            if (error) {
+
+              console.log(error);
+
+              alert(
+                "Error al actualizar duración"
+              );
+
+              info.revert();
+
+              return;
+            }
+
+            alert(
+              "Duración actualizada"
+            );
 
           }}
 
@@ -305,7 +571,9 @@ export default function AppointmentsPage() {
 
             <h3 className="text-2xl font-bold text-[#243847] mb-6">
 
-              Nueva Reserva
+              {editingAppointmentId
+                ? "Editar Reserva"
+                : "Nueva Reserva"}
 
             </h3>
 
@@ -315,7 +583,9 @@ export default function AppointmentsPage() {
               <select
                 value={clientId}
                 onChange={(e) =>
-                  setClientId(e.target.value)
+                  setClientId(
+                    e.target.value
+                  )
                 }
                 className="w-full border p-4 rounded-2xl"
               >
@@ -343,7 +613,9 @@ export default function AppointmentsPage() {
               <select
                 value={serviceId}
                 onChange={(e) =>
-                  setServiceId(e.target.value)
+                  setServiceId(
+                    e.target.value
+                  )
                 }
                 className="w-full border p-4 rounded-2xl"
               >
@@ -371,7 +643,9 @@ export default function AppointmentsPage() {
               <select
                 value={workerId}
                 onChange={(e) =>
-                  setWorkerId(e.target.value)
+                  setWorkerId(
+                    e.target.value
+                  )
                 }
                 className="w-full border p-4 rounded-2xl"
               >
@@ -399,7 +673,9 @@ export default function AppointmentsPage() {
               <select
                 value={branchId}
                 onChange={(e) =>
-                  setBranchId(e.target.value)
+                  setBranchId(
+                    e.target.value
+                  )
                 }
                 className="w-full border p-4 rounded-2xl"
               >
@@ -443,7 +719,9 @@ export default function AppointmentsPage() {
                 className="bg-[#243847] text-white px-5 py-3 rounded-2xl"
               >
 
-                Guardar Reserva
+                {editingAppointmentId
+                  ? "Actualizar"
+                  : "Guardar Reserva"}
 
               </button>
 
