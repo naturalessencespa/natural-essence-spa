@@ -18,6 +18,12 @@ export default function AppointmentsPage() {
 
   const [events, setEvents] = useState<any[]>([]);
 
+  const [selectedDate, setSelectedDate] =
+    useState("");
+
+  const [showModal, setShowModal] =
+    useState(false);
+
   // OBTENER CITAS
   const fetchAppointments = async () => {
 
@@ -117,6 +123,14 @@ export default function AppointmentsPage() {
 
           nowIndicator={true}
 
+          select={(info) => {
+
+            setSelectedDate(info.startStr);
+
+            setShowModal(true);
+
+          }}
+
           headerToolbar={{
             left: "prev,next today",
             center: "title",
@@ -136,6 +150,56 @@ export default function AppointmentsPage() {
         />
 
       </div>
+
+      {/* MODAL */}
+      {showModal && (
+
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+          <div className="bg-white p-8 rounded-3xl w-[500px] shadow-2xl">
+
+            <h3 className="text-2xl font-bold text-[#243847] mb-4">
+
+              Nueva Reserva
+
+            </h3>
+
+            <p className="mb-6 text-gray-600">
+
+              Fecha seleccionada:
+
+              <br />
+
+              {selectedDate}
+
+            </p>
+
+            <div className="flex gap-4">
+
+              <button
+                onClick={() => setShowModal(false)}
+                className="bg-gray-200 px-5 py-3 rounded-2xl"
+              >
+
+                Cancelar
+
+              </button>
+
+              <button
+                className="bg-[#243847] text-white px-5 py-3 rounded-2xl"
+              >
+
+                Guardar
+
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
 
     </div>
 
