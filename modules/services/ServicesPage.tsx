@@ -21,6 +21,7 @@ export default function ServicesPage() {
   const [price, setPrice] = useState("");
   const [duration, setDuration] = useState("");
   const [protocolUrl, setProtocolUrl] = useState("");
+  const [protocolFile, setProtocolFile] = useState<File | null>(null);
 
   const [editingId, setEditingId] =
     useState<number | null>(null);
@@ -48,11 +49,41 @@ export default function ServicesPage() {
   // GUARDAR
   const saveService = async () => {
 
+    let uploadedProtocolUrl = protocolUrl;
+
     if (
       !name ||
       !price ||
       !duration
     ) return;
+
+        // SUBIR PDF
+if (protocolFile) {
+
+  const fileName =
+    `${Date.now()}-${protocolFile.name}`;
+
+  const { error } = await supabase.storage
+
+    .from("protocols")
+
+    .upload(
+      fileName,
+      protocolFile
+    );
+
+  if (!error) {
+
+    const { data } = supabase.storage
+
+      .from("protocols")
+
+      .getPublicUrl(fileName);
+
+    uploadedProtocolUrl =
+      data.publicUrl;
+  }
+}
 
     // EDITAR
     if (editingId) {
@@ -63,7 +94,7 @@ export default function ServicesPage() {
           name,
           price,
           duration,
-          protocol_url: protocolUrl,
+          protocol_url: uploadedProtocolUrl,
         })
         .eq("id", editingId);
 
@@ -79,7 +110,7 @@ export default function ServicesPage() {
             name,
             price,
             duration,
-            protocol_url: protocolUrl,
+            protocol_url: uploadedProtocolUrl,
           },
         ]);
     }
@@ -169,12 +200,15 @@ export default function ServicesPage() {
           />
 
           <input
-            type="text"
-            placeholder="URL del protocolo PDF"
-            value={protocolUrl}
-            onChange={(e) =>
-              setProtocolUrl(e.target.value)
-            }
+            type="file"
+            accept="application/pdf"
+            onChange={(e) => {
+
+              if (e.target.files?.[0]) {
+                setProtocolFile(e.target.files[0]);
+              }
+
+            }}
             className="border p-4 rounded-2xl"
           />
 
