@@ -55,37 +55,48 @@ export default function AppointmentsPage() {
 
       .from("appointments")
 
-      .select("*");
+      .select(`
+        *,
+        clients(full_name),
+        services(name),
+        workers(name)
+      `);
 
-    if (!error && data) {
-
-      const formattedEvents = data.map(
-        (appointment) => ({
-
-          title: "Reserva",
-
-          start: new Date(
-            appointment.appointment_date +
-            "T" +
-            appointment.start_time
-          ),
-
-          end: new Date(
-            appointment.appointment_date +
-            "T" +
-            appointment.end_time
-          ),
-
-        })
-      );
-
-      setEvents(formattedEvents);
-
-    } else {
+    if (error) {
 
       console.log(error);
 
+      return;
     }
+
+    const formattedEvents = (data || []).map(
+      (appointment) => ({
+
+        title:
+          appointment.clients?.full_name +
+          " - " +
+          appointment.services?.name,
+
+        start: new Date(
+          appointment.appointment_date +
+          "T" +
+          appointment.start_time
+        ),
+
+        end: new Date(
+          appointment.appointment_date +
+          "T" +
+          appointment.end_time
+        ),
+
+        backgroundColor: "#243847",
+
+        borderColor: "#243847",
+
+      })
+    );
+
+    setEvents(formattedEvents);
   };
 
   // OBTENER DATOS FORMULARIO
@@ -128,7 +139,12 @@ export default function AppointmentsPage() {
       !serviceId ||
       !workerId ||
       !branchId
-    ) return;
+    ) {
+
+      alert("Completa todos los campos");
+
+      return;
+    }
 
     const start = new Date(selectedDate);
 
@@ -136,19 +152,20 @@ export default function AppointmentsPage() {
 
     end.setHours(end.getHours() + 1);
 
-    await supabase
+    const { error } = await supabase
 
       .from("appointments")
 
       .insert([
         {
-          client_id: Number(clientId),
 
-          service_id: Number(serviceId),
+          client_id: parseInt(clientId),
 
-          worker_id: Number(workerId),
+          service_id: parseInt(serviceId),
 
-          branch_id: Number(branchId),
+          worker_id: parseInt(workerId),
+
+          branch_id: parseInt(branchId),
 
           appointment_date:
             start.toISOString().split("T")[0],
@@ -160,10 +177,32 @@ export default function AppointmentsPage() {
             end.toTimeString().slice(0, 5),
 
           status: "confirmed",
+
+          notes: "",
+
         },
       ]);
 
+    if (error) {
+
+      console.log(error);
+
+      alert("Error al guardar reserva");
+
+      return;
+    }
+
+    alert("Reserva guardada");
+
     setShowModal(false);
+
+    setClientId("");
+
+    setServiceId("");
+
+    setWorkerId("");
+
+    setBranchId("");
 
     fetchAppointments();
   };
