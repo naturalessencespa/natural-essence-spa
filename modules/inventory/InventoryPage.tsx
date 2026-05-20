@@ -868,6 +868,10 @@ export default function InventoryPage() {
                       Seleccione estado
                     </option>
 
+                    <option value="Vacío">
+                      Vacío
+                    </option>
+
                     <option value="Muy poco">
                       Muy poco
                     </option>
