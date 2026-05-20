@@ -16,12 +16,15 @@ import { supabase } from "@/lib/supabase";
 
 export default function AppointmentsPage() {
 
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] =
+    useState<any[]>([]);
 
-  const [selectedDate, setSelectedDate] =
+  const [selectedDate,
+    setSelectedDate] =
     useState("");
 
-  const [showModal, setShowModal] =
+  const [showModal,
+    setShowModal] =
     useState(false);
 
   const [editingAppointmentId,
@@ -31,43 +34,49 @@ export default function AppointmentsPage() {
   const [clientId, setClientId] =
     useState("");
 
-  const [serviceId, setServiceId] =
+  const [serviceId,
+    setServiceId] =
     useState("");
 
-  const [workerId, setWorkerId] =
+  const [workerId,
+    setWorkerId] =
     useState("");
 
-  const [branchId, setBranchId] =
+  const [branchId,
+    setBranchId] =
     useState("");
 
   const [clients, setClients] =
     useState<any[]>([]);
 
-  const [services, setServices] =
+  const [services,
+    setServices] =
     useState<any[]>([]);
 
   const [workers, setWorkers] =
     useState<any[]>([]);
 
-  const [branches, setBranches] =
+  const [branches,
+    setBranches] =
     useState<any[]>([]);
 
   // OBTENER CITAS
   const fetchAppointments = async () => {
 
-    const { data, error } = await supabase
+    const { data, error } =
+      await supabase
 
-      .from("appointments")
+        .from("appointments")
 
-      .select(`
-        *,
-        clients(full_name),
-        services(name),
-        workers(
-                  name,
-                  color
-                )
-      `);
+        .select(`
+          *,
+          clients(full_name),
+          services(name),
+          workers(
+            name,
+            color
+          )
+        `);
 
     if (error) {
 
@@ -76,48 +85,64 @@ export default function AppointmentsPage() {
       return;
     }
 
-    const formattedEvents = (data || []).map(
-      (appointment) => ({
+    const formattedEvents =
+      (data || []).map(
+        (appointment) => ({
 
-        id: appointment.id,
-
-        title:
-          appointment.clients?.full_name +
-          " - " +
-          appointment.services?.name +
-          " - " +
-          appointment.workers?.name,
-
-        start: new Date(
-          appointment.appointment_date +
-          "T" +
-          appointment.start_time
-        ),
-
-        end: new Date(
-          appointment.appointment_date +
-          "T" +
-          appointment.end_time
-        ),
-
-       backgroundColor:
-        appointment.workers?.color ||
-        "#243847",
-
-      borderColor:
-        appointment.workers?.color ||
-        "#243847",
-
-        extendedProps: {
           id: appointment.id,
-          client_id: appointment.client_id,
-          service_id: appointment.service_id,
-          worker_id: appointment.worker_id,
-          branch_id: appointment.branch_id,
-        },
 
-      })
-    );
+          title:
+            appointment.clients
+              ?.full_name +
+            " - " +
+            appointment.services
+              ?.name +
+            " - " +
+            appointment.workers
+              ?.name,
+
+          start: new Date(
+            appointment.appointment_date +
+            "T" +
+            appointment.start_time
+          ),
+
+          end: new Date(
+            appointment.appointment_date +
+            "T" +
+            appointment.end_time
+          ),
+
+          backgroundColor:
+            appointment.workers
+              ?.color ||
+            "#243847",
+
+          borderColor:
+            appointment.workers
+              ?.color ||
+            "#243847",
+
+          extendedProps: {
+
+            id: appointment.id,
+
+            client_id:
+              appointment.client_id,
+
+            service_id:
+              appointment.service_id,
+
+            worker_id:
+              appointment.worker_id,
+
+            branch_id:
+              appointment.branch_id,
+
+          },
+
+        })
+      );
 
     setEvents(formattedEvents);
   };
@@ -127,23 +152,37 @@ export default function AppointmentsPage() {
 
     const { data: clientsData } =
       await supabase
+
         .from("clients")
-        .select("*");
+
+        .select("*")
+
+        .eq("active", true);
 
     const { data: servicesData } =
       await supabase
+
         .from("services")
+
         .select("*");
 
     const { data: workersData } =
       await supabase
+
         .from("workers")
-        .select("*");
+
+        .select("*")
+
+        .eq("active", true);
 
     const { data: branchesData } =
       await supabase
+
         .from("branches")
-        .select("*");
+
+        .select("*")
+
+        .eq("active", true);
 
     setClients(clientsData || []);
 
@@ -164,19 +203,95 @@ export default function AppointmentsPage() {
       !branchId
     ) {
 
-      alert("Completa todos los campos");
+      alert(
+        "Completa todos los campos"
+      );
 
       return;
     }
 
-    const start = new Date(selectedDate);
+    const start =
+      new Date(selectedDate);
 
-    const end = new Date(start);
+    // OBTENER SERVICIO
+    const selectedService =
+      services.find(
+        (service) =>
+          service.id ===
+          parseInt(serviceId)
+      );
 
-    end.setHours(end.getHours() + 1);
+    let durationMinutes = 60;
 
-    // VALIDAR SOLAPAMIENTO
-    const { data: existingAppointments } =
+    if (
+      selectedService?.duration
+    ) {
+
+      const durationText =
+        selectedService.duration
+          .toLowerCase();
+
+      // HORAS
+      if (
+        durationText.includes(
+          "hora"
+        )
+      ) {
+
+        const hours =
+          parseInt(
+            durationText
+          ) || 1;
+
+        durationMinutes =
+          hours * 60;
+      }
+
+      // MINUTOS
+      if (
+        durationText.includes(
+          "minuto"
+        )
+      ) {
+
+        durationMinutes =
+          parseInt(
+            durationText
+          ) || 60;
+      }
+
+    }
+
+    const end =
+      new Date(start);
+
+    end.setMinutes(
+      end.getMinutes() +
+        durationMinutes
+    );
+
+    // VALIDAR SOLAPAMIENTO REAL
+    const appointmentDate =
+      start
+        .toISOString()
+        .split("T")[0];
+
+    const startTime =
+      start
+        .toTimeString()
+        .slice(0, 5);
+
+    const endTime =
+      end
+        .toTimeString()
+        .slice(0, 5);
+
+    const {
+      data:
+        existingAppointments,
+      error:
+        validationError,
+    } =
       await supabase
 
         .from("appointments")
@@ -190,29 +305,57 @@ export default function AppointmentsPage() {
 
         .eq(
           "appointment_date",
-          start.toISOString().split("T")[0]
-        )
-
-        .gte(
-          "end_time",
-          start.toTimeString().slice(0, 5)
-        )
-
-        .lte(
-          "start_time",
-          end.toTimeString().slice(0, 5)
+          appointmentDate
         );
 
-    const filteredAppointments =
+    if (validationError) {
+
+      console.log(
+        validationError
+      );
+
+      alert(
+        "Error validando horario"
+      );
+
+      return;
+    }
+
+    const overlappingAppointments =
       existingAppointments?.filter(
-        (appointment) =>
-          appointment.id !==
-          editingAppointmentId
+        (appointment) => {
+
+          // IGNORAR MISMA CITA EN EDICIÓN
+          if (
+            appointment.id ===
+            editingAppointmentId
+          ) {
+
+            return false;
+          }
+
+          const existingStart =
+            appointment.start_time;
+
+          const existingEnd =
+            appointment.end_time;
+
+          return (
+
+            startTime <
+              existingEnd &&
+            endTime >
+              existingStart
+
+          );
+
+        }
       );
 
     if (
-      filteredAppointments &&
-      filteredAppointments.length > 0
+      overlappingAppointments &&
+      overlappingAppointments.length >
+        0
     ) {
 
       alert(
@@ -225,104 +368,133 @@ export default function AppointmentsPage() {
     // EDITAR
     if (editingAppointmentId) {
 
-      const { error } = await supabase
+      const { error } =
+        await supabase
 
-        .from("appointments")
+          .from("appointments")
 
-        .update({
+          .update({
 
-          client_id:
-            parseInt(clientId),
+            client_id:
+              parseInt(
+                clientId
+              ),
 
-          service_id:
-            parseInt(serviceId),
+            service_id:
+              parseInt(
+                serviceId
+              ),
 
-          worker_id:
-            parseInt(workerId),
+            worker_id:
+              parseInt(
+                workerId
+              ),
 
-          branch_id:
-            parseInt(branchId),
+            branch_id:
+              parseInt(
+                branchId
+              ),
 
-          appointment_date:
-            start.toISOString().split("T")[0],
+            appointment_date:
+              appointmentDate,
 
-          start_time:
-            start.toTimeString().slice(0, 5),
+            start_time:
+              startTime,
 
-          end_time:
-            end.toTimeString().slice(0, 5),
+            end_time:
+              endTime,
 
-        })
+          })
 
-        .eq(
-          "id",
-          editingAppointmentId
-        );
+          .eq(
+            "id",
+            editingAppointmentId
+          );
 
       if (error) {
 
         console.log(error);
 
-        alert("Error al editar");
+        alert(
+          "Error al editar"
+        );
 
         return;
       }
 
-      alert("Reserva actualizada");
+      alert(
+        "Reserva actualizada"
+      );
 
     } else {
 
       // CREAR
-      const { error } = await supabase
+      const { error } =
+        await supabase
 
-        .from("appointments")
+          .from("appointments")
 
-        .insert([
-          {
+          .insert([
+            {
 
-            client_id:
-              parseInt(clientId),
+              client_id:
+                parseInt(
+                  clientId
+                ),
 
-            service_id:
-              parseInt(serviceId),
+              service_id:
+                parseInt(
+                  serviceId
+                ),
 
-            worker_id:
-              parseInt(workerId),
+              worker_id:
+                parseInt(
+                  workerId
+                ),
 
-            branch_id:
-              parseInt(branchId),
+              branch_id:
+                parseInt(
+                  branchId
+                ),
 
-            appointment_date:
-              start.toISOString().split("T")[0],
+              appointment_date:
+                appointmentDate,
 
-            start_time:
-              start.toTimeString().slice(0, 5),
+              start_time:
+                startTime,
 
-            end_time:
-              end.toTimeString().slice(0, 5),
+              end_time:
+                endTime,
 
-            status: "confirmed",
+              status:
+                "confirmed",
 
-            notes: "",
+              notes: "",
 
-          },
-        ]);
+            },
+          ]);
 
       if (error) {
 
         console.log(error);
 
-        alert("Error al guardar");
+        alert(
+          "Error al guardar"
+        );
 
         return;
       }
 
-      alert("Reserva guardada");
+      alert(
+        "Reserva guardada"
+      );
     }
 
     setShowModal(false);
 
-    setEditingAppointmentId(null);
+    setEditingAppointmentId(
+      null
+    );
 
     setClientId("");
 
@@ -365,36 +537,36 @@ export default function AppointmentsPage() {
 
       </div>
 
-      {/* LEYENDA TRABAJADORAS */}
-        <div className="flex flex-wrap gap-4 mb-6">
+      {/* LEYENDA */}
+      <div className="flex flex-wrap gap-4 mb-6">
 
-          {workers.map((worker) => (
+        {workers.map((worker) => (
+
+          <div
+            key={worker.id}
+            className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow"
+          >
 
             <div
-              key={worker.id}
-              className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow"
-            >
+              className="w-5 h-5 rounded-full"
+              style={{
+                backgroundColor:
+                  worker.color ||
+                  "#243847",
+              }}
+            />
 
-              <div
-                className="w-5 h-5 rounded-full"
-                style={{
-                  backgroundColor:
-                    worker.color ||
-                    "#243847"
-                }}
-              />
+            <span className="font-medium text-[#243847]">
 
-              <span className="font-medium text-[#243847]">
+              {worker.name}
 
-                {worker.name}
+            </span>
 
-              </span>
+          </div>
 
-            </div>
+        ))}
 
-          ))}
-
-        </div>
+      </div>
 
       {/* CALENDARIO */}
       <div className="bg-white p-6 rounded-3xl shadow-xl">
@@ -446,7 +618,8 @@ export default function AppointmentsPage() {
           eventClick={(info) => {
 
             const appointment =
-              info.event.extendedProps;
+              info.event
+                .extendedProps;
 
             setEditingAppointmentId(
               appointment.id
@@ -469,7 +642,8 @@ export default function AppointmentsPage() {
             );
 
             setSelectedDate(
-              info.event.start?.toISOString() || ""
+              info.event.start?.toISOString() ||
+                ""
             );
 
             setShowModal(true);
@@ -479,35 +653,50 @@ export default function AppointmentsPage() {
           // DRAG & DROP
           eventDrop={async (info) => {
 
-            const event = info.event;
+            const event =
+              info.event;
 
-            const start = event.start;
+            const start =
+              event.start;
 
-            const end = event.end;
+            const end =
+              event.end;
 
-            if (!start || !end) return;
+            if (
+              !start ||
+              !end
+            ) return;
 
-            const { error } = await supabase
+            const { error } =
+              await supabase
 
-              .from("appointments")
+                .from(
+                  "appointments"
+                )
 
-              .update({
+                .update({
 
-                appointment_date:
-                  start.toISOString().split("T")[0],
+                  appointment_date:
+                    start
+                      .toISOString()
+                      .split("T")[0],
 
-                start_time:
-                  start.toTimeString().slice(0, 5),
+                  start_time:
+                    start
+                      .toTimeString()
+                      .slice(0, 5),
 
-                end_time:
-                  end.toTimeString().slice(0, 5),
+                  end_time:
+                    end
+                      .toTimeString()
+                      .slice(0, 5),
 
-              })
+                })
 
-              .eq(
-                "id",
-                Number(event.id)
-              );
+                .eq(
+                  "id",
+                  Number(event.id)
+                );
 
             if (error) {
 
@@ -531,35 +720,50 @@ export default function AppointmentsPage() {
           // RESIZE
           eventResize={async (info) => {
 
-            const event = info.event;
+            const event =
+              info.event;
 
-            const start = event.start;
+            const start =
+              event.start;
 
-            const end = event.end;
+            const end =
+              event.end;
 
-            if (!start || !end) return;
+            if (
+              !start ||
+              !end
+            ) return;
 
-            const { error } = await supabase
+            const { error } =
+              await supabase
 
-              .from("appointments")
+                .from(
+                  "appointments"
+                )
 
-              .update({
+                .update({
 
-                appointment_date:
-                  start.toISOString().split("T")[0],
+                  appointment_date:
+                    start
+                      .toISOString()
+                      .split("T")[0],
 
-                start_time:
-                  start.toTimeString().slice(0, 5),
+                  start_time:
+                    start
+                      .toTimeString()
+                      .slice(0, 5),
 
-                end_time:
-                  end.toTimeString().slice(0, 5),
+                  end_time:
+                    end
+                      .toTimeString()
+                      .slice(0, 5),
 
-              })
+                })
 
-              .eq(
-                "id",
-                Number(event.id)
-              );
+                .eq(
+                  "id",
+                  Number(event.id)
+                );
 
             if (error) {
 
@@ -581,17 +785,28 @@ export default function AppointmentsPage() {
           }}
 
           headerToolbar={{
-            left: "prev,next today",
-            center: "title",
+
+            left:
+              "prev,next today",
+
+            center:
+              "title",
+
             right:
               "dayGridMonth,timeGridWeek,timeGridDay",
+
           }}
 
           buttonText={{
+
             today: "Hoy",
+
             month: "Mes",
+
             week: "Semana",
+
             day: "Día",
+
           }}
 
           events={events}
@@ -753,7 +968,9 @@ export default function AppointmentsPage() {
               </button>
 
               <button
-                onClick={saveAppointment}
+                onClick={
+                  saveAppointment
+                }
                 className="bg-[#243847] text-white px-5 py-3 rounded-2xl"
               >
 

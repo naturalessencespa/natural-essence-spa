@@ -12,6 +12,14 @@ export default function ClientsPage() {
   const [showModal, setShowModal] =
     useState(false);
 
+  const [showViewModal,
+    setShowViewModal] =
+    useState(false);
+
+  const [selectedClient,
+    setSelectedClient] =
+    useState<any>(null);
+
   const [editingClientId,
     setEditingClientId] =
     useState<number | null>(null);
@@ -25,6 +33,43 @@ export default function ClientsPage() {
   const [email, setEmail] =
     useState("");
 
+  const [birthDate,
+    setBirthDate] =
+    useState("");
+
+  const [dni, setDni] =
+    useState("");
+
+  const [address,
+    setAddress] =
+    useState("");
+
+  const [allergies,
+    setAllergies] =
+    useState("");
+
+  const [medicalConditions,
+    setMedicalConditions] =
+    useState("");
+
+  const [consentSigned,
+    setConsentSigned] =
+    useState(false);
+
+  const [emergencyContact,
+    setEmergencyContact] =
+    useState("");
+
+  const [emergencyPhone,
+    setEmergencyPhone] =
+    useState("");
+
+  const [notes, setNotes] =
+    useState("");
+
+  const [fileUrl, setFileUrl] =
+    useState("");
+
   // OBTENER CLIENTES
   const fetchClients = async () => {
 
@@ -34,6 +79,8 @@ export default function ClientsPage() {
         .from("clients")
 
         .select("*")
+
+        .eq("active", true)
 
         .order("id", {
           ascending: false,
@@ -75,6 +122,32 @@ export default function ClientsPage() {
 
             email,
 
+            birth_date:
+              birthDate || null,
+
+            dni,
+
+            address,
+
+            allergies,
+
+            medical_conditions:
+              medicalConditions,
+
+            consent_signed:
+              consentSigned,
+
+            emergency_contact:
+              emergencyContact,
+
+            emergency_phone:
+              emergencyPhone,
+
+            notes,
+
+            file_url:
+              fileUrl,
+
           })
 
           .eq(
@@ -110,6 +183,34 @@ export default function ClientsPage() {
 
               email,
 
+              birth_date:
+                birthDate || null,
+
+              dni,
+
+              address,
+
+              allergies,
+
+              medical_conditions:
+                medicalConditions,
+
+              consent_signed:
+                consentSigned,
+
+              emergency_contact:
+                emergencyContact,
+
+              emergency_phone:
+                emergencyPhone,
+
+              notes,
+
+              file_url:
+                fileUrl,
+
+              active: true,
+
             },
           ]);
 
@@ -135,10 +236,65 @@ export default function ClientsPage() {
 
     setEmail("");
 
+    setBirthDate("");
+
+    setDni("");
+
+    setAddress("");
+
+    setAllergies("");
+
+    setMedicalConditions("");
+
+    setConsentSigned(false);
+
+    setEmergencyContact("");
+
+    setEmergencyPhone("");
+
+    setNotes("");
+
+    setFileUrl("");
+
     fetchClients();
   };
 
+  // ELIMINAR
+  const deleteClient = async (
+    id: number
+  ) => {
 
+    const confirmDelete =
+      confirm(
+        "¿Eliminar cliente?"
+      );
+
+    if (!confirmDelete) return;
+
+    const { error } =
+      await supabase
+
+        .from("clients")
+
+        .update({
+          active: false,
+        })
+
+        .eq("id", id);
+
+    if (error) {
+
+      console.log(error);
+
+      alert("Error al eliminar");
+
+      return;
+    }
+
+    alert("Cliente eliminado");
+
+    fetchClients();
+  };
 
   useEffect(() => {
 
@@ -182,6 +338,26 @@ export default function ClientsPage() {
 
             setEmail("");
 
+            setBirthDate("");
+
+            setDni("");
+
+            setAddress("");
+
+            setAllergies("");
+
+            setMedicalConditions("");
+
+            setConsentSigned(false);
+
+            setEmergencyContact("");
+
+            setEmergencyPhone("");
+
+            setNotes("");
+
+            setFileUrl("");
+
             setShowModal(true);
 
           }}
@@ -213,6 +389,10 @@ export default function ClientsPage() {
 
               <th className="text-left p-5">
                 Email
+              </th>
+
+              <th className="text-left p-5">
+                Consentimiento
               </th>
 
               <th className="text-left p-5">
@@ -250,7 +430,33 @@ export default function ClientsPage() {
 
                 </td>
 
+                <td className="p-5">
+
+                  {client.consent_signed
+                    ? "Sí"
+                    : "No"}
+
+                </td>
+
                 <td className="p-5 flex gap-3">
+
+                  {/* VER */}
+                  <button
+                    onClick={() => {
+
+                      setSelectedClient(
+                        client
+                      );
+
+                      setShowViewModal(true);
+
+                    }}
+                    className="bg-[#243847] text-white px-4 py-2 rounded-xl"
+                  >
+
+                    Ver
+
+                  </button>
 
                   {/* EDITAR */}
                   <button
@@ -272,6 +478,46 @@ export default function ClientsPage() {
                         client.email || ""
                       );
 
+                      setBirthDate(
+                        client.birth_date || ""
+                      );
+
+                      setDni(
+                        client.dni || ""
+                      );
+
+                      setAddress(
+                        client.address || ""
+                      );
+
+                      setAllergies(
+                        client.allergies || ""
+                      );
+
+                      setMedicalConditions(
+                        client.medical_conditions || ""
+                      );
+
+                      setConsentSigned(
+                        client.consent_signed || false
+                      );
+
+                      setEmergencyContact(
+                        client.emergency_contact || ""
+                      );
+
+                      setEmergencyPhone(
+                        client.emergency_phone || ""
+                      );
+
+                      setNotes(
+                        client.notes || ""
+                      );
+
+                      setFileUrl(
+                        client.file_url || ""
+                      );
+
                       setShowModal(true);
 
                     }}
@@ -280,6 +526,19 @@ export default function ClientsPage() {
 
                     Editar
 
+                  </button>
+
+                  {/* ELIMINAR */}
+                  <button
+                    onClick={() =>
+                      deleteClient(
+                        client.id
+                      )
+                    }
+                    className="bg-red-500 text-white px-4 py-2 rounded-xl"
+                  >
+
+                    Eliminar
 
                   </button>
 
@@ -295,12 +554,267 @@ export default function ClientsPage() {
 
       </div>
 
-      {/* MODAL */}
+      {/* MODAL VER CLIENTE */}
+      {showViewModal &&
+        selectedClient && (
+
+        <div className="fixed inset-0 bg-black/40 flex items-start justify-center z-50 overflow-y-auto p-6">
+
+          <div className="bg-white p-8 rounded-3xl w-full max-w-[700px] shadow-2xl mt-10 mb-20">
+
+            <div className="flex items-center justify-between mb-8">
+
+              <h3 className="text-3xl font-bold text-[#243847]">
+
+                Cliente
+
+              </h3>
+
+              <button
+                onClick={() =>
+                  setShowViewModal(
+                    false
+                  )
+                }
+                className="bg-gray-200 px-4 py-2 rounded-xl"
+              >
+
+                Cerrar
+
+              </button>
+
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+              <div>
+
+                <p className="text-gray-500 text-sm">
+
+                  Nombre
+
+                </p>
+
+                <p className="font-semibold text-lg">
+
+                  {selectedClient.full_name}
+
+                </p>
+
+              </div>
+
+              <div>
+
+                <p className="text-gray-500 text-sm">
+
+                  Teléfono
+
+                </p>
+
+                <p className="font-semibold text-lg">
+
+                  {selectedClient.phone || "-"}
+
+                </p>
+
+              </div>
+
+              <div>
+
+                <p className="text-gray-500 text-sm">
+
+                  Email
+
+                </p>
+
+                <p className="font-semibold text-lg">
+
+                  {selectedClient.email || "-"}
+
+                </p>
+
+              </div>
+
+              <div>
+
+                <p className="text-gray-500 text-sm">
+
+                  DNI
+
+                </p>
+
+                <p className="font-semibold text-lg">
+
+                  {selectedClient.dni || "-"}
+
+                </p>
+
+              </div>
+
+              <div>
+
+                <p className="text-gray-500 text-sm">
+
+                  Fecha nacimiento
+
+                </p>
+
+                <p className="font-semibold text-lg">
+
+                  {selectedClient.birth_date || "-"}
+
+                </p>
+
+              </div>
+
+              <div>
+
+                <p className="text-gray-500 text-sm">
+
+                  Dirección
+
+                </p>
+
+                <p className="font-semibold text-lg">
+
+                  {selectedClient.address || "-"}
+
+                </p>
+
+              </div>
+
+              <div className="md:col-span-2">
+
+                <p className="text-gray-500 text-sm">
+
+                  Alergias
+
+                </p>
+
+                <p className="font-semibold text-lg">
+
+                  {selectedClient.allergies || "-"}
+
+                </p>
+
+              </div>
+
+              <div className="md:col-span-2">
+
+                <p className="text-gray-500 text-sm">
+
+                  Condiciones médicas
+
+                </p>
+
+                <p className="font-semibold text-lg">
+
+                  {selectedClient.medical_conditions || "-"}
+
+                </p>
+
+              </div>
+
+              <div>
+
+                <p className="text-gray-500 text-sm">
+
+                  Contacto emergencia
+
+                </p>
+
+                <p className="font-semibold text-lg">
+
+                  {selectedClient.emergency_contact || "-"}
+
+                </p>
+
+              </div>
+
+              <div>
+
+                <p className="text-gray-500 text-sm">
+
+                  Teléfono emergencia
+
+                </p>
+
+                <p className="font-semibold text-lg">
+
+                  {selectedClient.emergency_phone || "-"}
+
+                </p>
+
+              </div>
+
+              <div>
+
+                <p className="text-gray-500 text-sm">
+
+                  Consentimiento
+
+                </p>
+
+                <p className="font-semibold text-lg">
+
+                  {selectedClient.consent_signed
+                    ? "Sí"
+                    : "No"}
+
+                </p>
+
+              </div>
+
+              <div className="md:col-span-2">
+
+                <p className="text-gray-500 text-sm">
+
+                  Observaciones
+
+                </p>
+
+                <p className="font-semibold text-lg whitespace-pre-wrap">
+
+                  {selectedClient.notes || "-"}
+
+                </p>
+
+              </div>
+
+              {selectedClient.file_url && (
+
+                <div className="md:col-span-2">
+
+                  <a
+                    href={
+                      selectedClient.file_url
+                    }
+                    target="_blank"
+                    className="bg-[#243847] text-white px-5 py-3 rounded-2xl inline-block"
+                  >
+
+                    Ver consentimiento
+
+                  </a>
+
+                </div>
+
+              )}
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+      {/* MODAL EDITAR / CREAR */}
       {showModal && (
 
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/40 flex items-start justify-center z-50 overflow-y-auto p-6">
 
-          <div className="bg-white p-8 rounded-3xl w-[500px] shadow-2xl">
+          <div className="bg-white p-8 rounded-3xl w-full max-w-[700px] shadow-2xl mt-10 mb-20">
 
             <h3 className="text-2xl font-bold text-[#243847] mb-6">
 
@@ -348,6 +862,224 @@ export default function ClientsPage() {
                 className="w-full border p-4 rounded-2xl"
               />
 
+              <input
+                type="date"
+                value={birthDate}
+                onChange={(e) =>
+                  setBirthDate(
+                    e.target.value
+                  )
+                }
+                className="w-full border p-4 rounded-2xl"
+              />
+
+              <input
+                type="text"
+                placeholder="DNI"
+                value={dni}
+                onChange={(e) =>
+                  setDni(
+                    e.target.value
+                  )
+                }
+                className="w-full border p-4 rounded-2xl"
+              />
+
+              <input
+                type="text"
+                placeholder="Dirección"
+                value={address}
+                onChange={(e) =>
+                  setAddress(
+                    e.target.value
+                  )
+                }
+                className="w-full border p-4 rounded-2xl"
+              />
+
+              <textarea
+                placeholder="Alergias"
+                value={allergies}
+                onChange={(e) =>
+                  setAllergies(
+                    e.target.value
+                  )
+                }
+                className="w-full border p-4 rounded-2xl"
+              />
+
+              <textarea
+                placeholder="Condiciones médicas"
+                value={medicalConditions}
+                onChange={(e) =>
+                  setMedicalConditions(
+                    e.target.value
+                  )
+                }
+                className="w-full border p-4 rounded-2xl"
+              />
+
+              <input
+                type="text"
+                placeholder="Contacto emergencia"
+                value={emergencyContact}
+                onChange={(e) =>
+                  setEmergencyContact(
+                    e.target.value
+                  )
+                }
+                className="w-full border p-4 rounded-2xl"
+              />
+
+              <input
+                type="text"
+                placeholder="Teléfono emergencia"
+                value={emergencyPhone}
+                onChange={(e) =>
+                  setEmergencyPhone(
+                    e.target.value
+                  )
+                }
+                className="w-full border p-4 rounded-2xl"
+              />
+
+              <textarea
+                placeholder="Observaciones"
+                value={notes}
+                onChange={(e) =>
+                  setNotes(
+                    e.target.value
+                  )
+                }
+                className="w-full border p-4 rounded-2xl min-h-[120px]"
+              />
+
+              {/* SUBIR ARCHIVO */}
+              <div>
+
+                <label className="block mb-2 font-medium text-[#243847]">
+
+                  Consentimiento / Ficha
+
+                </label>
+
+                <label className="flex items-center justify-center w-full min-h-[90px] border-2 border-dashed border-gray-300 rounded-3xl cursor-pointer hover:bg-gray-50 transition p-6">
+
+                  <input
+                    type="file"
+                    accept=".pdf,image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+
+                      const file =
+                        e.target.files?.[0];
+
+                      if (!file) return;
+
+                      const fileName =
+                        `${Date.now()}-${file.name}`;
+
+                      const { error } =
+                        await supabase.storage
+
+                          .from("client-files")
+
+                          .upload(
+                            fileName,
+                            file
+                          );
+
+                      if (error) {
+
+                        console.log(error);
+
+                        alert(
+                          "Error al subir archivo"
+                        );
+
+                        return;
+                      }
+
+                      const {
+                        data:
+                        publicUrlData,
+                      } =
+                        supabase.storage
+
+                          .from("client-files")
+
+                          .getPublicUrl(
+                            fileName
+                          );
+
+                      setFileUrl(
+                        publicUrlData
+                          .publicUrl
+                      );
+
+                      alert(
+                        "Archivo subido"
+                      );
+
+                    }}
+                  />
+
+                  <div className="text-center">
+
+                    <p className="text-lg font-medium text-[#243847]">
+
+                      Subir Consentimiento
+
+                    </p>
+
+                    <p className="text-sm text-gray-500 mt-1">
+
+                      PDF o Imagen
+
+                    </p>
+
+                  </div>
+
+                </label>
+
+                {fileUrl && (
+
+                  <a
+                    href={fileUrl}
+                    target="_blank"
+                    className="text-blue-600 underline mt-3 block"
+                  >
+
+                    Ver archivo subido
+
+                  </a>
+
+                )}
+
+              </div>
+
+              {/* CONSENTIMIENTO */}
+              <div className="flex items-center gap-3">
+
+                <input
+                  type="checkbox"
+                  checked={consentSigned}
+                  onChange={(e) =>
+                    setConsentSigned(
+                      e.target.checked
+                    )
+                  }
+                  className="w-5 h-5"
+                />
+
+                <label className="font-medium text-[#243847]">
+
+                  Consentimiento firmado
+
+                </label>
+
+              </div>
+
             </div>
 
             <div className="flex gap-4 mt-8">
@@ -385,4 +1117,4 @@ export default function ClientsPage() {
     </div>
 
   );
-}   
+}
