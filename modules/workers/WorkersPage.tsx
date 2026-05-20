@@ -527,6 +527,10 @@ export default function WorkersPage() {
                         worker.photo_url || ""
                       );
 
+                      setColor(
+                        worker.color || "#243847"
+                      );
+
                       setNotes(
                         worker.notes || ""
                       );
