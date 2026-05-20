@@ -91,6 +91,10 @@ export default function PackagesPage() {
     setSessionsDetail] =
     useState<any[]>([]);
 
+  const [upcomingSessions,
+  setUpcomingSessions] =
+  useState<any[]>([]);
+
   // SUBTOTAL
   const subtotal =
     useMemo(() => {
@@ -735,11 +739,80 @@ const updateSession =
     }
   };
 
+  // PROXIMAS CITAS
+const fetchUpcomingSessions =
+  async () => {
+
+    const today =
+      new Date()
+        .toISOString()
+        .split("T")[0];
+
+    const nextWeek =
+        new Date();
+
+        nextWeek.setDate(
+        nextWeek.getDate() + 7
+        );
+
+        const nextWeekDate =
+        nextWeek
+            .toISOString()
+            .split("T")[0];
+
+    const { data, error } =
+      await supabase
+
+        .from(
+          "package_sessions"
+        )
+
+        .select(`
+          *,
+          client_packages(
+            clients(full_name)
+          )
+        `)
+
+        .eq(
+          "completed",
+          false
+        )
+
+        .gte(
+          "scheduled_date",
+          today
+        )
+
+        .lte(
+        "scheduled_date",
+        nextWeekDate
+        )
+
+        .order(
+          "scheduled_date",
+          {
+            ascending: true
+          }
+        )
+
+        .limit(10);
+
+    if (!error && data) {
+
+      setUpcomingSessions(
+        data
+      );
+    }
+  };
+
   useEffect(() => {
 
     fetchPackages();
 
     fetchData();
+
+    fetchUpcomingSessions();
 
   }, []);
 
@@ -819,6 +892,76 @@ const updateSession =
         </select>
 
       </div>
+
+      {/* PROXIMAS CITAS */}
+<div className="bg-white rounded-3xl shadow-xl p-6 mb-8">
+
+  <h3 className="text-2xl font-bold text-[#243847] mb-5">
+
+    📅 Próximas sesiones pendientes
+
+  </h3>
+
+  <div className="space-y-4">
+
+    {upcomingSessions.map(
+      (session: any) => (
+
+        <div
+          key={session.id}
+          className="border rounded-2xl p-4 flex items-center justify-between"
+        >
+
+          <div>
+
+            <p className="font-bold text-[#243847]">
+
+              {
+                session
+                  ?.client_packages
+                  ?.clients
+                  ?.full_name
+              }
+
+            </p>
+
+            <p className="text-gray-500">
+
+              Sesión #
+              {
+                session.session_number
+              }
+
+            </p>
+
+          </div>
+
+          <div className="text-right">
+
+            <p className="font-bold">
+
+              {
+                session.scheduled_date
+              }
+
+            </p>
+
+            <p className="text-orange-500 text-sm">
+
+              Pendiente
+
+            </p>
+
+          </div>
+
+        </div>
+
+      )
+    )}
+
+  </div>
+
+</div>
 
       {/* TABLA */}
       <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
