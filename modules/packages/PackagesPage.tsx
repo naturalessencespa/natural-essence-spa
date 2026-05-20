@@ -82,6 +82,15 @@ export default function PackagesPage() {
     setZonesDetail] =
     useState<any[]>([]);
 
+  // MODAL SESIONES
+  const [showSessionsModal,
+    setShowSessionsModal] =
+    useState(false);
+
+  const [sessionsDetail,
+    setSessionsDetail] =
+    useState<any[]>([]);
+
   // SUBTOTAL
   const subtotal =
     useMemo(() => {
@@ -576,6 +585,156 @@ export default function PackagesPage() {
       fetchPackages();
     };
 
+    // ACTUALIZAR SESION
+// ACTUALIZAR SESION
+const updateSession =
+  async (
+    session: any
+  ) => {
+
+    const attendedDate =
+      prompt(
+        "Fecha atendida (YYYY-MM-DD)",
+        session.scheduled_date
+      );
+
+    if (!attendedDate)
+      return;
+
+    // ACTUALIZAR SESION ACTUAL
+    const { error } =
+      await supabase
+
+        .from(
+          "package_sessions"
+        )
+
+        .update({
+
+          completed: true,
+
+          attended_date:
+            attendedDate,
+
+          completed_at:
+            new Date()
+              .toISOString(),
+
+          scheduled_date:
+            attendedDate,
+
+        })
+
+        .eq(
+          "id",
+          session.id
+        );
+
+    if (error) {
+
+      console.log(error);
+
+      alert(
+        "Error actualizando sesión"
+      );
+
+      return;
+    }
+
+    // OBTENER FUTURAS
+    const { data: futureSessions } =
+      await supabase
+
+        .from(
+          "package_sessions"
+        )
+
+        .select("*")
+
+        .eq(
+          "package_id",
+          session.package_id
+        )
+
+        .gt(
+          "session_number",
+          session.session_number
+        )
+
+        .order(
+          "session_number"
+        );
+
+    if (futureSessions) {
+
+      for (
+        let i = 0;
+        i < futureSessions.length;
+        i++
+      ) {
+
+        const future =
+          futureSessions[i];
+
+        const newDate =
+          new Date(
+            attendedDate
+          );
+
+        newDate.setMonth(
+          newDate.getMonth()
+          + (i + 1)
+        );
+
+        await supabase
+
+          .from(
+            "package_sessions"
+          )
+
+          .update({
+
+            scheduled_date:
+              newDate
+                .toISOString()
+                .split("T")[0],
+
+          })
+
+          .eq(
+            "id",
+            future.id
+          );
+      }
+    }
+
+    // RECARGAR SESIONES
+    const { data } =
+      await supabase
+
+        .from(
+          "package_sessions"
+        )
+
+        .select("*")
+
+        .eq(
+          "package_id",
+          session.package_id
+        )
+
+        .order(
+          "session_number"
+        );
+
+    if (data) {
+
+      setSessionsDetail(
+        data
+      );
+    }
+  };
+
   useEffect(() => {
 
     fetchPackages();
@@ -691,6 +850,10 @@ export default function PackagesPage() {
               </th>
 
               <th className="text-left p-5">
+                Programación
+              </th>
+
+              <th className="text-left p-5">
                 Total
               </th>
 
@@ -775,6 +938,7 @@ export default function PackagesPage() {
                     }
                   </td>
 
+                  {/* ZONAS */}
                   <td className="p-5">
 
                     <button
@@ -825,6 +989,51 @@ export default function PackagesPage() {
 
                   <td className="p-5">
                     {pkg.total_sessions}
+                  </td>
+
+                  {/* PROGRAMACION */}
+                  <td className="p-5">
+
+                    <button
+                      onClick={async () => {
+
+                        const { data } =
+                          await supabase
+
+                            .from(
+                              "package_sessions"
+                            )
+
+                            .select("*")
+
+                            .eq(
+                              "package_id",
+                              pkg.id
+                            )
+
+                            .order(
+                              "session_number"
+                            );
+
+                        if (data) {
+
+                          setSessionsDetail(
+                            data
+                          );
+                          setShowModal(false);
+
+                          setShowSessionsModal(
+                            true
+                          );
+                        }
+                      }}
+                      className="bg-[#243847] text-white px-4 py-2 rounded-xl text-sm"
+                    >
+
+                      Ver sesiones
+
+                    </button>
+
                   </td>
 
                   <td className="p-5 font-bold">
@@ -969,7 +1178,7 @@ export default function PackagesPage() {
 
       </div>
 
-      {/* MODAL */}
+      {/* MODAL PRINCIPAL */}
       {showModal && (
 
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-6">
@@ -1194,7 +1403,6 @@ export default function PackagesPage() {
 
               </div>
 
-              {/* RESUMEN */}
               <div className="bg-[#243847]/5 border-2 border-[#243847] rounded-3xl p-6 space-y-3">
 
                 <div className="flex justify-between">
@@ -1374,6 +1582,132 @@ export default function PackagesPage() {
 
                 )
               )}
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+      {/* MODAL SESIONES */}
+      {showSessionsModal && (
+
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[70] p-6">
+
+          <div className="bg-white rounded-3xl w-full max-w-[600px] overflow-hidden">
+
+            <div className="bg-[#243847] text-white px-6 py-5 flex items-center justify-between">
+
+              <h3 className="text-2xl font-bold">
+
+                Sesiones programadas
+
+              </h3>
+
+              <button
+                onClick={() =>
+                  setShowSessionsModal(
+                    false
+                  )
+                }
+                className="text-white text-xl"
+              >
+
+                ✕
+
+              </button>
+
+            </div>
+
+            <div className="p-6">
+
+              <table className="w-full">
+
+                <thead>
+
+                  <tr className="border-b">
+
+                    <th className="text-left p-3">
+                      #
+                    </th>
+
+                    <th className="text-left p-3">
+                      Fecha
+                    </th>
+
+                    <th className="text-left p-3">
+                      Estado
+                    </th>
+
+                  </tr>
+
+                </thead>
+
+                <tbody>
+
+                  {sessionsDetail.map(
+                    (session: any) => (
+
+                      <tr
+                        key={session.id}
+                        className="border-b"
+                      >
+
+                        <td className="p-3">
+
+                          {
+                            session.session_number
+                          }
+
+                        </td>
+
+                        <td className="p-3">
+
+                          {
+                            session.scheduled_date
+                          }
+
+                        </td>
+
+                       <td className="p-3">
+
+  <button
+
+    onClick={() =>
+
+      updateSession(
+        session
+      )
+
+    }
+
+    className={`px-4 py-2 rounded-xl text-white text-sm
+
+      ${session.completed
+        ? "bg-green-600"
+        : "bg-orange-500"}
+
+    `}
+  >
+
+                    {session.completed
+                    ? "✅ Atendida"
+                    : "⏳ Pendiente"}
+
+                </button>
+
+                </td>
+
+                      </tr>
+
+                    )
+                  )}
+
+                </tbody>
+
+              </table>
 
             </div>
 
