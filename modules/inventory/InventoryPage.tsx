@@ -19,6 +19,9 @@ export default function InventoryPage() {
     setFilterCategory] =
     useState("");
 
+  const [sortBy, setSortBy] =
+    useState("name");
+
   const [showModal, setShowModal] =
     useState(false);
 
@@ -109,6 +112,30 @@ export default function InventoryPage() {
               === filterCategory
         );
     }
+
+    // ORDENAR
+    filteredProducts.sort((a, b) => {
+
+      // NOMBRE
+      if (sortBy === "name") {
+
+        return a.name.localeCompare(
+          b.name
+        );
+      }
+
+      // ESTADO
+      if (sortBy === "stock") {
+
+        return (
+          a.stock_status || ""
+        ).localeCompare(
+          b.stock_status || ""
+        );
+      }
+
+      return 0;
+    });
 
     setProducts(filteredProducts);
   };
@@ -323,7 +350,11 @@ export default function InventoryPage() {
 
     fetchProducts();
 
-  }, [search, filterCategory]);
+  }, [
+    search,
+    filterCategory,
+    sortBy
+  ]);
 
   // CATEGORIAS
   useEffect(() => {
@@ -433,6 +464,27 @@ export default function InventoryPage() {
             </option>
 
           ))}
+
+        </select>
+
+        {/* ORDENAR */}
+        <select
+          value={sortBy}
+          onChange={(e) =>
+            setSortBy(
+              e.target.value
+            )
+          }
+          className="border p-4 rounded-2xl"
+        >
+
+          <option value="name">
+            Ordenar: Nombre
+          </option>
+
+          <option value="stock">
+            Ordenar: Estado
+          </option>
 
         </select>
 

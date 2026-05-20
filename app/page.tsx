@@ -2,83 +2,47 @@
 
 import { useState } from "react";
 
-import Image from "next/image";
-
-import {
-  Users,
-  Wallet,
-  LayoutDashboard,
-  Sparkles,
-  Package,
-} from "lucide-react";
-
-import ServicesPage from "@/modules/services/ServicesPage";
+import AppointmentsPage from "@/modules/appointments/AppointmentsPage";
 
 import ClientsPage from "@/modules/clients/ClientsPage";
 
+import ServicesPage from "@/modules/services/ServicesPage";
+
 import InventoryPage from "@/modules/inventory/InventoryPage";
 
-import AppointmentsPage from "@/modules/appointments/AppointmentsPage";
+import WorkersPage from "@/modules/workers/WorkersPage";
 
 export default function Home() {
 
   const [page, setPage] =
-    useState("dashboard");
+    useState("reservas");
 
   return (
 
-    <main className="min-h-screen bg-[#243847] flex">
+    <div className="flex min-h-screen bg-gray-100">
 
       {/* SIDEBAR */}
-      <aside className="w-80 bg-[#1d2d39] p-6 shadow-2xl">
+      <div className="w-[280px] bg-[#243847] text-white p-6">
 
-        {/* LOGO */}
-        <div className="flex flex-col items-center mb-12">
+        <h1 className="text-3xl font-bold mb-10">
 
-          <Image
-            src="/logo.png"
-            alt="Natural Essence"
-            width={180}
-            height={180}
-            className="object-contain"
-          />
+          Natural Essence
 
-          <h1 className="text-3xl font-bold text-white mt-4 text-center">
+        </h1>
 
-            Natural Essence
-
-          </h1>
-
-          <p className="text-[#8fb7c9] text-sm mt-2">
-
-            Spa y Salón de Masajes
-
-          </p>
-
-        </div>
-
-        {/* MENU */}
-        <nav className="space-y-4">
-
-          {/* DASHBOARD */}
-          <button
-            onClick={() => setPage("dashboard")}
-            className="flex items-center gap-3 w-full bg-[#2d4454] hover:bg-[#3da9fc] text-white p-4 rounded-2xl transition"
-          >
-
-            <LayoutDashboard size={20} />
-
-            Dashboard
-
-          </button>
+        <div className="flex flex-col gap-3">
 
           {/* RESERVAS */}
           <button
-            onClick={() => setPage("appointments")}
-            className="flex items-center gap-3 w-full bg-[#2d4454] hover:bg-[#3da9fc] text-white p-4 rounded-2xl transition"
+            onClick={() =>
+              setPage("reservas")
+            }
+            className={`text-left p-4 rounded-2xl transition ${
+              page === "reservas"
+                ? "bg-white text-[#243847]"
+                : "hover:bg-white/10"
+            }`}
           >
-
-            📅
 
             Reservas
 
@@ -86,78 +50,85 @@ export default function Home() {
 
           {/* CLIENTES */}
           <button
-            onClick={() => setPage("clientes")}
-            className="flex items-center gap-3 w-full bg-[#2d4454] hover:bg-[#3da9fc] text-white p-4 rounded-2xl transition"
+            onClick={() =>
+              setPage("clientes")
+            }
+            className={`text-left p-4 rounded-2xl transition ${
+              page === "clientes"
+                ? "bg-white text-[#243847]"
+                : "hover:bg-white/10"
+            }`}
           >
-
-            <Users size={20} />
 
             Clientes
 
           </button>
 
-          {/* CAJA */}
-          <button
-            onClick={() => setPage("caja")}
-            className="flex items-center gap-3 w-full bg-[#2d4454] hover:bg-[#3da9fc] text-white p-4 rounded-2xl transition"
-          >
-
-            <Wallet size={20} />
-
-            Caja
-
-          </button>
-
-          {/* INVENTARIO */}
-          <button
-            onClick={() => setPage("inventario")}
-            className="flex items-center gap-3 w-full bg-[#2d4454] hover:bg-[#3da9fc] text-white p-4 rounded-2xl transition"
-          >
-
-            <Package size={20} />
-
-            Inventario
-
-          </button>
-
           {/* SERVICIOS */}
           <button
-            onClick={() => setPage("servicios")}
-            className="flex items-center gap-3 w-full bg-[#2d4454] hover:bg-[#3da9fc] text-white p-4 rounded-2xl transition"
+            onClick={() =>
+              setPage("servicios")
+            }
+            className={`text-left p-4 rounded-2xl transition ${
+              page === "servicios"
+                ? "bg-white text-[#243847]"
+                : "hover:bg-white/10"
+            }`}
           >
-
-            <Sparkles size={20} />
 
             Servicios
 
           </button>
 
-        </nav>
+          {/* INVENTARIO */}
+          <button
+            onClick={() =>
+              setPage("inventario")
+            }
+            className={`text-left p-4 rounded-2xl transition ${
+              page === "inventario"
+                ? "bg-white text-[#243847]"
+                : "hover:bg-white/10"
+            }`}
+          >
 
-      </aside>
+            Inventario
 
-      {/* MAIN */}
-      <section className="flex-1 p-10 overflow-y-auto bg-[#f4f7f9]">
+          </button>
 
-        {/* DASHBOARD */}
-        {page === "dashboard" && (
+          {/* TRABAJADORAS */}
+          <button
+            onClick={() =>
+              setPage(
+                "trabajadoras"
+              )
+            }
+            className={`text-left p-4 rounded-2xl transition ${
+              page === "trabajadoras"
+                ? "bg-white text-[#243847]"
+                : "hover:bg-white/10"
+            }`}
+          >
 
-          <div>
+            Trabajadoras
 
-            <h2 className="text-5xl font-bold text-[#243847] mb-4">
+          </button>
 
-              Dashboard Premium ✨
+        </div>
 
-            </h2>
+      </div>
 
-            <p className="text-gray-600 text-lg mb-10">
+      {/* CONTENIDO */}
+      <div className="flex-1 p-10">
 
-              Bienvenida al sistema Natural Essence
+        {/* RESERVAS */}
+        {page === "reservas" && (
+          <AppointmentsPage />
+        )}
 
-            </p>
-
-          </div>
-
+        {/* CLIENTES */}
+        {page === "clientes" && (
+          <ClientsPage />
         )}
 
         {/* SERVICIOS */}
@@ -165,21 +136,19 @@ export default function Home() {
           <ServicesPage />
         )}
 
-        {/* CLIENTES */}
-        {page === "clientes" &&
-        <ClientsPage />}
-
-         {/* INVENTARIO*/}
-        {page === "inventario" &&
-        <InventoryPage />}
-
-        {/* RESERVAS */}
-        {page === "appointments" && (
-          <AppointmentsPage />
+        {/* INVENTARIO */}
+        {page === "inventario" && (
+          <InventoryPage />
         )}
 
-      </section>
+        {/* TRABAJADORAS */}
+        {page === "trabajadoras" && (
+          <WorkersPage />
+        )}
 
-    </main>
+      </div>
+
+    </div>
+
   );
 }
