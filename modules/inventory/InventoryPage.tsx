@@ -72,7 +72,7 @@ export default function InventoryPage() {
             .inventory_categories
             ?.name || "",
 
-        Medida:
+        Cantidad:
           product.measure,
 
         Estado:
@@ -156,7 +156,7 @@ export default function InventoryPage() {
     let filteredProducts =
       data || [];
 
-    // BUSCAR
+    // BUSCAR PRODUCTO
     if (search) {
 
       filteredProducts =
@@ -172,7 +172,7 @@ export default function InventoryPage() {
         );
     }
 
-    // FILTRAR
+    // FILTRAR CATEGORIA
     if (filterCategory) {
 
       filteredProducts =
@@ -189,6 +189,7 @@ export default function InventoryPage() {
     // ORDENAR
     filteredProducts.sort((a, b) => {
 
+      // NOMBRE
       if (sortBy === "name") {
 
         return a.name.localeCompare(
@@ -196,6 +197,7 @@ export default function InventoryPage() {
         );
       }
 
+      // ESTADO
       if (sortBy === "stock") {
 
         return (
@@ -235,7 +237,7 @@ export default function InventoryPage() {
     setCategories(data || []);
   };
 
-  // GUARDAR
+  // GUARDAR / EDITAR
   const saveProduct = async () => {
 
     if (
@@ -594,7 +596,7 @@ export default function InventoryPage() {
               </th>
 
               <th className="text-left p-5">
-                Medida
+                Cantidad
               </th>
 
               <th className="text-left p-5">
@@ -739,224 +741,259 @@ export default function InventoryPage() {
 
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-6">
 
-          <div className="bg-white rounded-3xl w-full max-w-[700px] shadow-2xl p-8">
+          <div className="bg-white rounded-3xl w-full max-w-[700px] max-h-[90vh] shadow-2xl overflow-hidden flex flex-col">
 
-            <h3 className="text-3xl font-bold text-[#243847] mb-6">
+            {/* HEADER */}
+            <div className="bg-[#243847] text-white px-8 py-6">
 
-              {editingProductId
-                ? "Editar producto"
-                : "Nuevo producto"}
+              <h3 className="text-3xl font-bold">
 
-            </h3>
+                {editingProductId
+                  ? "Editar producto"
+                  : "Nuevo producto"}
 
-            <div className="grid md:grid-cols-2 gap-4">
+              </h3>
 
-              {/* NOMBRE */}
-              <div>
+            </div>
 
-                <label className="block mb-2 font-medium">
+            {/* BODY */}
+            <div className="p-8 overflow-y-auto space-y-6">
 
-                  Nombre producto
+              <div className="grid md:grid-cols-2 gap-4">
 
-                </label>
+                {/* NOMBRE */}
+                <div>
 
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) =>
-                    setName(
-                      e.target.value
-                    )
-                  }
-                  className="w-full border p-4 rounded-2xl"
-                />
+                  <label className="block mb-2 font-medium text-gray-700">
 
-              </div>
+                    Nombre producto
 
-              {/* CATEGORIA */}
-              <div>
+                  </label>
 
-                <label className="block mb-2 font-medium">
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) =>
+                      setName(
+                        e.target.value
+                      )
+                    }
+                    className="w-full border p-4 rounded-2xl"
+                  />
 
-                  Categoría
+                </div>
 
-                </label>
+                {/* CATEGORIA */}
+                <div>
 
-                <select
-                  value={categoryId}
-                  onChange={(e) =>
-                    setCategoryId(
-                      e.target.value
-                    )
-                  }
-                  className="w-full border p-4 rounded-2xl"
-                >
+                  <label className="block mb-2 font-medium text-gray-700">
 
-                  <option value="">
-                    Seleccione categoría
-                  </option>
+                    Categoría
 
-                  {categories.map(
-                    (category) => (
+                  </label>
+
+                  <select
+                    value={categoryId}
+                    onChange={(e) =>
+                      setCategoryId(
+                        e.target.value
+                      )
+                    }
+                    className="w-full border p-4 rounded-2xl"
+                  >
+
+                    <option value="">
+                      Seleccione categoría
+                    </option>
+
+                    {categories.map((category) => (
 
                       <option
-                        key={
-                          category.id
-                        }
-                        value={
-                          category.id
-                        }
+                        key={category.id}
+                        value={category.id}
                       >
 
-                        {
-                          category.name
-                        }
+                        {category.name}
 
                       </option>
 
-                    )
-                  )}
+                    ))}
 
-                </select>
+                  </select>
+
+                </div>
+
+                {/* CANTIDAD */}
+                <div>
+
+                  <label className="block mb-2 font-medium text-gray-700">
+
+                    Cantidad / Medida
+
+                  </label>
+
+                  <input
+                    type="text"
+                    value={measure}
+                    onChange={(e) =>
+                      setMeasure(
+                        e.target.value
+                      )
+                    }
+                    className="w-full border p-4 rounded-2xl"
+                  />
+
+                </div>
+
+                {/* ESTADO STOCK */}
+                <div>
+
+                  <label className="block mb-2 font-medium text-gray-700">
+
+                    Estado stock
+
+                  </label>
+
+                  <select
+                    value={stockStatus}
+                    onChange={(e) =>
+                      setStockStatus(
+                        e.target.value
+                      )
+                    }
+                    className="w-full border p-4 rounded-2xl"
+                  >
+
+                    <option value="">
+                      Seleccione estado
+                    </option>
+
+                    <option value="Muy poco">
+                      Muy poco
+                    </option>
+
+                    <option value="Poco">
+                      Poco
+                    </option>
+
+                    <option value="1/4">
+                      1/4
+                    </option>
+
+                    <option value="Mitad">
+                      Mitad
+                    </option>
+
+                    <option value="3/4">
+                      3/4
+                    </option>
+
+                    <option value="Lleno">
+                      Lleno
+                    </option>
+
+                    <option value="Casi agotado">
+                      Casi agotado
+                    </option>
+
+                  </select>
+
+                </div>
+
+                {/* MARCA */}
+                <div>
+
+                  <label className="block mb-2 font-medium text-gray-700">
+
+                    Marca
+
+                  </label>
+
+                  <input
+                    type="text"
+                    value={brand}
+                    onChange={(e) =>
+                      setBrand(
+                        e.target.value
+                      )
+                    }
+                    className="w-full border p-4 rounded-2xl"
+                  />
+
+                </div>
+
+                {/* FECHA */}
+                <div>
+
+                  <label className="block mb-2 font-medium text-gray-700">
+
+                    Fecha vencimiento
+
+                  </label>
+
+                  <input
+                    type="date"
+                    value={
+                      expirationDate
+                    }
+                    onChange={(e) =>
+                      setExpirationDate(
+                        e.target.value
+                      )
+                    }
+                    className="w-full border p-4 rounded-2xl"
+                  />
+
+                </div>
 
               </div>
 
-              {/* MEDIDA */}
+              {/* DESCRIPCIÓN */}
               <div>
 
-                <label className="block mb-2 font-medium">
+                <label className="block mb-2 font-medium text-gray-700">
 
-                  Medida
+                  Descripción
 
                 </label>
 
-                <input
-                  type="text"
-                  value={measure}
+                <textarea
+                  value={description}
                   onChange={(e) =>
-                    setMeasure(
+                    setDescription(
                       e.target.value
                     )
                   }
-                  className="w-full border p-4 rounded-2xl"
+                  className="w-full border p-4 rounded-2xl h-24"
                 />
 
               </div>
 
-              {/* ESTADO */}
+              {/* OBSERVACIONES */}
               <div>
 
-                <label className="block mb-2 font-medium">
+                <label className="block mb-2 font-medium text-gray-700">
 
-                  Estado stock
+                  Observaciones
 
                 </label>
 
-                <input
-                  type="text"
-                  value={stockStatus}
+                <textarea
+                  value={notes}
                   onChange={(e) =>
-                    setStockStatus(
+                    setNotes(
                       e.target.value
                     )
                   }
-                  className="w-full border p-4 rounded-2xl"
-                />
-
-              </div>
-
-              {/* MARCA */}
-              <div>
-
-                <label className="block mb-2 font-medium">
-
-                  Marca
-
-                </label>
-
-                <input
-                  type="text"
-                  value={brand}
-                  onChange={(e) =>
-                    setBrand(
-                      e.target.value
-                    )
-                  }
-                  className="w-full border p-4 rounded-2xl"
-                />
-
-              </div>
-
-              {/* FECHA */}
-              <div>
-
-                <label className="block mb-2 font-medium">
-
-                  Vencimiento
-
-                </label>
-
-                <input
-                  type="date"
-                  value={
-                    expirationDate
-                  }
-                  onChange={(e) =>
-                    setExpirationDate(
-                      e.target.value
-                    )
-                  }
-                  className="w-full border p-4 rounded-2xl"
+                  className="w-full border p-4 rounded-2xl h-24"
                 />
 
               </div>
 
             </div>
 
-            {/* DESCRIPCION */}
-            <div className="mt-4">
-
-              <label className="block mb-2 font-medium">
-
-                Descripción
-
-              </label>
-
-              <textarea
-                value={description}
-                onChange={(e) =>
-                  setDescription(
-                    e.target.value
-                  )
-                }
-                className="w-full border p-4 rounded-2xl h-24"
-              />
-
-            </div>
-
-            {/* OBSERVACIONES */}
-            <div className="mt-4">
-
-              <label className="block mb-2 font-medium">
-
-                Observaciones
-
-              </label>
-
-              <textarea
-                value={notes}
-                onChange={(e) =>
-                  setNotes(
-                    e.target.value
-                  )
-                }
-                className="w-full border p-4 rounded-2xl h-24"
-              />
-
-            </div>
-
-            {/* BOTONES */}
-            <div className="flex justify-end gap-4 mt-8">
+            {/* FOOTER */}
+            <div className="flex justify-end gap-4 p-8 border-t">
 
               <button
                 onClick={() =>
