@@ -156,7 +156,7 @@ export default function InventoryPage() {
     let filteredProducts =
       data || [];
 
-    // BUSCAR PRODUCTO
+    // BUSCAR
     if (search) {
 
       filteredProducts =
@@ -172,7 +172,7 @@ export default function InventoryPage() {
         );
     }
 
-    // FILTRAR CATEGORIA
+    // FILTRAR
     if (filterCategory) {
 
       filteredProducts =
@@ -189,7 +189,6 @@ export default function InventoryPage() {
     // ORDENAR
     filteredProducts.sort((a, b) => {
 
-      // NOMBRE
       if (sortBy === "name") {
 
         return a.name.localeCompare(
@@ -197,7 +196,6 @@ export default function InventoryPage() {
         );
       }
 
-      // ESTADO
       if (sortBy === "stock") {
 
         return (
@@ -237,7 +235,7 @@ export default function InventoryPage() {
     setCategories(data || []);
   };
 
-  // GUARDAR / EDITAR
+  // GUARDAR
   const saveProduct = async () => {
 
     if (
@@ -377,7 +375,7 @@ export default function InventoryPage() {
     fetchProducts();
   };
 
-  // ELIMINAR (INACTIVAR)
+  // ELIMINAR
   const deleteProduct = async (
     id: number
   ) => {
@@ -418,7 +416,7 @@ export default function InventoryPage() {
     fetchProducts();
   };
 
-  // FILTROS AUTOMATICOS
+  // FILTROS
   useEffect(() => {
 
     fetchProducts();
@@ -510,7 +508,7 @@ export default function InventoryPage() {
       </div>
 
       {/* FILTROS */}
-      <div className="flex gap-4 mb-6">
+      <div className="flex gap-4 mb-6 flex-wrap">
 
         {/* BUSCAR */}
         <input
@@ -579,7 +577,7 @@ export default function InventoryPage() {
       </div>
 
       {/* TABLA */}
-      <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+      <div className="bg-white rounded-3xl shadow-xl overflow-hidden overflow-x-auto">
 
         <table className="w-full">
 
@@ -735,7 +733,261 @@ export default function InventoryPage() {
         </table>
 
       </div>
-    </div>
 
+      {/* MODAL */}
+      {showModal && (
+
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-6">
+
+          <div className="bg-white rounded-3xl w-full max-w-[700px] shadow-2xl p-8">
+
+            <h3 className="text-3xl font-bold text-[#243847] mb-6">
+
+              {editingProductId
+                ? "Editar producto"
+                : "Nuevo producto"}
+
+            </h3>
+
+            <div className="grid md:grid-cols-2 gap-4">
+
+              {/* NOMBRE */}
+              <div>
+
+                <label className="block mb-2 font-medium">
+
+                  Nombre producto
+
+                </label>
+
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) =>
+                    setName(
+                      e.target.value
+                    )
+                  }
+                  className="w-full border p-4 rounded-2xl"
+                />
+
+              </div>
+
+              {/* CATEGORIA */}
+              <div>
+
+                <label className="block mb-2 font-medium">
+
+                  Categoría
+
+                </label>
+
+                <select
+                  value={categoryId}
+                  onChange={(e) =>
+                    setCategoryId(
+                      e.target.value
+                    )
+                  }
+                  className="w-full border p-4 rounded-2xl"
+                >
+
+                  <option value="">
+                    Seleccione categoría
+                  </option>
+
+                  {categories.map(
+                    (category) => (
+
+                      <option
+                        key={
+                          category.id
+                        }
+                        value={
+                          category.id
+                        }
+                      >
+
+                        {
+                          category.name
+                        }
+
+                      </option>
+
+                    )
+                  )}
+
+                </select>
+
+              </div>
+
+              {/* MEDIDA */}
+              <div>
+
+                <label className="block mb-2 font-medium">
+
+                  Medida
+
+                </label>
+
+                <input
+                  type="text"
+                  value={measure}
+                  onChange={(e) =>
+                    setMeasure(
+                      e.target.value
+                    )
+                  }
+                  className="w-full border p-4 rounded-2xl"
+                />
+
+              </div>
+
+              {/* ESTADO */}
+              <div>
+
+                <label className="block mb-2 font-medium">
+
+                  Estado stock
+
+                </label>
+
+                <input
+                  type="text"
+                  value={stockStatus}
+                  onChange={(e) =>
+                    setStockStatus(
+                      e.target.value
+                    )
+                  }
+                  className="w-full border p-4 rounded-2xl"
+                />
+
+              </div>
+
+              {/* MARCA */}
+              <div>
+
+                <label className="block mb-2 font-medium">
+
+                  Marca
+
+                </label>
+
+                <input
+                  type="text"
+                  value={brand}
+                  onChange={(e) =>
+                    setBrand(
+                      e.target.value
+                    )
+                  }
+                  className="w-full border p-4 rounded-2xl"
+                />
+
+              </div>
+
+              {/* FECHA */}
+              <div>
+
+                <label className="block mb-2 font-medium">
+
+                  Vencimiento
+
+                </label>
+
+                <input
+                  type="date"
+                  value={
+                    expirationDate
+                  }
+                  onChange={(e) =>
+                    setExpirationDate(
+                      e.target.value
+                    )
+                  }
+                  className="w-full border p-4 rounded-2xl"
+                />
+
+              </div>
+
+            </div>
+
+            {/* DESCRIPCION */}
+            <div className="mt-4">
+
+              <label className="block mb-2 font-medium">
+
+                Descripción
+
+              </label>
+
+              <textarea
+                value={description}
+                onChange={(e) =>
+                  setDescription(
+                    e.target.value
+                  )
+                }
+                className="w-full border p-4 rounded-2xl h-24"
+              />
+
+            </div>
+
+            {/* OBSERVACIONES */}
+            <div className="mt-4">
+
+              <label className="block mb-2 font-medium">
+
+                Observaciones
+
+              </label>
+
+              <textarea
+                value={notes}
+                onChange={(e) =>
+                  setNotes(
+                    e.target.value
+                  )
+                }
+                className="w-full border p-4 rounded-2xl h-24"
+              />
+
+            </div>
+
+            {/* BOTONES */}
+            <div className="flex justify-end gap-4 mt-8">
+
+              <button
+                onClick={() =>
+                  setShowModal(false)
+                }
+                className="bg-gray-200 px-6 py-3 rounded-2xl"
+              >
+
+                Cancelar
+
+              </button>
+
+              <button
+                onClick={
+                  saveProduct
+                }
+                className="bg-[#243847] text-white px-6 py-3 rounded-2xl"
+              >
+
+                Guardar
+
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+    </div>
   );
 }

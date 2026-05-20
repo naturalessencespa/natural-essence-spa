@@ -12,6 +12,8 @@ import InventoryPage from "@/modules/inventory/InventoryPage";
 
 import WorkersPage from "@/modules/workers/WorkersPage";
 
+import PackagesPage from "@/modules/packages/PackagesPage";
+
 export default function Home() {
 
   const [page, setPage] =
@@ -120,6 +122,21 @@ export default function Home() {
 
           </button>
 
+          <button
+            onClick={() =>
+              setPage("paquetes")
+            }
+            className={`text-left p-4 rounded-2xl transition ${
+              page === "paquetes"
+                ? "bg-white text-[#243847]"
+                : "hover:bg-white/10"
+            }`}
+          >
+
+            Paquetes
+
+         </button>
+
         </div>
 
       </div>
@@ -150,6 +167,11 @@ export default function Home() {
         {/* TRABAJADORAS */}
         {page === "trabajadoras" && (
           <WorkersPage />
+        )}
+
+         {/* PAQUETES */}
+        {page === "paquetes" && (
+          <PackagesPage />
         )}
 
       </div>
