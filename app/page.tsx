@@ -22,14 +22,20 @@ export default function Home() {
     <div className="flex min-h-screen bg-gray-100">
 
       {/* SIDEBAR */}
-      <div className="w-[280px] bg-[#243847] text-white p-6">
+      <div className="w-[280px] bg-[#243847] text-white p-6 flex flex-col">
 
-        <h1 className="text-3xl font-bold mb-10">
+        {/* LOGO */}
+        <div className="flex justify-center mb-10">
 
-          Natural Essence
+          <img
+            src="/logo.png"
+            alt="Natural Essence"
+            className="w-[220px] object-contain"
+          />
 
-        </h1>
+        </div>
 
+        {/* MENU */}
         <div className="flex flex-col gap-3">
 
           {/* RESERVAS */}
@@ -37,7 +43,7 @@ export default function Home() {
             onClick={() =>
               setPage("reservas")
             }
-            className={`text-left p-4 rounded-2xl transition ${
+            className={`text-left p-4 rounded-2xl transition font-medium ${
               page === "reservas"
                 ? "bg-white text-[#243847]"
                 : "hover:bg-white/10"
@@ -53,7 +59,7 @@ export default function Home() {
             onClick={() =>
               setPage("clientes")
             }
-            className={`text-left p-4 rounded-2xl transition ${
+            className={`text-left p-4 rounded-2xl transition font-medium ${
               page === "clientes"
                 ? "bg-white text-[#243847]"
                 : "hover:bg-white/10"
@@ -69,7 +75,7 @@ export default function Home() {
             onClick={() =>
               setPage("servicios")
             }
-            className={`text-left p-4 rounded-2xl transition ${
+            className={`text-left p-4 rounded-2xl transition font-medium ${
               page === "servicios"
                 ? "bg-white text-[#243847]"
                 : "hover:bg-white/10"
@@ -85,7 +91,7 @@ export default function Home() {
             onClick={() =>
               setPage("inventario")
             }
-            className={`text-left p-4 rounded-2xl transition ${
+            className={`text-left p-4 rounded-2xl transition font-medium ${
               page === "inventario"
                 ? "bg-white text-[#243847]"
                 : "hover:bg-white/10"
@@ -103,7 +109,7 @@ export default function Home() {
                 "trabajadoras"
               )
             }
-            className={`text-left p-4 rounded-2xl transition ${
+            className={`text-left p-4 rounded-2xl transition font-medium ${
               page === "trabajadoras"
                 ? "bg-white text-[#243847]"
                 : "hover:bg-white/10"
@@ -119,7 +125,7 @@ export default function Home() {
       </div>
 
       {/* CONTENIDO */}
-      <div className="flex-1 p-10">
+      <div className="flex-1 p-10 overflow-auto">
 
         {/* RESERVAS */}
         {page === "reservas" && (

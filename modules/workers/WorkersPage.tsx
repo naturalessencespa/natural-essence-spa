@@ -8,6 +8,9 @@ export default function WorkersPage() {
 
   const [workers, setWorkers] =
     useState<any[]>([]);
+  
+  const [color, setColor] =
+  useState("#F9A8D4");
 
   const [branches, setBranches] =
     useState<any[]>([]);
@@ -167,6 +170,8 @@ export default function WorkersPage() {
 
             notes,
 
+            color,
+
           })
 
           .eq(
@@ -220,6 +225,8 @@ export default function WorkersPage() {
                 photoUrl,
 
               notes,
+
+              color,
 
               active: true,
 
@@ -562,7 +569,7 @@ export default function WorkersPage() {
       {/* MODAL */}
       {showModal && (
 
-        <div className="fixed inset-0 flex items-start justify-center bg-black/40 z-50 p-6 overflow-y-auto">
+        <div className="absolute inset-0 flex items-start justify-center bg-black/40 z-30 p-6 overflow-y-auto">
 
           <div className="bg-white p-8 rounded-3xl w-full max-w-[650px] shadow-2xl mt-10 mb-20">
 
@@ -638,6 +645,27 @@ export default function WorkersPage() {
                 />
 
               </div>
+
+              <div>
+
+              <label className="block mb-2 font-medium text-[#243847]">
+
+                Color agenda
+
+              </label>
+
+              <input
+                type="color"
+                value={color}
+                onChange={(e) =>
+                  setColor(
+                    e.target.value
+                  )
+                }
+                className="w-[120px] h-[60px] border rounded-2xl cursor-pointer"
+              />
+
+            </div>
 
               {/* ESTADO */}
               <div>

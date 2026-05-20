@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 
 import { supabase } from "@/lib/supabase";
 
+import * as XLSX from "xlsx";
+
+import { saveAs } from "file-saver";
+
 export default function InventoryPage() {
 
   const [products, setProducts] =
@@ -53,6 +57,75 @@ export default function InventoryPage() {
 
   const [notes, setNotes] =
     useState("");
+
+  // EXPORTAR EXCEL
+  const exportToExcel = () => {
+
+    const data =
+      products.map((product) => ({
+
+        Producto:
+          product.name,
+
+        Categoria:
+          product
+            .inventory_categories
+            ?.name || "",
+
+        Medida:
+          product.measure,
+
+        Estado:
+          product.stock_status,
+
+        Marca:
+          product.brand,
+
+        Descripcion:
+          product.description,
+
+        Observaciones:
+          product.notes,
+
+      }));
+
+    const worksheet =
+      XLSX.utils.json_to_sheet(
+        data
+      );
+
+    const workbook =
+      XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      "Inventario"
+    );
+
+    const excelBuffer =
+      XLSX.write(
+        workbook,
+        {
+          bookType: "xlsx",
+          type: "array",
+        }
+      );
+
+    const fileData =
+      new Blob(
+        [excelBuffer],
+        {
+          type:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+        }
+      );
+
+    saveAs(
+      fileData,
+      "inventario.xlsx"
+    );
+  };
 
   // OBTENER PRODUCTOS
   const fetchProducts = async () => {
@@ -386,38 +459,53 @@ export default function InventoryPage() {
 
         </div>
 
-        <button
-          onClick={() => {
+        <div className="flex gap-4">
 
-            setEditingProductId(
-              null
-            );
+          {/* EXPORTAR */}
+          <button
+            onClick={exportToExcel}
+            className="bg-green-600 text-white px-6 py-4 rounded-2xl"
+          >
 
-            setName("");
+            Exportar Excel
 
-            setCategoryId("");
+          </button>
 
-            setDescription("");
+          {/* NUEVO */}
+          <button
+            onClick={() => {
 
-            setMeasure("");
+              setEditingProductId(
+                null
+              );
 
-            setStockStatus("");
+              setName("");
 
-            setBrand("");
+              setCategoryId("");
 
-            setExpirationDate("");
+              setDescription("");
 
-            setNotes("");
+              setMeasure("");
 
-            setShowModal(true);
+              setStockStatus("");
 
-          }}
-          className="bg-[#243847] text-white px-6 py-4 rounded-2xl"
-        >
+              setBrand("");
 
-          + Nuevo Producto
+              setExpirationDate("");
 
-        </button>
+              setNotes("");
+
+              setShowModal(true);
+
+            }}
+            className="bg-[#243847] text-white px-6 py-4 rounded-2xl"
+          >
+
+            + Nuevo Producto
+
+          </button>
+
+        </div>
 
       </div>
 
@@ -647,210 +735,6 @@ export default function InventoryPage() {
         </table>
 
       </div>
-
-      {/* MODAL */}
-      {showModal && (
-
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-
-          <div className="bg-white p-8 rounded-3xl w-[600px] shadow-2xl">
-
-            <h3 className="text-2xl font-bold text-[#243847] mb-6">
-
-              {editingProductId
-                ? "Editar Producto"
-                : "Nuevo Producto"}
-
-            </h3>
-
-            <div className="space-y-4">
-
-              {/* NOMBRE */}
-              <input
-                type="text"
-                placeholder="Nombre producto"
-                value={name}
-                onChange={(e) =>
-                  setName(
-                    e.target.value
-                  )
-                }
-                className="w-full border p-4 rounded-2xl"
-              />
-
-              {/* CATEGORIA */}
-              <select
-                value={categoryId}
-                onChange={(e) =>
-                  setCategoryId(
-                    e.target.value
-                  )
-                }
-                className="w-full border p-4 rounded-2xl"
-              >
-
-                <option value="">
-                  Seleccionar categoría
-                </option>
-
-                {categories.map(
-                  (category) => (
-
-                    <option
-                      key={category.id}
-                      value={category.id}
-                    >
-
-                      {category.name}
-
-                    </option>
-
-                  )
-                )}
-
-              </select>
-
-              {/* DESCRIPCION */}
-              <textarea
-                placeholder="Descripción"
-                value={description}
-                onChange={(e) =>
-                  setDescription(
-                    e.target.value
-                  )
-                }
-                className="w-full border p-4 rounded-2xl"
-              />
-
-              {/* MEDIDA */}
-              <input
-                type="text"
-                placeholder="250ml / 1 litro / unidad"
-                value={measure}
-                onChange={(e) =>
-                  setMeasure(
-                    e.target.value
-                  )
-                }
-                className="w-full border p-4 rounded-2xl"
-              />
-
-              {/* STOCK */}
-              <select
-                value={stockStatus}
-                onChange={(e) =>
-                  setStockStatus(
-                    e.target.value
-                  )
-                }
-                className="w-full border p-4 rounded-2xl"
-              >
-
-                <option value="">
-                  Estado stock
-                </option>
-
-                <option value="Lleno">
-                  Lleno
-                </option>
-
-                <option value="3/4">
-                  3/4
-                </option>
-
-                <option value="Mitad">
-                  Mitad
-                </option>
-
-                <option value="1/4">
-                  1/4
-                </option>
-
-                <option value="Poco">
-                  Poco
-                </option>
-
-                <option value="Muy poco">
-                  Muy poco
-                </option>
-
-                <option value="Vacío">
-                  Vacío
-                </option>
-
-              </select>
-
-              {/* MARCA */}
-              <input
-                type="text"
-                placeholder="Marca"
-                value={brand}
-                onChange={(e) =>
-                  setBrand(
-                    e.target.value
-                  )
-                }
-                className="w-full border p-4 rounded-2xl"
-              />
-
-              {/* VENCIMIENTO */}
-              <input
-                type="date"
-                value={expirationDate}
-                onChange={(e) =>
-                  setExpirationDate(
-                    e.target.value
-                  )
-                }
-                className="w-full border p-4 rounded-2xl"
-              />
-
-              {/* OBSERVACIONES */}
-              <textarea
-                placeholder="Observaciones"
-                value={notes}
-                onChange={(e) =>
-                  setNotes(
-                    e.target.value
-                  )
-                }
-                className="w-full border p-4 rounded-2xl"
-              />
-
-            </div>
-
-            <div className="flex gap-4 mt-8">
-
-              <button
-                onClick={() =>
-                  setShowModal(false)
-                }
-                className="bg-gray-200 px-5 py-3 rounded-2xl"
-              >
-
-                Cancelar
-
-              </button>
-
-              <button
-                onClick={saveProduct}
-                className="bg-[#243847] text-white px-5 py-3 rounded-2xl"
-              >
-
-                {editingProductId
-                  ? "Actualizar"
-                  : "Guardar Producto"}
-
-              </button>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      )}
-
     </div>
 
   );

@@ -63,7 +63,10 @@ export default function AppointmentsPage() {
         *,
         clients(full_name),
         services(name),
-        workers(name)
+        workers(
+                  name,
+                  color
+                )
       `);
 
     if (error) {
@@ -97,9 +100,13 @@ export default function AppointmentsPage() {
           appointment.end_time
         ),
 
-        backgroundColor: "#243847",
+       backgroundColor:
+        appointment.workers?.color ||
+        "#243847",
 
-        borderColor: "#243847",
+      borderColor:
+        appointment.workers?.color ||
+        "#243847",
 
         extendedProps: {
           id: appointment.id,
@@ -357,6 +364,37 @@ export default function AppointmentsPage() {
         </p>
 
       </div>
+
+      {/* LEYENDA TRABAJADORAS */}
+        <div className="flex flex-wrap gap-4 mb-6">
+
+          {workers.map((worker) => (
+
+            <div
+              key={worker.id}
+              className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow"
+            >
+
+              <div
+                className="w-5 h-5 rounded-full"
+                style={{
+                  backgroundColor:
+                    worker.color ||
+                    "#243847"
+                }}
+              />
+
+              <span className="font-medium text-[#243847]">
+
+                {worker.name}
+
+              </span>
+
+            </div>
+
+          ))}
+
+        </div>
 
       {/* CALENDARIO */}
       <div className="bg-white p-6 rounded-3xl shadow-xl">
