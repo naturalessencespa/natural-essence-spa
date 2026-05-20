@@ -44,6 +44,10 @@ export default function PackagesPage() {
     setStartDate] =
     useState("");
 
+  const [startTime,
+    setStartTime] =
+    useState("");
+
   const [selectedZones,
     setSelectedZones] =
     useState<any[]>([]);
@@ -278,7 +282,8 @@ export default function PackagesPage() {
       if (
         !clientId ||
         !serviceId ||
-        !startDate
+        !startDate ||
+        !startTime
       ) {
 
         alert(
@@ -312,6 +317,9 @@ export default function PackagesPage() {
 
               start_date:
                 startDate,
+            
+              start_time:
+                startTime,
 
               total_sessions:
                 totalSessions,
@@ -422,6 +430,9 @@ export default function PackagesPage() {
               start_date:
                 startDate,
 
+              start_time:
+                startTime,
+
               total_sessions:
                 totalSessions,
 
@@ -518,6 +529,9 @@ export default function PackagesPage() {
               sessionDate
                 .toISOString()
                 .split("T")[0],
+            
+            scheduled_time:
+                startTime,
 
             completed:
               false,
@@ -550,6 +564,8 @@ export default function PackagesPage() {
       setServiceId("");
 
       setStartDate("");
+
+      setStartTime("");
 
       setSelectedZones([]);
 
@@ -1217,6 +1233,10 @@ const fetchUpcomingSessions =
                             pkg.start_date || ""
                           );
 
+                          setStartTime(
+                            pkg.start_time || ""
+                            );
+
                           setTotalSessions(
                             pkg.total_sessions
                           );
@@ -1442,6 +1462,25 @@ const fetchUpcomingSessions =
                 />
 
               </div>
+
+              <div className="mt-4">
+
+                <label className="block mb-2 font-medium text-gray-700">
+                    Hora
+                </label>
+
+                <input
+                    type="time"
+                    value={startTime}
+                    onChange={(e) =>
+                    setStartTime(
+                        e.target.value
+                    )
+                    }
+                    className="w-full border p-4 rounded-2xl"
+                />
+
+                </div>
 
               <div>
 
@@ -1810,7 +1849,17 @@ const fetchUpcomingSessions =
 
                           {
                             session.scheduled_date
-                          }
+                            }
+
+                            <br />
+
+                            <span className="text-sm text-gray-500">
+
+                            {
+                                session.scheduled_time
+                            }
+
+                            </span>
 
                         </td>
 
