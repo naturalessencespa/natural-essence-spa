@@ -4,6 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 
 import Select from "react-select";
 
+import {
+  Pencil,
+  Trash2
+} from "lucide-react";
+
 import { supabase } from "@/lib/supabase";
 
 export default function PackagesPage() {
@@ -23,10 +28,20 @@ export default function PackagesPage() {
   const [showModal, setShowModal] =
     useState(false);
 
+  const [editingId,
+    setEditingId] =
+    useState<number | null>(
+      null
+    );
+
   const [clientId, setClientId] =
     useState("");
 
   const [serviceId, setServiceId] =
+    useState("");
+
+  const [startDate,
+    setStartDate] =
     useState("");
 
   const [selectedZones,
@@ -47,6 +62,25 @@ export default function PackagesPage() {
 
   const [notes, setNotes] =
     useState("");
+
+  // BUSCADOR
+  const [searchClient,
+    setSearchClient] =
+    useState("");
+
+  // ORDEN
+  const [sortBy,
+    setSortBy] =
+    useState("date_desc");
+
+  // MODAL ZONAS
+  const [showZonesModal,
+    setShowZonesModal] =
+    useState(false);
+
+  const [zonesDetail,
+    setZonesDetail] =
+    useState<any[]>([]);
 
   // SUBTOTAL
   const subtotal =
@@ -156,11 +190,7 @@ export default function PackagesPage() {
           .eq(
             "active",
             true
-          )
-
-          .order("id", {
-            ascending: false,
-          });
+          );
 
       if (error) {
 
@@ -194,10 +224,12 @@ export default function PackagesPage() {
       } = await supabase
 
         .from("services")
+
         .select("*")
+
         .eq(
-        "allow_packages",
-        true
+          "allow_packages",
+          true
         );
 
       const {
@@ -232,114 +264,279 @@ export default function PackagesPage() {
 
       if (
         !clientId ||
-        !serviceId
+        !serviceId ||
+        !startDate
       ) {
 
         alert(
-          "Completa cliente y servicio"
+          "Completa cliente, servicio y fecha"
         );
 
         return;
       }
 
-      const {
-        data,
-        error,
-      } = await supabase
+      // EDITAR
+      if (editingId) {
 
-        .from(
-          "client_packages"
-        )
+        const { error } =
+          await supabase
 
-        .insert([
-          {
+            .from(
+              "client_packages"
+            )
 
-            client_id:
-              parseInt(
-                clientId
-              ),
+            .update({
 
-            service_id:
-              parseInt(
-                serviceId
-              ),
+              client_id:
+                parseInt(
+                  clientId
+                ),
 
-            total_sessions:
-              totalSessions,
+              service_id:
+                parseInt(
+                  serviceId
+                ),
 
-            quantity: 1,
+              start_date:
+                startDate,
 
-            unit_price:
-              unitPrice,
+              total_sessions:
+                totalSessions,
 
-            subtotal,
+              unit_price:
+                unitPrice,
 
-            discount_percentage:
-              discountPercentage,
+              subtotal,
 
-            total_price:
-              totalPrice,
+              discount_percentage:
+                discountPercentage,
 
-            notes,
+              total_price:
+                totalPrice,
 
-            active: true,
-
-          },
-        ])
-
-        .select()
-
-        .single();
-
-      if (error) {
-
-        console.log(error);
-
-        alert(
-          "Error al guardar"
-        );
-
-        return;
-      }
-
-      // GUARDAR ZONAS
-      if (
-        selectedZones.length > 0
-      ) {
-
-        const zonesToInsert =
-          selectedZones.map(
-            (zone) => ({
-
-              package_id:
-                data.id,
-
-              laser_zone_id:
-                zone.value,
+              notes,
 
             })
+
+            .eq(
+              "id",
+              editingId
+            );
+
+        if (error) {
+
+          console.log(error);
+
+          alert(
+            "Error al actualizar"
           );
 
+          return;
+        }
+
+        // BORRAR ZONAS
         await supabase
 
           .from(
             "client_package_zones"
           )
 
-          .insert(
-            zonesToInsert
+          .delete()
+
+          .eq(
+            "package_id",
+            editingId
           );
+
+        // REINSERTAR
+        if (
+          selectedZones.length > 0
+        ) {
+
+          const zonesToInsert =
+            selectedZones.map(
+              (zone) => ({
+
+                package_id:
+                  editingId,
+
+                laser_zone_id:
+                  zone.value,
+
+              })
+            );
+
+          await supabase
+
+            .from(
+              "client_package_zones"
+            )
+
+            .insert(
+              zonesToInsert
+            );
+        }
+
+        alert(
+          "Paquete actualizado"
+        );
+
+      } else {
+
+        // CREAR
+        const {
+          data,
+          error,
+        } = await supabase
+
+          .from(
+            "client_packages"
+          )
+
+          .insert([
+            {
+
+              client_id:
+                parseInt(
+                  clientId
+                ),
+
+              service_id:
+                parseInt(
+                  serviceId
+                ),
+
+              start_date:
+                startDate,
+
+              total_sessions:
+                totalSessions,
+
+              quantity: 1,
+
+              unit_price:
+                unitPrice,
+
+              subtotal,
+
+              discount_percentage:
+                discountPercentage,
+
+              total_price:
+                totalPrice,
+
+              notes,
+
+              active: true,
+
+            },
+          ])
+
+          .select()
+
+          .single();
+
+        if (error) {
+
+          console.log(error);
+
+          alert(
+            "Error al guardar"
+          );
+
+          return;
+        }
+
+        // GUARDAR ZONAS
+        if (
+          selectedZones.length > 0
+        ) {
+
+          const zonesToInsert =
+            selectedZones.map(
+              (zone) => ({
+
+                package_id:
+                  data.id,
+
+                laser_zone_id:
+                  zone.value,
+
+              })
+            );
+
+          await supabase
+
+            .from(
+              "client_package_zones"
+            )
+
+            .insert(
+              zonesToInsert
+            );
+        }
+
+        // GENERAR SESIONES
+        const sessionsToInsert = [];
+
+        for (
+          let i = 0;
+          i < totalSessions;
+          i++
+        ) {
+
+          const sessionDate =
+            new Date(startDate);
+
+          sessionDate.setMonth(
+            sessionDate.getMonth()
+            + i
+          );
+
+          sessionsToInsert.push({
+
+            package_id:
+              data.id,
+
+            session_number:
+              i + 1,
+
+            scheduled_date:
+              sessionDate
+                .toISOString()
+                .split("T")[0],
+
+            completed:
+              false,
+
+          });
+        }
+
+        await supabase
+
+          .from(
+            "package_sessions"
+          )
+
+          .insert(
+            sessionsToInsert
+          );
+
+        alert(
+          "Paquete creado"
+        );
       }
 
-      alert(
-        "Paquete creado"
-      );
-
+      // LIMPIAR
       setShowModal(false);
+
+      setEditingId(null);
 
       setClientId("");
 
       setServiceId("");
+
+      setStartDate("");
 
       setSelectedZones([]);
 
@@ -350,6 +547,31 @@ export default function PackagesPage() {
       setDiscountPercentage(0);
 
       setNotes("");
+
+      fetchPackages();
+    };
+
+  // ELIMINAR
+  const deletePackage =
+    async (id: number) => {
+
+      const confirmDelete =
+        confirm(
+          "¿Eliminar paquete?"
+        );
+
+      if (!confirmDelete)
+        return;
+
+      await supabase
+
+        .from(
+          "client_packages"
+        )
+
+        .delete()
+
+        .eq("id", id);
 
       fetchPackages();
     };
@@ -398,6 +620,47 @@ export default function PackagesPage() {
 
       </div>
 
+      {/* FILTROS */}
+      <div className="flex gap-4 mb-6">
+
+        <input
+          type="text"
+          placeholder="Buscar cliente..."
+          value={searchClient}
+          onChange={(e) =>
+            setSearchClient(
+              e.target.value
+            )
+          }
+          className="border p-4 rounded-2xl w-[350px]"
+        />
+
+        <select
+          value={sortBy}
+          onChange={(e) =>
+            setSortBy(
+              e.target.value
+            )
+          }
+          className="border p-4 rounded-2xl"
+        >
+
+          <option value="date_desc">
+            Fecha reciente
+          </option>
+
+          <option value="date_asc">
+            Fecha antigua
+          </option>
+
+          <option value="client_asc">
+            Cliente A-Z
+          </option>
+
+        </select>
+
+      </div>
+
       {/* TABLA */}
       <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
 
@@ -416,11 +679,23 @@ export default function PackagesPage() {
               </th>
 
               <th className="text-left p-5">
+                Zonas
+              </th>
+
+              <th className="text-left p-5">
+                Primera atención
+              </th>
+
+              <th className="text-left p-5">
                 Sesiones
               </th>
 
               <th className="text-left p-5">
                 Total
+              </th>
+
+              <th className="text-left p-5">
+                Acciones
               </th>
 
             </tr>
@@ -429,53 +704,264 @@ export default function PackagesPage() {
 
           <tbody>
 
-            {packages.map((pkg) => (
+            {[...packages]
 
-              <tr
-                key={pkg.id}
-                className="border-b"
-              >
+              .filter((pkg) =>
 
-                <td className="p-5">
+                pkg.clients
+                  ?.full_name
+                  ?.toLowerCase()
 
-                  {
-                    pkg.clients
-                      ?.full_name
-                  }
+                  .includes(
+                    searchClient.toLowerCase()
+                  )
+              )
 
-                </td>
+              .sort((a, b) => {
 
-                <td className="p-5">
+                if (
+                  sortBy === "client_asc"
+                ) {
 
-                  {
-                    pkg.services
-                      ?.name
-                  }
+                  return a.clients?.full_name.localeCompare(
+                    b.clients?.full_name
+                  );
+                }
 
-                </td>
+                if (
+                  sortBy === "date_asc"
+                ) {
 
-                <td className="p-5">
+                  return new Date(
+                    a.start_date
+                  ).getTime()
 
-                  {
-                    pkg.total_sessions
-                  }
+                    -
 
-                </td>
+                    new Date(
+                      b.start_date
+                    ).getTime();
+                }
 
-                <td className="p-5 font-bold">
+                return new Date(
+                  b.start_date
+                ).getTime()
 
-                  S/
-                  {
-                    Number(
-                      pkg.total_price
-                    ).toFixed(2)
-                  }
+                  -
 
-                </td>
+                  new Date(
+                    a.start_date
+                  ).getTime();
+              })
 
-              </tr>
+              .map((pkg) => (
 
-            ))}
+                <tr
+                  key={pkg.id}
+                  className="border-b"
+                >
+
+                  <td className="p-5">
+                    {
+                      pkg.clients
+                        ?.full_name
+                    }
+                  </td>
+
+                  <td className="p-5">
+                    {
+                      pkg.services
+                        ?.name
+                    }
+                  </td>
+
+                  <td className="p-5">
+
+                    <button
+                      onClick={async () => {
+
+                        const { data } =
+                          await supabase
+
+                            .from(
+                              "client_package_zones"
+                            )
+
+                            .select(`
+                              laser_zones(
+                                name,
+                                price
+                              )
+                            `)
+
+                            .eq(
+                              "package_id",
+                              pkg.id
+                            );
+
+                        if (data) {
+
+                          setZonesDetail(
+                            data
+                          );
+
+                          setShowZonesModal(
+                            true
+                          );
+                        }
+                      }}
+                      className="bg-[#243847] text-white px-4 py-2 rounded-xl text-sm"
+                    >
+
+                      Ver zonas
+
+                    </button>
+
+                  </td>
+
+                  <td className="p-5">
+                    {pkg.start_date}
+                  </td>
+
+                  <td className="p-5">
+                    {pkg.total_sessions}
+                  </td>
+
+                  <td className="p-5 font-bold">
+
+                    S/
+                    {
+                      Number(
+                        pkg.total_price
+                      ).toFixed(2)
+                    }
+
+                  </td>
+
+                  <td className="p-5">
+
+                    <div className="flex gap-3">
+
+                      <button
+                        onClick={async () => {
+
+                          setEditingId(
+                            pkg.id
+                          );
+
+                          setClientId(
+                            String(
+                              pkg.client_id
+                            )
+                          );
+
+                          setServiceId(
+                            String(
+                              pkg.service_id
+                            )
+                          );
+
+                          setStartDate(
+                            pkg.start_date || ""
+                          );
+
+                          setTotalSessions(
+                            pkg.total_sessions
+                          );
+
+                          setUnitPrice(
+                            Number(
+                              pkg.unit_price
+                            )
+                          );
+
+                          setDiscountPercentage(
+                            Number(
+                              pkg.discount_percentage
+                            )
+                          );
+
+                          setNotes(
+                            pkg.notes || ""
+                          );
+
+                          const { data } =
+                            await supabase
+
+                              .from(
+                                "client_package_zones"
+                              )
+
+                              .select(`
+                                laser_zone_id,
+                                laser_zones(
+                                  id,
+                                  name,
+                                  price
+                                )
+                              `)
+
+                              .eq(
+                                "package_id",
+                                pkg.id
+                              );
+
+                          if (data) {
+
+                            const formatted =
+                              data.map(
+                                (item: any) => ({
+
+                                  value:
+                                    item
+                                      .laser_zones
+                                      .id,
+
+                                  label:
+                                    `${item.laser_zones.name} - S/ ${item.laser_zones.price}`,
+
+                                  price:
+                                    item
+                                      .laser_zones
+                                      .price,
+
+                                })
+                              );
+
+                            setSelectedZones(
+                              formatted
+                            );
+                          }
+
+                          setShowModal(true);
+                        }}
+                        className="bg-blue-100 p-3 rounded-xl hover:scale-105 transition"
+                      >
+
+                        <Pencil size={18} />
+
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          deletePackage(
+                            pkg.id
+                          )
+                        }
+                        className="bg-red-100 p-3 rounded-xl hover:scale-105 transition"
+                      >
+
+                        <Trash2 size={18} />
+
+                      </button>
+
+                    </div>
+
+                  </td>
+
+                </tr>
+
+              ))}
 
           </tbody>
 
@@ -490,27 +976,24 @@ export default function PackagesPage() {
 
           <div className="bg-white rounded-3xl w-full max-w-[700px] max-h-[90vh] overflow-hidden flex flex-col">
 
-            {/* HEADER */}
             <div className="bg-[#243847] text-white px-8 py-6">
 
               <h3 className="text-3xl font-bold">
 
-                Nuevo paquete
+                {editingId
+                  ? "Editar paquete"
+                  : "Nuevo paquete"}
 
               </h3>
 
             </div>
 
-            {/* BODY */}
             <div className="p-8 overflow-y-auto space-y-6">
 
-              {/* CLIENTE */}
               <div>
 
                 <label className="block mb-2 font-medium text-gray-700">
-
                   Cliente
-
                 </label>
 
                 <select
@@ -548,13 +1031,10 @@ export default function PackagesPage() {
 
               </div>
 
-              {/* SERVICIO */}
               <div>
 
                 <label className="block mb-2 font-medium text-gray-700">
-
                   Servicio
-
                 </label>
 
                 <select
@@ -592,13 +1072,29 @@ export default function PackagesPage() {
 
               </div>
 
-              {/* ZONAS */}
               <div>
 
                 <label className="block mb-2 font-medium text-gray-700">
+                  Primera atención
+                </label>
 
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) =>
+                    setStartDate(
+                      e.target.value
+                    )
+                  }
+                  className="w-full border p-4 rounded-2xl"
+                />
+
+              </div>
+
+              <div>
+
+                <label className="block mb-2 font-medium text-gray-700">
                   Zonas láser
-
                 </label>
 
                 <Select
@@ -643,19 +1139,14 @@ export default function PackagesPage() {
 
               </div>
 
-              {/* SESIONES */}
               <div>
 
                 <label className="block mb-2 font-medium text-gray-700">
-
                   Número de sesiones
-
                 </label>
 
                 <select
-                  value={
-                    totalSessions
-                  }
+                  value={totalSessions}
                   onChange={(e) =>
                     setTotalSessions(
                       Number(
@@ -682,20 +1173,15 @@ export default function PackagesPage() {
 
               </div>
 
-              {/* DESCUENTO */}
               <div>
 
                 <label className="block mb-2 font-medium text-gray-700">
-
                   Descuento adicional %
-
                 </label>
 
                 <input
                   type="number"
-                  value={
-                    discountPercentage
-                  }
+                  value={discountPercentage}
                   onChange={(e) =>
                     setDiscountPercentage(
                       Number(
@@ -718,12 +1204,7 @@ export default function PackagesPage() {
                   </span>
 
                   <span className="font-semibold">
-
-                    S/
-                    {
-                      subtotal.toFixed(2)
-                    }
-
+                    S/ {subtotal.toFixed(2)}
                   </span>
 
                 </div>
@@ -735,11 +1216,7 @@ export default function PackagesPage() {
                   </span>
 
                   <span className="font-semibold text-green-600">
-
-                    - {
-                      automaticDiscount
-                    }%
-
+                    - {automaticDiscount}%
                   </span>
 
                 </div>
@@ -751,14 +1228,7 @@ export default function PackagesPage() {
                   </span>
 
                   <span className="font-semibold">
-
-                    S/
-                    {
-                      packagePrice.toFixed(
-                        2
-                      )
-                    }
-
+                    S/ {packagePrice.toFixed(2)}
                   </span>
 
                 </div>
@@ -770,11 +1240,7 @@ export default function PackagesPage() {
                   </span>
 
                   <span className="font-semibold text-red-500">
-
-                    - {
-                      discountPercentage
-                    }%
-
+                    - {discountPercentage}%
                   </span>
 
                 </div>
@@ -782,27 +1248,17 @@ export default function PackagesPage() {
                 <div className="border-t pt-4 flex justify-between items-center">
 
                   <span className="text-xl font-bold text-[#243847]">
-
                     TOTAL FINAL
-
                   </span>
 
                   <span className="text-3xl font-bold text-[#243847]">
-
-                    S/
-                    {
-                      totalPrice.toFixed(
-                        2
-                      )
-                    }
-
+                    S/ {totalPrice.toFixed(2)}
                   </span>
 
                 </div>
 
               </div>
 
-              {/* OBSERVACIONES */}
               <div>
 
                 <textarea
@@ -820,7 +1276,6 @@ export default function PackagesPage() {
 
             </div>
 
-            {/* FOOTER */}
             <div className="flex justify-end gap-4 p-8 border-t">
 
               <button
@@ -835,13 +1290,13 @@ export default function PackagesPage() {
               </button>
 
               <button
-                onClick={
-                  savePackage
-                }
+                onClick={savePackage}
                 className="bg-[#243847] text-white px-6 py-3 rounded-2xl"
               >
 
-                Guardar paquete
+                {editingId
+                  ? "Actualizar paquete"
+                  : "Guardar paquete"}
 
               </button>
 
@@ -853,7 +1308,81 @@ export default function PackagesPage() {
 
       )}
 
-    </div>
+      {/* MODAL ZONAS */}
+      {showZonesModal && (
 
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60] p-6">
+
+          <div className="bg-white rounded-3xl w-full max-w-[500px] overflow-hidden">
+
+            <div className="bg-[#243847] text-white px-6 py-5 flex items-center justify-between">
+
+              <h3 className="text-2xl font-bold">
+                Zonas del paquete
+              </h3>
+
+              <button
+                onClick={() =>
+                  setShowZonesModal(
+                    false
+                  )
+                }
+                className="text-white text-xl"
+              >
+
+                ✕
+
+              </button>
+
+            </div>
+
+            <div className="p-6 space-y-4">
+
+              {zonesDetail.map(
+                (
+                  item: any,
+                  index: number
+                ) => (
+
+                  <div
+                    key={index}
+                    className="border rounded-2xl p-4 flex justify-between"
+                  >
+
+                    <span className="font-medium">
+
+                      {
+                        item
+                          .laser_zones
+                          ?.name
+                      }
+
+                    </span>
+
+                    <span className="font-bold">
+
+                      S/
+                      {
+                        item
+                          .laser_zones
+                          ?.price
+                      }
+
+                    </span>
+
+                  </div>
+
+                )
+              )}
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+    </div>
   );
 }
