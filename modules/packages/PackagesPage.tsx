@@ -8,35 +8,27 @@ import { supabase } from "@/lib/supabase";
 
 export default function PackagesPage() {
 
-  const [packages,
-    setPackages] =
+  const [packages, setPackages] =
     useState<any[]>([]);
 
-  const [clients,
-    setClients] =
+  const [clients, setClients] =
     useState<any[]>([]);
 
-  const [services,
-    setServices] =
+  const [services, setServices] =
     useState<any[]>([]);
 
-  const [laserZones,
-    setLaserZones] =
+  const [laserZones, setLaserZones] =
     useState<any[]>([]);
 
-  const [showModal,
-    setShowModal] =
+  const [showModal, setShowModal] =
     useState(false);
 
-  const [clientId,
-    setClientId] =
+  const [clientId, setClientId] =
     useState("");
 
-  const [serviceId,
-    setServiceId] =
+  const [serviceId, setServiceId] =
     useState("");
 
-  // MULTISELECT
   const [selectedZones,
     setSelectedZones] =
     useState<any[]>([]);
@@ -53,33 +45,94 @@ export default function PackagesPage() {
     setDiscountPercentage] =
     useState(0);
 
-  const [notes,
-    setNotes] =
+  const [notes, setNotes] =
     useState("");
 
-  // TOTAL
+  // SUBTOTAL
+  const subtotal =
+    useMemo(() => {
+
+      return (
+        unitPrice *
+        totalSessions
+      );
+
+    }, [
+      unitPrice,
+      totalSessions,
+    ]);
+
+  // DESCUENTO AUTOMÁTICO
+  const automaticDiscount =
+    useMemo(() => {
+
+      if (
+        totalSessions === 3
+      ) {
+
+        return 10;
+      }
+
+      if (
+        totalSessions === 6
+      ) {
+
+        return 15;
+      }
+
+      return 0;
+
+    }, [
+      totalSessions,
+    ]);
+
+  // PRECIO PAQUETE
+  const packagePrice =
+    useMemo(() => {
+
+      if (
+        totalSessions === 3
+      ) {
+
+        return (
+          subtotal * 0.90
+        );
+      }
+
+      if (
+        totalSessions === 6
+      ) {
+
+        return (
+          subtotal * 0.85
+        );
+      }
+
+      return subtotal;
+
+    }, [
+      subtotal,
+      totalSessions,
+    ]);
+
+  // TOTAL FINAL
   const totalPrice =
     useMemo(() => {
 
-      const subtotal =
-        unitPrice *
-        totalSessions;
-
-      const discount =
-        subtotal *
+      const extraDiscount =
+        packagePrice *
         (
           discountPercentage /
           100
         );
 
       return (
-        subtotal -
-        discount
+        packagePrice -
+        extraDiscount
       );
 
     }, [
-      unitPrice,
-      totalSessions,
+      packagePrice,
       discountPercentage,
     ]);
 
@@ -141,8 +194,11 @@ export default function PackagesPage() {
       } = await supabase
 
         .from("services")
-
-        .select("*");
+        .select("*")
+        .eq(
+        "allow_packages",
+        true
+        );
 
       const {
         data: zonesData,
@@ -186,58 +242,54 @@ export default function PackagesPage() {
         return;
       }
 
-      // CREAR PAQUETE
       const {
         data,
-        error
-      } =
-        await supabase
+        error,
+      } = await supabase
 
-          .from(
-            "client_packages"
-          )
+        .from(
+          "client_packages"
+        )
 
-          .insert([
-            {
+        .insert([
+          {
 
-              client_id:
-                parseInt(
-                  clientId
-                ),
+            client_id:
+              parseInt(
+                clientId
+              ),
 
-              service_id:
-                parseInt(
-                  serviceId
-                ),
+            service_id:
+              parseInt(
+                serviceId
+              ),
 
-              total_sessions:
-                totalSessions,
+            total_sessions:
+              totalSessions,
 
-              quantity: 1,
+            quantity: 1,
 
-              unit_price:
-                unitPrice,
+            unit_price:
+              unitPrice,
 
-              subtotal:
-                unitPrice *
-                totalSessions,
+            subtotal,
 
-              discount_percentage:
-                discountPercentage,
+            discount_percentage:
+              discountPercentage,
 
-              total_price:
-                totalPrice,
+            total_price:
+              totalPrice,
 
-              notes,
+            notes,
 
-              active: true,
+            active: true,
 
-            },
-          ])
+          },
+        ])
 
-          .select()
+        .select()
 
-          .single();
+        .single();
 
       if (error) {
 
@@ -319,13 +371,13 @@ export default function PackagesPage() {
 
         <div>
 
-          <h2 className="text-5xl font-bold text-[#243847] mb-3">
+          <h2 className="text-5xl font-bold text-[#243847]">
 
             Paquetes 🎯
 
           </h2>
 
-          <p className="text-gray-600 text-lg">
+          <p className="text-gray-600 mt-2">
 
             Gestión de paquetes
 
@@ -347,7 +399,7 @@ export default function PackagesPage() {
       </div>
 
       {/* TABLA */}
-      <div className="bg-white rounded-3xl shadow-xl overflow-hidden overflow-x-auto">
+      <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
 
         <table className="w-full">
 
@@ -356,27 +408,19 @@ export default function PackagesPage() {
             <tr>
 
               <th className="text-left p-5">
-
                 Cliente
-
               </th>
 
               <th className="text-left p-5">
-
                 Servicio
-
               </th>
 
               <th className="text-left p-5">
-
                 Sesiones
-
               </th>
 
               <th className="text-left p-5">
-
                 Total
-
               </th>
 
             </tr>
@@ -385,53 +429,53 @@ export default function PackagesPage() {
 
           <tbody>
 
-            {packages.map(
-              (pkg) => (
+            {packages.map((pkg) => (
 
-                <tr
-                  key={pkg.id}
-                  className="border-b"
-                >
+              <tr
+                key={pkg.id}
+                className="border-b"
+              >
 
-                  <td className="p-5">
+                <td className="p-5">
 
-                    {
-                      pkg.clients
-                        ?.full_name
-                    }
+                  {
+                    pkg.clients
+                      ?.full_name
+                  }
 
-                  </td>
+                </td>
 
-                  <td className="p-5">
+                <td className="p-5">
 
-                    {
-                      pkg.services
-                        ?.name
-                    }
+                  {
+                    pkg.services
+                      ?.name
+                  }
 
-                  </td>
+                </td>
 
-                  <td className="p-5">
+                <td className="p-5">
 
-                    {
-                      pkg.total_sessions
-                    }
+                  {
+                    pkg.total_sessions
+                  }
 
-                  </td>
+                </td>
 
-                  <td className="p-5 font-bold">
+                <td className="p-5 font-bold">
 
-                    S/
-                    {
+                  S/
+                  {
+                    Number(
                       pkg.total_price
-                    }
+                    ).toFixed(2)
+                  }
 
-                  </td>
+                </td>
 
-                </tr>
+              </tr>
 
-              )
-            )}
+            ))}
 
           </tbody>
 
@@ -444,7 +488,7 @@ export default function PackagesPage() {
 
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-6">
 
-          <div className="bg-white rounded-3xl w-full max-w-[700px] max-h-[90vh] shadow-2xl overflow-hidden flex flex-col">
+          <div className="bg-white rounded-3xl w-full max-w-[700px] max-h-[90vh] overflow-hidden flex flex-col">
 
             {/* HEADER */}
             <div className="bg-[#243847] text-white px-8 py-6">
@@ -460,108 +504,95 @@ export default function PackagesPage() {
             {/* BODY */}
             <div className="p-8 overflow-y-auto space-y-6">
 
-              {/* CLIENTE Y SERVICIO */}
-              <div className="grid md:grid-cols-2 gap-4">
+              {/* CLIENTE */}
+              <div>
 
-                {/* CLIENTE */}
-                <div>
+                <label className="block mb-2 font-medium text-gray-700">
 
-                  <label className="block mb-2 font-medium text-gray-700">
+                  Cliente
 
-                    Cliente
+                </label>
 
-                  </label>
+                <select
+                  value={clientId}
+                  onChange={(e) =>
+                    setClientId(
+                      e.target.value
+                    )
+                  }
+                  className="w-full border p-4 rounded-2xl"
+                >
 
-                  <select
-                    value={clientId}
-                    onChange={(e) =>
-                      setClientId(
-                        e.target.value
-                      )
-                    }
-                    className="w-full border p-4 rounded-2xl"
-                  >
+                  <option value="">
+                    Seleccione cliente
+                  </option>
 
-                    <option value="">
-                      Seleccione cliente
-                    </option>
+                  {clients.map(
+                    (client) => (
 
-                    {clients.map(
-                      (client) => (
+                      <option
+                        key={client.id}
+                        value={client.id}
+                      >
 
-                        <option
-                          key={
-                            client.id
-                          }
-                          value={
-                            client.id
-                          }
-                        >
+                        {
+                          client.full_name
+                        }
 
-                          {
-                            client.full_name
-                          }
+                      </option>
 
-                        </option>
+                    )
+                  )}
 
-                      )
-                    )}
-
-                  </select>
-
-                </div>
-
-                {/* SERVICIO */}
-                <div>
-
-                  <label className="block mb-2 font-medium text-gray-700">
-
-                    Servicio
-
-                  </label>
-
-                  <select
-                    value={serviceId}
-                    onChange={(e) =>
-                      setServiceId(
-                        e.target.value
-                      )
-                    }
-                    className="w-full border p-4 rounded-2xl"
-                  >
-
-                    <option value="">
-                      Seleccione servicio
-                    </option>
-
-                    {services.map(
-                      (service) => (
-
-                        <option
-                          key={
-                            service.id
-                          }
-                          value={
-                            service.id
-                          }
-                        >
-
-                          {
-                            service.name
-                          }
-
-                        </option>
-
-                      )
-                    )}
-
-                  </select>
-
-                </div>
+                </select>
 
               </div>
 
-              {/* ZONAS LASER */}
+              {/* SERVICIO */}
+              <div>
+
+                <label className="block mb-2 font-medium text-gray-700">
+
+                  Servicio
+
+                </label>
+
+                <select
+                  value={serviceId}
+                  onChange={(e) =>
+                    setServiceId(
+                      e.target.value
+                    )
+                  }
+                  className="w-full border p-4 rounded-2xl"
+                >
+
+                  <option value="">
+                    Seleccione servicio
+                  </option>
+
+                  {services.map(
+                    (service) => (
+
+                      <option
+                        key={service.id}
+                        value={service.id}
+                      >
+
+                        {
+                          service.name
+                        }
+
+                      </option>
+
+                    )
+                  )}
+
+                </select>
+
+              </div>
+
+              {/* ZONAS */}
               <div>
 
                 <label className="block mb-2 font-medium text-gray-700">
@@ -621,8 +652,7 @@ export default function PackagesPage() {
 
                 </label>
 
-                <input
-                  type="number"
+                <select
                   value={
                     totalSessions
                   }
@@ -634,7 +664,21 @@ export default function PackagesPage() {
                     )
                   }
                   className="w-full border p-4 rounded-2xl"
-                />
+                >
+
+                  <option value={1}>
+                    1 sesión
+                  </option>
+
+                  <option value={3}>
+                    3 sesiones
+                  </option>
+
+                  <option value={6}>
+                    6 sesiones
+                  </option>
+
+                </select>
 
               </div>
 
@@ -643,7 +687,7 @@ export default function PackagesPage() {
 
                 <label className="block mb-2 font-medium text-gray-700">
 
-                  Descuento %
+                  Descuento adicional %
 
                 </label>
 
@@ -664,23 +708,97 @@ export default function PackagesPage() {
 
               </div>
 
-              {/* TOTAL */}
-              <div className="bg-[#243847]/5 border-2 border-[#243847] rounded-3xl p-6 text-center">
+              {/* RESUMEN */}
+              <div className="bg-[#243847]/5 border-2 border-[#243847] rounded-3xl p-6 space-y-3">
 
-                <p className="text-gray-600 text-sm uppercase tracking-wider">
+                <div className="flex justify-between">
 
-                  Total final
+                  <span>
+                    Subtotal
+                  </span>
 
-                </p>
+                  <span className="font-semibold">
 
-                <h3 className="text-4xl font-bold text-[#243847] mt-2">
+                    S/
+                    {
+                      subtotal.toFixed(2)
+                    }
 
-                  S/
-                  {totalPrice.toFixed(
-                    2
-                  )}
+                  </span>
 
-                </h3>
+                </div>
+
+                <div className="flex justify-between">
+
+                  <span>
+                    Descuento automático
+                  </span>
+
+                  <span className="font-semibold text-green-600">
+
+                    - {
+                      automaticDiscount
+                    }%
+
+                  </span>
+
+                </div>
+
+                <div className="flex justify-between">
+
+                  <span>
+                    Precio paquete
+                  </span>
+
+                  <span className="font-semibold">
+
+                    S/
+                    {
+                      packagePrice.toFixed(
+                        2
+                      )
+                    }
+
+                  </span>
+
+                </div>
+
+                <div className="flex justify-between">
+
+                  <span>
+                    Descuento adicional
+                  </span>
+
+                  <span className="font-semibold text-red-500">
+
+                    - {
+                      discountPercentage
+                    }%
+
+                  </span>
+
+                </div>
+
+                <div className="border-t pt-4 flex justify-between items-center">
+
+                  <span className="text-xl font-bold text-[#243847]">
+
+                    TOTAL FINAL
+
+                  </span>
+
+                  <span className="text-3xl font-bold text-[#243847]">
+
+                    S/
+                    {
+                      totalPrice.toFixed(
+                        2
+                      )
+                    }
+
+                  </span>
+
+                </div>
 
               </div>
 
@@ -736,5 +854,6 @@ export default function PackagesPage() {
       )}
 
     </div>
+
   );
 }
