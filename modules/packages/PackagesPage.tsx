@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import Select from "react-select";
+
 import { supabase } from "@/lib/supabase";
 
 export default function PackagesPage() {
@@ -34,9 +36,10 @@ export default function PackagesPage() {
     setServiceId] =
     useState("");
 
-  const [laserZoneId,
-    setLaserZoneId] =
-    useState("");
+  // MULTISELECT
+  const [selectedZones,
+    setSelectedZones] =
+    useState<any[]>([]);
 
   const [totalSessions,
     setTotalSessions] =
@@ -54,33 +57,29 @@ export default function PackagesPage() {
     setNotes] =
     useState("");
 
-  // PRIMERA SESIÓN
-  const [firstSessionDate,
-    setFirstSessionDate] =
-    useState("");
-
-  const [firstSessionTime,
-    setFirstSessionTime] =
-    useState("");
-
   // TOTAL
   const totalPrice =
     useMemo(() => {
 
-      const discount =
+      const subtotal =
         unitPrice *
+        totalSessions;
+
+      const discount =
+        subtotal *
         (
           discountPercentage /
           100
         );
 
       return (
-        unitPrice -
+        subtotal -
         discount
       );
 
     }, [
       unitPrice,
+      totalSessions,
       discountPercentage,
     ]);
 
@@ -98,8 +97,7 @@ export default function PackagesPage() {
           .select(`
             *,
             clients(full_name),
-            services(name),
-            laser_zones(name)
+            services(name)
           `)
 
           .eq(
@@ -172,33 +170,6 @@ export default function PackagesPage() {
       );
     };
 
-  // CAMBIO ZONA
-  const handleZoneChange =
-    (
-      value: string
-    ) => {
-
-      setLaserZoneId(
-        value
-      );
-
-      const zone =
-        laserZones.find(
-          (z) =>
-            z.id ===
-            parseInt(value)
-        );
-
-      if (zone?.price) {
-
-        setUnitPrice(
-          Number(
-            zone.price
-          )
-        );
-      }
-    };
-
   // GUARDAR
   const savePackage =
     async () => {
@@ -209,13 +180,17 @@ export default function PackagesPage() {
       ) {
 
         alert(
-          "Completa los campos"
+          "Completa cliente y servicio"
         );
 
         return;
       }
 
-      const { error } =
+      // CREAR PAQUETE
+      const {
+        data,
+        error
+      } =
         await supabase
 
           .from(
@@ -235,13 +210,6 @@ export default function PackagesPage() {
                   serviceId
                 ),
 
-              laser_zone_id:
-                laserZoneId
-                  ? parseInt(
-                      laserZoneId
-                    )
-                  : null,
-
               total_sessions:
                 totalSessions,
 
@@ -251,7 +219,8 @@ export default function PackagesPage() {
                 unitPrice,
 
               subtotal:
-                unitPrice,
+                unitPrice *
+                totalSessions,
 
               discount_percentage:
                 discountPercentage,
@@ -264,7 +233,11 @@ export default function PackagesPage() {
               active: true,
 
             },
-          ]);
+          ])
+
+          .select()
+
+          .single();
 
       if (error) {
 
@@ -277,6 +250,35 @@ export default function PackagesPage() {
         return;
       }
 
+      // GUARDAR ZONAS
+      if (
+        selectedZones.length > 0
+      ) {
+
+        const zonesToInsert =
+          selectedZones.map(
+            (zone) => ({
+
+              package_id:
+                data.id,
+
+              laser_zone_id:
+                zone.value,
+
+            })
+          );
+
+        await supabase
+
+          .from(
+            "client_package_zones"
+          )
+
+          .insert(
+            zonesToInsert
+          );
+      }
+
       alert(
         "Paquete creado"
       );
@@ -287,7 +289,7 @@ export default function PackagesPage() {
 
       setServiceId("");
 
-      setLaserZoneId("");
+      setSelectedZones([]);
 
       setTotalSessions(1);
 
@@ -296,10 +298,6 @@ export default function PackagesPage() {
       setDiscountPercentage(0);
 
       setNotes("");
-
-      setFirstSessionDate("");
-
-      setFirstSessionTime("");
 
       fetchPackages();
     };
@@ -329,7 +327,7 @@ export default function PackagesPage() {
 
           <p className="text-gray-600 text-lg">
 
-            Gestión de paquetes y sesiones
+            Gestión de paquetes
 
           </p>
 
@@ -371,19 +369,7 @@ export default function PackagesPage() {
 
               <th className="text-left p-5">
 
-                Zona
-
-              </th>
-
-              <th className="text-left p-5">
-
                 Sesiones
-
-              </th>
-
-              <th className="text-left p-5">
-
-                Restantes
 
               </th>
 
@@ -428,26 +414,7 @@ export default function PackagesPage() {
                   <td className="p-5">
 
                     {
-                      pkg.laser_zones
-                        ?.name || "-"
-                    }
-
-                  </td>
-
-                  <td className="p-5">
-
-                    {
-                      pkg.remaining_sessions
-                    } / {
                       pkg.total_sessions
-                    }
-
-                  </td>
-
-                  <td className="p-5 font-bold text-[#243847]">
-
-                    {
-                      pkg.remaining_sessions
                     }
 
                   </td>
@@ -477,7 +444,7 @@ export default function PackagesPage() {
 
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-6">
 
-          <div className="bg-white rounded-3xl w-full max-w-[650px] max-h-[90vh] shadow-2xl overflow-hidden flex flex-col">
+          <div className="bg-white rounded-3xl w-full max-w-[700px] max-h-[90vh] shadow-2xl overflow-hidden flex flex-col">
 
             {/* HEADER */}
             <div className="bg-[#243847] text-white px-8 py-6">
@@ -488,141 +455,27 @@ export default function PackagesPage() {
 
               </h3>
 
-              <p className="opacity-80 mt-1">
-
-                Gestión profesional de sesiones
-
-              </p>
-
             </div>
 
             {/* BODY */}
-            <div className="p-8 space-y-8 overflow-y-auto">
+            <div className="p-8 overflow-y-auto space-y-6">
 
-              {/* INFORMACIÓN */}
-              <div>
+              {/* CLIENTE Y SERVICIO */}
+              <div className="grid md:grid-cols-2 gap-4">
 
-                <h4 className="text-xl font-bold text-[#243847] mb-5">
-
-                  Información del paquete
-
-                </h4>
-
-                <div className="grid md:grid-cols-2 gap-4">
-
-                  {/* CLIENTE */}
-                  <div>
-
-                    <label className="block mb-2 font-medium text-gray-700">
-
-                      Cliente
-
-                    </label>
-
-                    <select
-                      value={clientId}
-                      onChange={(e) =>
-                        setClientId(
-                          e.target.value
-                        )
-                      }
-                      className="w-full border p-4 rounded-2xl"
-                    >
-
-                      <option value="">
-                        Seleccione cliente
-                      </option>
-
-                      {clients.map(
-                        (client) => (
-
-                          <option
-                            key={
-                              client.id
-                            }
-                            value={
-                              client.id
-                            }
-                          >
-
-                            {
-                              client.full_name
-                            }
-
-                          </option>
-
-                        )
-                      )}
-
-                    </select>
-
-                  </div>
-
-                  {/* SERVICIO */}
-                  <div>
-
-                    <label className="block mb-2 font-medium text-gray-700">
-
-                      Servicio
-
-                    </label>
-
-                    <select
-                      value={serviceId}
-                      onChange={(e) =>
-                        setServiceId(
-                          e.target.value
-                        )
-                      }
-                      className="w-full border p-4 rounded-2xl"
-                    >
-
-                      <option value="">
-                        Seleccione servicio
-                      </option>
-
-                      {services.map(
-                        (service) => (
-
-                          <option
-                            key={
-                              service.id
-                            }
-                            value={
-                              service.id
-                            }
-                          >
-
-                            {
-                              service.name
-                            }
-
-                          </option>
-
-                        )
-                      )}
-
-                    </select>
-
-                  </div>
-
-                </div>
-
-                {/* ZONA */}
-                <div className="mt-4">
+                {/* CLIENTE */}
+                <div>
 
                   <label className="block mb-2 font-medium text-gray-700">
 
-                    Zona láser (opcional)
+                    Cliente
 
                   </label>
 
                   <select
-                    value={
-                      laserZoneId
-                    }
+                    value={clientId}
                     onChange={(e) =>
-                      handleZoneChange(
+                      setClientId(
                         e.target.value
                       )
                     }
@@ -630,26 +483,71 @@ export default function PackagesPage() {
                   >
 
                     <option value="">
-                      Seleccione zona láser
+                      Seleccione cliente
                     </option>
 
-                    {laserZones.map(
-                      (zone) => (
+                    {clients.map(
+                      (client) => (
 
                         <option
                           key={
-                            zone.id
+                            client.id
                           }
                           value={
-                            zone.id
+                            client.id
                           }
                         >
 
                           {
-                            zone.name
-                          } - S/
+                            client.full_name
+                          }
+
+                        </option>
+
+                      )
+                    )}
+
+                  </select>
+
+                </div>
+
+                {/* SERVICIO */}
+                <div>
+
+                  <label className="block mb-2 font-medium text-gray-700">
+
+                    Servicio
+
+                  </label>
+
+                  <select
+                    value={serviceId}
+                    onChange={(e) =>
+                      setServiceId(
+                        e.target.value
+                      )
+                    }
+                    className="w-full border p-4 rounded-2xl"
+                  >
+
+                    <option value="">
+                      Seleccione servicio
+                    </option>
+
+                    {services.map(
+                      (service) => (
+
+                        <option
+                          key={
+                            service.id
+                          }
+                          value={
+                            service.id
+                          }
+                        >
+
                           {
-                            zone.price
+                            service.name
                           }
 
                         </option>
@@ -663,210 +561,141 @@ export default function PackagesPage() {
 
               </div>
 
+              {/* ZONAS LASER */}
+              <div>
+
+                <label className="block mb-2 font-medium text-gray-700">
+
+                  Zonas láser
+
+                </label>
+
+                <Select
+                  isMulti
+                  options={laserZones.map(
+                    (zone) => ({
+                      value: zone.id,
+                      label: `${zone.name} - S/ ${zone.price}`,
+                      price: zone.price,
+                    })
+                  )}
+                  value={selectedZones}
+                  onChange={(selected: any) => {
+
+                    setSelectedZones(
+                      selected || []
+                    );
+
+                    const total =
+                      (
+                        selected || []
+                      ).reduce(
+                        (
+                          sum: number,
+                          item: any
+                        ) =>
+
+                          sum +
+                          Number(
+                            item.price || 0
+                          ),
+
+                        0
+                      );
+
+                    setUnitPrice(
+                      total
+                    );
+                  }}
+                  placeholder="Seleccionar zonas..."
+                />
+
+              </div>
+
               {/* SESIONES */}
               <div>
 
-                <h4 className="text-xl font-bold text-[#243847] mb-5">
+                <label className="block mb-2 font-medium text-gray-700">
 
-                  Sesiones
+                  Número de sesiones
 
-                </h4>
+                </label>
 
-                <div>
-
-                  <label className="block mb-2 font-medium text-gray-700">
-
-                    Número de sesiones
-
-                  </label>
-
-                  <input
-                    type="number"
-                    value={
-                      totalSessions
-                    }
-                    onChange={(e) =>
-                      setTotalSessions(
-                        Number(
-                          e.target.value
-                        )
+                <input
+                  type="number"
+                  value={
+                    totalSessions
+                  }
+                  onChange={(e) =>
+                    setTotalSessions(
+                      Number(
+                        e.target.value
                       )
-                    }
-                    className="w-full border p-4 rounded-2xl"
-                  />
-
-                </div>
-
-              </div>
-
-              {/* PRECIOS */}
-              <div>
-
-                <h4 className="text-xl font-bold text-[#243847] mb-5">
-
-                  Precio y descuento
-
-                </h4>
-
-                <div className="grid md:grid-cols-2 gap-4">
-
-                  {/* PRECIO */}
-                  <div>
-
-                    <label className="block mb-2 font-medium text-gray-700">
-
-                      Precio
-
-                    </label>
-
-                    <input
-                      type="number"
-                      value={
-                        unitPrice
-                      }
-                      onChange={(e) =>
-                        setUnitPrice(
-                          Number(
-                            e.target.value
-                          )
-                        )
-                      }
-                      className="w-full border p-4 rounded-2xl"
-                    />
-
-                  </div>
-
-                  {/* DESCUENTO */}
-                  <div>
-
-                    <label className="block mb-2 font-medium text-gray-700">
-
-                      Descuento %
-
-                    </label>
-
-                    <input
-                      type="number"
-                      value={
-                        discountPercentage
-                      }
-                      onChange={(e) =>
-                        setDiscountPercentage(
-                          Number(
-                            e.target.value
-                          )
-                        )
-                      }
-                      className="w-full border p-4 rounded-2xl"
-                    />
-
-                  </div>
-
-                </div>
-
-                {/* TOTAL */}
-                <div className="mt-5 bg-[#243847]/5 border-2 border-[#243847] rounded-3xl p-6 text-center">
-
-                  <p className="text-gray-600 text-sm uppercase tracking-wider">
-
-                    Total final
-
-                  </p>
-
-                  <h3 className="text-4xl font-bold text-[#243847] mt-2">
-
-                    S/
-                    {totalPrice.toFixed(
-                      2
-                    )}
-
-                  </h3>
-
-                </div>
+                    )
+                  }
+                  className="w-full border p-4 rounded-2xl"
+                />
 
               </div>
 
-              {/* PRIMERA SESIÓN */}
+              {/* DESCUENTO */}
               <div>
 
-                <h4 className="text-xl font-bold text-[#243847] mb-5">
+                <label className="block mb-2 font-medium text-gray-700">
 
-                  Primera sesión (opcional)
+                  Descuento %
 
-                </h4>
+                </label>
 
-                <div className="grid md:grid-cols-2 gap-4">
+                <input
+                  type="number"
+                  value={
+                    discountPercentage
+                  }
+                  onChange={(e) =>
+                    setDiscountPercentage(
+                      Number(
+                        e.target.value
+                      )
+                    )
+                  }
+                  className="w-full border p-4 rounded-2xl"
+                />
 
-                  {/* FECHA */}
-                  <div>
+              </div>
 
-                    <label className="block mb-2 font-medium text-gray-700">
+              {/* TOTAL */}
+              <div className="bg-[#243847]/5 border-2 border-[#243847] rounded-3xl p-6 text-center">
 
-                      Fecha primera sesión
+                <p className="text-gray-600 text-sm uppercase tracking-wider">
 
-                    </label>
+                  Total final
 
-                    <input
-                      type="date"
-                      value={
-                        firstSessionDate
-                      }
-                      onChange={(e) =>
-                        setFirstSessionDate(
-                          e.target.value
-                        )
-                      }
-                      className="w-full border p-4 rounded-2xl"
-                    />
+                </p>
 
-                  </div>
+                <h3 className="text-4xl font-bold text-[#243847] mt-2">
 
-                  {/* HORA */}
-                  <div>
+                  S/
+                  {totalPrice.toFixed(
+                    2
+                  )}
 
-                    <label className="block mb-2 font-medium text-gray-700">
-
-                      Hora aproximada
-
-                    </label>
-
-                    <input
-                      type="time"
-                      value={
-                        firstSessionTime
-                      }
-                      onChange={(e) =>
-                        setFirstSessionTime(
-                          e.target.value
-                        )
-                      }
-                      className="w-full border p-4 rounded-2xl"
-                    />
-
-                  </div>
-
-                </div>
+                </h3>
 
               </div>
 
               {/* OBSERVACIONES */}
               <div>
 
-                <h4 className="text-xl font-bold text-[#243847] mb-5">
-
-                  Observaciones
-
-                </h4>
-
                 <textarea
-                  placeholder="Notas del paquete"
+                  placeholder="Observaciones"
                   value={notes}
                   onChange={(e) =>
                     setNotes(
                       e.target.value
                     )
                   }
-                  className="w-full border p-4 rounded-2xl h-28"
+                  className="w-full border p-4 rounded-2xl h-24"
                 />
 
               </div>
@@ -907,6 +736,5 @@ export default function PackagesPage() {
       )}
 
     </div>
-
   );
 }
