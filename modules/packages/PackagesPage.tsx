@@ -832,6 +832,43 @@ const fetchUpcomingSessions =
 
   }, []);
 
+  const updateSessionField =
+  async (
+    sessionId: number,
+    field: string,
+    value: string
+  ) => {
+
+    const { error } =
+      await supabase
+
+        .from(
+          "package_sessions"
+        )
+
+        .update({
+          [field]: value,
+        })
+
+        .eq(
+          "id",
+          sessionId
+        );
+
+    if (error) {
+
+      console.log(error);
+
+      alert(
+        "Error al guardar"
+      );
+
+      return;
+    }
+
+    fetchPackages();
+  };
+
   return (
 
     <div>
@@ -982,7 +1019,7 @@ const fetchUpcomingSessions =
       {/* TABLA */}
       <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
 
-        <table className="w-full">
+        <table className="w-full min-w-[1000px]">
 
           <thead className="bg-[#243847] text-white">
 
@@ -1778,7 +1815,7 @@ const fetchUpcomingSessions =
 
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[70] p-6">
 
-          <div className="bg-white rounded-3xl w-full max-w-[600px] overflow-hidden">
+          <div className="bg-white rounded-3xl w-full max-w-[1100px] overflow-y-auto max-h-[90vh]">
 
             <div className="bg-[#243847] text-white px-6 py-5 flex items-center justify-between">
 
@@ -1803,9 +1840,9 @@ const fetchUpcomingSessions =
 
             </div>
 
-            <div className="p-6">
+            <div className="p-6 overflow-x-auto">
 
-              <table className="w-full">
+             <table className="w-full min-w-[1000px]">
 
                 <thead>
 
@@ -1823,6 +1860,10 @@ const fetchUpcomingSessions =
                       Estado
                     </th>
 
+                    <th className="text-left p-3">
+                      Seguimiento
+                    </th>
+
                   </tr>
 
                 </thead>
@@ -1834,7 +1875,7 @@ const fetchUpcomingSessions =
 
                       <tr
                         key={session.id}
-                        className="border-b"
+                        className="border-b align-top"
                       >
 
                         <td className="p-3">
@@ -1891,7 +1932,59 @@ const fetchUpcomingSessions =
                 </button>
 
                 </td>
+                        <td className="p-3 min-w-[350px]">
 
+  <div className="space-y-3">
+
+    <input
+      type="text"
+      placeholder="Parámetro / Intensidad"
+      defaultValue={
+        session.session_parameter || ""
+      }
+      onChange={(e) =>
+        updateSessionField(
+          session.id,
+          "session_parameter",
+          e.target.value
+        )
+      }
+      className="w-full border border-gray-200 bg-[#f8fafc] p-3 rounded-xl"
+    />
+
+    <textarea
+      placeholder="Avance"
+      defaultValue={
+        session.session_progress || ""
+      }
+      onChange={(e) =>
+        updateSessionField(
+          session.id,
+          "session_progress",
+          e.target.value
+        )
+      }
+      className="w-full border border-gray-200 bg-[#f8fafc] p-3 rounded-xl"
+    />
+
+    <textarea
+      placeholder="Observaciones"
+      defaultValue={
+        session.session_notes || ""
+      }
+      onChange={(e) =>
+        updateSessionField(
+          session.id,
+          "session_notes",
+          e.target.value
+        )
+      }
+      className="w-full border border-gray-200 bg-[#f8fafc] p-3 rounded-xl"
+    />
+
+  </div>
+
+</td>
                       </tr>
 
                     )
