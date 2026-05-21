@@ -560,7 +560,7 @@ export default function ClientsPage() {
 
         <div className="fixed inset-0 bg-black/40 flex items-start justify-center z-50 overflow-y-auto p-6">
 
-          <div className="bg-white p-8 rounded-3xl w-full max-w-[700px] shadow-2xl mt-10 mb-20">
+          <div className="bg-white p-8 rounded-3xl w-full max-w-[1100px] max-h-[90vh] overflow-y-auto shadow-2xl mt-10 mb-20">
 
             <div className="flex items-center justify-between mb-8">
 
@@ -814,7 +814,7 @@ export default function ClientsPage() {
 
         <div className="fixed inset-0 bg-black/40 flex items-start justify-center z-50 overflow-y-auto p-6">
 
-          <div className="bg-white p-8 rounded-3xl w-full max-w-[700px] shadow-2xl mt-10 mb-20">
+        <div className="bg-white p-8 rounded-3xl w-full max-w-[1100px] max-h-[90vh] overflow-y-auto shadow-2xl mt-10 mb-20">
 
             <h3 className="text-2xl font-bold text-[#243847] mb-6">
 
@@ -824,7 +824,7 @@ export default function ClientsPage() {
 
             </h3>
 
-            <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
 
               <input
                 type="text"
@@ -835,7 +835,7 @@ export default function ClientsPage() {
                     e.target.value
                   )
                 }
-                className="w-full border p-4 rounded-2xl"
+                className="w-full border border-gray-200 bg-[#f8fafc] p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#243847]"
               />
 
               <input
@@ -847,7 +847,7 @@ export default function ClientsPage() {
                     e.target.value
                   )
                 }
-                className="w-full border p-4 rounded-2xl"
+                className="w-full border border-gray-200 bg-[#f8fafc] p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#243847]"
               />
 
               <input
@@ -859,7 +859,7 @@ export default function ClientsPage() {
                     e.target.value
                   )
                 }
-                className="w-full border p-4 rounded-2xl"
+                className="w-full border border-gray-200 bg-[#f8fafc] p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#243847]"
               />
 
               <input
@@ -870,7 +870,7 @@ export default function ClientsPage() {
                     e.target.value
                   )
                 }
-                className="w-full border p-4 rounded-2xl"
+                className="w-full border border-gray-200 bg-[#f8fafc] p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#243847]"
               />
 
               <input
@@ -882,7 +882,7 @@ export default function ClientsPage() {
                     e.target.value
                   )
                 }
-                className="w-full border p-4 rounded-2xl"
+                className="w-full border border-gray-200 bg-[#f8fafc] p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#243847]"
               />
 
               <input
@@ -894,30 +894,67 @@ export default function ClientsPage() {
                     e.target.value
                   )
                 }
-                className="w-full border p-4 rounded-2xl"
+                className="w-full border border-gray-200 bg-[#f8fafc] p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#243847]"
               />
+                    <div className="col-span-2 pt-4">
 
-              <textarea
-                placeholder="Alergias"
-                value={allergies}
-                onChange={(e) =>
-                  setAllergies(
-                    e.target.value
-                  )
-                }
-                className="w-full border p-4 rounded-2xl"
-              />
+                    <h3 className="text-xl font-bold text-[#243847]">
 
-              <textarea
-                placeholder="Condiciones médicas"
-                value={medicalConditions}
-                onChange={(e) =>
-                  setMedicalConditions(
-                    e.target.value
-                  )
-                }
-                className="w-full border p-4 rounded-2xl"
-              />
+                      Información médica
+
+                    </h3>
+
+                  </div>
+             <div className="col-span-2">
+
+  <label className="block mb-2 font-medium text-[#243847]">
+
+    Alergias
+
+  </label>
+
+  <textarea
+    placeholder="Alergias"
+    value={allergies}
+    onChange={(e) =>
+      setAllergies(
+        e.target.value
+      )
+    }
+    className="w-full border border-gray-200 bg-[#f8fafc] p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#243847]"
+  />
+
+</div>
+
+              <div className="col-span-2">
+
+  <label className="block mb-2 font-medium text-[#243847]">
+
+    Condiciones médicas
+
+  </label>
+
+  <textarea
+    placeholder="Condiciones médicas"
+    value={medicalConditions}
+    onChange={(e) =>
+      setMedicalConditions(
+        e.target.value
+      )
+    }
+    className="col-span-2 w-full border border-gray-200 bg-[#f8fafc] p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#243847]"
+  />
+
+</div>
+                  <div className="col-span-2 pt-4">
+
+                <h3 className="text-xl font-bold text-[#243847]">
+
+                  Contacto de emergencia
+
+                </h3>
+
+              </div>
 
               <input
                 type="text"
@@ -928,7 +965,7 @@ export default function ClientsPage() {
                     e.target.value
                   )
                 }
-                className="w-full border p-4 rounded-2xl"
+                className="w-full border border-gray-200 bg-[#f8fafc] p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#243847]"
               />
 
               <input
@@ -940,7 +977,7 @@ export default function ClientsPage() {
                     e.target.value
                   )
                 }
-                className="w-full border p-4 rounded-2xl"
+                className="w-full border border-gray-200 bg-[#f8fafc] p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#243847]"
               />
 
               <textarea
@@ -951,11 +988,19 @@ export default function ClientsPage() {
                     e.target.value
                   )
                 }
-                className="w-full border p-4 rounded-2xl min-h-[120px]"
+                className="col-span-2 w-full border p-4 rounded-2xl min-h-[120px]"
               />
+                  <div className="col-span-2 pt-4">
 
+                  <h3 className="text-xl font-bold text-[#243847]">
+
+                    Documentos
+
+                  </h3>
+
+                </div>
               {/* SUBIR ARCHIVO */}
-              <div>
+              <div className="col-span-2">
 
                 <label className="block mb-2 font-medium text-[#243847]">
 
@@ -1017,6 +1062,8 @@ export default function ClientsPage() {
                           .publicUrl
                       );
 
+                      setConsentSigned(true);
+
                       alert(
                         "Archivo subido"
                       );
@@ -1059,16 +1106,12 @@ export default function ClientsPage() {
               </div>
 
               {/* CONSENTIMIENTO */}
-              <div className="flex items-center gap-3">
+              <div className="col-span-2 flex items-center gap-3">
 
                 <input
                   type="checkbox"
                   checked={consentSigned}
-                  onChange={(e) =>
-                    setConsentSigned(
-                      e.target.checked
-                    )
-                  }
+                  disabled
                   className="w-5 h-5"
                 />
 

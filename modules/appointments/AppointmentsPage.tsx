@@ -14,6 +14,7 @@ import esLocale from "@fullcalendar/core/locales/es";
 
 import { supabase } from "@/lib/supabase";
 
+
 export default function AppointmentsPage() {
 
   const [events, setEvents] =
@@ -59,6 +60,7 @@ export default function AppointmentsPage() {
   const [branches,
     setBranches] =
     useState<any[]>([]);
+  
 
   // OBTENER CITAS
   const fetchAppointments = async () => {
@@ -365,6 +367,50 @@ export default function AppointmentsPage() {
       return;
     }
 
+            // VALIDAR CRUCE
+    const { data: conflicts } =
+      await supabase
+
+        .from(
+          "appointments"
+        )
+
+        .select("*")
+
+  
+
+        .eq(
+          "appointment_date",
+          appointmentDate
+        )
+
+        .neq(
+          "id",
+          editingAppointmentId || 0
+        );
+
+    const hasConflict =
+      conflicts?.some(
+        (appt: any) =>
+
+          startTime <
+            appt.end_time
+
+          &&
+
+          endTime >
+            appt.start_time
+      );
+
+    if (hasConflict) {
+
+      alert(
+        "La trabajadora ya tiene una cita en ese horario"
+      );
+
+      return;
+    }
+
     // EDITAR
     if (editingAppointmentId) {
 
@@ -427,12 +473,77 @@ export default function AppointmentsPage() {
       );
 
     } else {
+        // VALIDAR CRUCE
+const { data: conflicts } =
+  await supabase
 
+    .from(
+      "appointments"
+    )
+
+    .select("*")
+
+
+
+    .eq(
+      "appointment_date",
+      appointmentDate
+    );
+
+const hasConflict =
+  conflicts?.some(
+    (appt: any) => {
+
+      const newStart =
+        new Date(
+          `2000-01-01T${startTime}`
+        );
+
+      const newEnd =
+        new Date(
+          `2000-01-01T${endTime}`
+        );
+
+      const existingStart =
+        new Date(
+          `2000-01-01T${appt.start_time}`
+        );
+
+      const existingEnd =
+        new Date(
+          `2000-01-01T${appt.end_time}`
+        );
+
+      return (
+
+        newStart <
+          existingEnd
+
+        &&
+
+        newEnd >
+          existingStart
+
+      );
+    }
+  );
+
+if (hasConflict) {
+
+  alert(
+    "La trabajadora ya tiene una cita en ese horario"
+  );
+
+  return;
+}
+      
       // CREAR
       const { error } =
         await supabase
 
           .from("appointments")
+
+          
 
           .insert([
             {
@@ -507,6 +618,7 @@ export default function AppointmentsPage() {
     fetchAppointments();
   };
 
+
   // CARGAR
   useEffect(() => {
 
@@ -551,8 +663,9 @@ export default function AppointmentsPage() {
               className="w-5 h-5 rounded-full"
               style={{
                 backgroundColor:
-                  worker.color ||
-                  "#243847",
+                worker.color?.startsWith("#")
+                  ? worker.color
+                  : "#243847",
               }}
             />
 
@@ -567,6 +680,7 @@ export default function AppointmentsPage() {
         ))}
 
       </div>
+
 
       {/* CALENDARIO */}
       <div className="bg-white p-6 rounded-3xl shadow-xl">
@@ -650,72 +764,159 @@ export default function AppointmentsPage() {
 
           }}
 
-          // DRAG & DROP
-          eventDrop={async (info) => {
+            // DRAG & DROP
+eventDrop={async (info) => {
 
-            const event =
-              info.event;
+  const event =
+    info.event;
 
-            const start =
-              event.start;
+  const start =
+    event.start;
 
-            const end =
-              event.end;
+  const end =
+    event.end;
 
-            if (
-              !start ||
-              !end
-            ) return;
+  if (
+    !start ||
+    !end
+  ) return;
 
-            const { error } =
-              await supabase
+  const appointmentDate =
+    start
+      .toISOString()
+      .split("T")[0];
 
-                .from(
-                  "appointments"
-                )
+  const startTime =
+    start
+      .toTimeString()
+      .slice(0, 5);
 
-                .update({
+  const endTime =
+    end
+      .toTimeString()
+      .slice(0, 5);
 
-                  appointment_date:
-                    start
-                      .toISOString()
-                      .split("T")[0],
+  const workerId =
+    event.extendedProps
+      .worker_id;
 
-                  start_time:
-                    start
-                      .toTimeString()
-                      .slice(0, 5),
+  // VALIDAR CRUCE
+  const { data: conflicts } =
+    await supabase
 
-                  end_time:
-                    end
-                      .toTimeString()
-                      .slice(0, 5),
+      .from(
+        "appointments"
+      )
 
-                })
+      .select("*")
 
-                .eq(
-                  "id",
-                  Number(event.id)
-                );
+      .eq(
+        "worker_id",
+        workerId
+      )
 
-            if (error) {
+      .eq(
+        "appointment_date",
+        appointmentDate
+      )
 
-              console.log(error);
+      .neq(
+        "id",
+        Number(event.id)
+      );
 
-              alert(
-                "Error al mover reserva"
-              );
+  const hasConflict =
+    conflicts?.some(
+      (appt: any) => {
 
-              info.revert();
+        const newStart =
+          new Date(
+            `2000-01-01T${startTime}`
+          );
 
-              return;
-            }
+        const newEnd =
+          new Date(
+            `2000-01-01T${endTime}`
+          );
 
-            alert(
-              "Reserva actualizada"
-            );
+        const existingStart =
+          new Date(
+            `2000-01-01T${appt.start_time}`
+          );
 
-          }}
+        const existingEnd =
+          new Date(
+            `2000-01-01T${appt.end_time}`
+          );
+
+        return (
+
+          newStart <
+            existingEnd
+
+          &&
+
+          newEnd >
+            existingStart
+
+        );
+      }
+    );
+
+  if (hasConflict) {
+
+    alert(
+      "La trabajadora ya tiene una reserva en ese horario"
+    );
+
+    info.revert();
+
+    return;
+  }
+
+  const { error } =
+    await supabase
+
+      .from(
+        "appointments"
+      )
+
+      .update({
+
+        appointment_date:
+          appointmentDate,
+
+        start_time:
+          startTime,
+
+        end_time:
+          endTime,
+
+      })
+
+      .eq(
+        "id",
+        Number(event.id)
+      );
+
+  if (error) {
+
+    console.log(error);
+
+    alert(
+      "Error al mover reserva"
+    );
+
+    info.revert();
+
+    return;
+  }
+
+  alert(
+    "Reserva actualizada"
+  );
+
+}}
 
           // RESIZE
           eventResize={async (info) => {
