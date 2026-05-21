@@ -500,6 +500,49 @@ export default function PackagesPage() {
             );
         }
 
+        // CREAR CITA AUTOMATICA
+
+await supabase
+
+  .from(
+    "appointments"
+  )
+
+  .insert([
+    {
+
+      client_id:
+        parseInt(
+          clientId
+        ),
+
+      service_id:
+        parseInt(
+          serviceId
+        ),
+
+      worker_id: 1,
+
+      branch_id: 1,
+
+      appointment_date:
+        startDate,
+
+      start_time:
+        startTime,
+
+      end_time:
+        startTime,
+
+      status:
+        "Pendiente",
+
+      notes:
+        "Sesión #1 paquete",
+
+    },
+  ]);
+
         // GENERAR SESIONES
         const sessionsToInsert = [];
 
@@ -548,6 +591,42 @@ export default function PackagesPage() {
           .insert(
             sessionsToInsert
           );
+
+          // CREAR CITA AUTOMATICA
+
+await supabase
+
+  .from(
+    "appointments"
+  )
+
+  .insert([
+    {
+
+      client_id:
+        parseInt(
+          clientId
+        ),
+
+      service_id:
+        parseInt(
+          serviceId
+        ),
+
+      appointment_date:
+        startDate,
+
+      start_time:
+        startTime,
+
+      status:
+        "Pendiente",
+
+      notes:
+        `Sesión #1 paquete`,
+
+    },
+  ]);
 
         alert(
           "Paquete creado"

@@ -19,6 +19,21 @@ export default function AppointmentsPage() {
 
   const [events, setEvents] =
     useState<any[]>([]);
+  
+    const [
+  showReprogramModal,
+  setShowReprogramModal
+] = useState(false);
+
+    const [
+      reprogramDate,
+      setReprogramDate
+    ] = useState("");
+
+    const [
+      reprogramTime,
+      setReprogramTime
+    ] = useState("");
 
   const [selectedDate,
     setSelectedDate] =
@@ -78,7 +93,13 @@ export default function AppointmentsPage() {
             name,
             color
           )
-        `);
+        `)
+        
+                        .neq(
+          "status",
+          "Cancelada"
+        )
+        ;
 
     if (error) {
 
@@ -300,6 +321,11 @@ export default function AppointmentsPage() {
 
         .select("*")
 
+            .neq(
+            "status",
+            "Cancelada"
+          )
+
         .eq(
           "worker_id",
           parseInt(workerId)
@@ -336,6 +362,14 @@ export default function AppointmentsPage() {
             return false;
           }
 
+          if (
+  appointment.status ===
+  "Cancelada"
+) {
+
+  return false;
+}
+
           const existingStart =
             appointment.start_time;
 
@@ -368,26 +402,29 @@ export default function AppointmentsPage() {
     }
 
             // VALIDAR CRUCE
-    const { data: conflicts } =
-      await supabase
+                const { data: conflicts } =
+  await supabase
 
-        .from(
-          "appointments"
-        )
+    .from(
+      "appointments"
+    )
 
-        .select("*")
+    .select("*")
 
-  
+    .neq(
+      "status",
+      "Cancelada"
+    )
 
-        .eq(
-          "appointment_date",
-          appointmentDate
-        )
+    .eq(
+      "worker_id",
+      parseInt(workerId)
+    )
 
-        .neq(
-          "id",
-          editingAppointmentId || 0
-        );
+    .eq(
+      "appointment_date",
+      appointmentDate
+    );
 
     const hasConflict =
       conflicts?.some(
@@ -628,6 +665,206 @@ if (hasConflict) {
 
   }, []);
 
+const cancelAppointment =
+
+
+  async (
+    appointmentId: number
+  ) => {
+
+    const confirmCancel =
+      confirm(
+        "¿Cancelar cita?"
+      );
+
+    if (!confirmCancel)
+      return;
+
+    const { error } =
+      await supabase
+
+        .from(
+          "appointments"
+        )
+
+        .update({
+          status:
+            "Cancelada",
+        })
+
+        .eq(
+          "id",
+          appointmentId
+        );
+
+    if (error) {
+
+      console.log(error);
+
+      alert(
+        "Error cancelando cita"
+      );
+
+      return;
+    }
+
+    alert(
+      "Cita cancelada"
+    );
+
+    fetchAppointments();
+  };
+
+  const reprogramAppointment =
+  async (
+    appointmentId: number,
+    newDate: string,
+    newTime: string
+  ) => {
+      const currentEvent =
+  events.find(
+    (event) =>
+      event.id ===
+      appointmentId
+  );
+
+const serviceId =
+  currentEvent
+    ?.extendedProps
+    ?.service_id;
+
+const selectedService =
+  services.find(
+    (service) =>
+      service.id ===
+      serviceId
+  );
+
+let durationMinutes = 60;
+
+if (
+  selectedService?.duration
+) {
+
+  const durationText =
+    selectedService.duration
+      .toLowerCase();
+
+  if (
+    durationText.includes(
+      "hora"
+    )
+  ) {
+
+    const hours =
+      parseInt(
+        durationText
+      ) || 1;
+
+    durationMinutes =
+      hours * 60;
+  }
+
+  if (
+    durationText.includes(
+      "minuto"
+    )
+  ) {
+
+    durationMinutes =
+      parseInt(
+        durationText
+      ) || 60;
+  }
+}
+
+const start =
+  new Date(
+    `${newDate}T${newTime}`
+  );
+
+const end =
+  new Date(start);
+
+end.setMinutes(
+  end.getMinutes() +
+    durationMinutes
+);
+
+const endTime =
+  end
+    .toTimeString()
+    .slice(0, 5);   
+
+
+    const { error } =
+      await supabase
+
+        .from(
+          "appointments"
+        )
+
+        .update({
+
+          appointment_date:
+            newDate,
+
+            start_time:
+            newTime,
+
+            end_time:
+            endTime,
+
+        })
+
+        .eq(
+          "id",
+          appointmentId
+        );
+
+    if (error) {
+
+      console.log(error);
+
+      alert(
+        "Error reprogramando"
+      );
+
+      return;
+    }
+
+
+
+if (
+  selectedService
+    ?.allow_packages
+) {
+
+  const moveNextSessions =
+    confirm(
+      "¿Mover también las siguientes sesiones?"
+    );
+
+  if (
+    moveNextSessions
+  ) {
+
+    alert(
+      "Próximamente moverá las siguientes sesiones automáticamente"
+    );
+
+  }
+}
+
+    alert(
+      "Reserva reprogramada"
+    );
+
+    fetchAppointments();
+
+    setShowModal(false);
+  };
+
   return (
 
     <div>
@@ -810,6 +1047,11 @@ eventDrop={async (info) => {
 
       .select("*")
 
+            .neq(
+        "status",
+        "Cancelada"
+      )
+
       .eq(
         "worker_id",
         workerId
@@ -848,6 +1090,8 @@ eventDrop={async (info) => {
           new Date(
             `2000-01-01T${appt.end_time}`
           );
+        
+              
 
         return (
 
@@ -1155,7 +1399,7 @@ eventDrop={async (info) => {
 
             </div>
 
-            <div className="flex gap-4 mt-8">
+            <div className="flex flex-wrap gap-4 mt-8">
 
               <button
                 onClick={() =>
@@ -1167,6 +1411,52 @@ eventDrop={async (info) => {
                 Cancelar
 
               </button>
+
+{editingAppointmentId && (
+
+  <button
+
+    onClick={() => {
+
+      setReprogramDate("");
+
+      setReprogramTime("");
+
+      setShowReprogramModal(true);
+
+    }}
+
+    className="bg-orange-500 text-white px-5 py-3 rounded-2xl"
+
+  >
+
+    Reprogramar
+
+  </button>
+
+)}              {editingAppointmentId && (
+  
+  
+
+  <button
+
+    onClick={() =>
+
+      cancelAppointment(
+        editingAppointmentId
+      )
+
+    }
+
+    className="bg-red-500 text-white px-5 py-3 rounded-2xl whitespace-nowrap"
+
+  >
+
+    Eliminar reserva
+
+  </button>
+
+)}
 
               <button
                 onClick={
@@ -1188,6 +1478,98 @@ eventDrop={async (info) => {
         </div>
 
       )}
+
+      {showReprogramModal && (
+
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+    <div className="bg-white p-8 rounded-3xl w-[400px] shadow-2xl">
+
+      <h3 className="text-2xl font-bold text-[#243847] mb-6">
+
+        Reprogramar reserva
+
+      </h3>
+
+      <div className="space-y-4">
+
+        <input
+
+          type="date"
+
+          value={reprogramDate}
+
+          onChange={(e) =>
+            setReprogramDate(
+              e.target.value
+            )
+          }
+
+          className="w-full border p-4 rounded-2xl"
+
+        />
+
+        <input
+
+          type="time"
+
+          value={reprogramTime}
+
+          onChange={(e) =>
+            setReprogramTime(
+              e.target.value
+            )
+          }
+
+          className="w-full border p-4 rounded-2xl"
+
+        />
+
+      </div>
+
+      <div className="flex gap-4 mt-8">
+
+        <button
+
+          onClick={() =>
+            setShowReprogramModal(false)
+          }
+
+          className="bg-gray-200 px-5 py-3 rounded-2xl"
+
+        >
+
+          Cancelar
+
+        </button>
+
+        <button
+
+          onClick={() =>
+
+            reprogramAppointment(
+              editingAppointmentId!,
+              reprogramDate,
+              reprogramTime
+            )
+
+          }
+
+          className="bg-orange-500 text-white px-5 py-3 rounded-2xl"
+
+        >
+
+          Guardar
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+)}
 
     </div>
 
