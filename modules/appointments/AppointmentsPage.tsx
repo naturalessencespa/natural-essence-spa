@@ -35,6 +35,26 @@ export default function AppointmentsPage() {
       setReprogramTime
     ] = useState("");
 
+        const [
+  showSalesModal,
+  setShowSalesModal
+] = useState(false);
+
+const [
+  completedAppointmentId,
+  setCompletedAppointmentId
+] = useState<number | null>(null);
+
+const [
+  additionalServiceId,
+  setAdditionalServiceId
+] = useState("");
+
+const [
+  soldPrice,
+  setSoldPrice
+] = useState("");
+
   const [selectedDate,
     setSelectedDate] =
     useState("");
@@ -715,6 +735,158 @@ const cancelAppointment =
     fetchAppointments();
   };
 
+  const completeAppointment =
+  async (
+    appointmentId: number
+  ) => {
+
+    const { error } =
+      await supabase
+
+        .from(
+          "appointments"
+        )
+
+        .update({
+
+          status:
+            "Atendida",
+
+        })
+
+        .eq(
+          "id",
+          appointmentId
+        );
+
+    if (error) {
+
+      console.log(error);
+
+      alert(
+        "Error marcando atención"
+      );
+
+      return;
+    }
+
+        setCompletedAppointmentId(
+  appointmentId
+);
+
+setShowSalesModal(true);
+
+fetchAppointments();
+
+setShowModal(false);
+  };  
+
+  const saveAdditionalService =
+  async () => {
+
+    if (
+      !additionalServiceId ||
+      !soldPrice ||
+      !completedAppointmentId
+    ) {
+
+      alert(
+        "Completa los campos"
+      );
+
+      return;
+    }
+
+    const selectedService =
+      services.find(
+        (service) =>
+          service.id ===
+          parseInt(
+            additionalServiceId
+          )
+      );
+
+    const currentAppointment =
+      events.find(
+        (event) =>
+          event.id ===
+          completedAppointmentId
+      );
+
+    const workerId =
+      currentAppointment
+        ?.extendedProps
+        ?.worker_id;
+
+    const originalPrice =
+      selectedService?.price || 0;
+
+    const sold =
+      parseFloat(
+        soldPrice
+      );
+
+    const commission =
+      sold * 0.20;
+
+    const { error } =
+      await supabase
+
+        .from(
+          "appointment_services"
+        )
+
+        .insert([
+          {
+
+            appointment_id:
+              completedAppointmentId,
+
+            service_id:
+              parseInt(
+                additionalServiceId
+              ),
+
+            worker_id:
+              workerId,
+
+            original_price:
+              originalPrice,
+
+            sold_price:
+              sold,
+
+            commission_percentage:
+              20,
+
+            commission_amount:
+              commission,
+
+          },
+        ]);
+
+    if (error) {
+
+      console.log(error);
+
+      alert(
+        "Error guardando venta"
+      );
+
+      return;
+    }
+
+    alert(
+      "Venta guardada"
+    );
+
+    setAdditionalServiceId("");
+
+    setSoldPrice("");
+
+    setShowSalesModal(false);
+  };
+
   const reprogramAppointment =
   async (
     appointmentId: number,
@@ -728,7 +900,9 @@ const cancelAppointment =
       appointmentId
   );
 
-const serviceId =
+ 
+
+const currentServiceId  =
   currentEvent
     ?.extendedProps
     ?.service_id;
@@ -737,7 +911,7 @@ const selectedService =
   services.find(
     (service) =>
       service.id ===
-      serviceId
+      currentServiceId
   );
 
 let durationMinutes = 60;
@@ -1434,7 +1608,32 @@ eventDrop={async (info) => {
 
   </button>
 
-)}              {editingAppointmentId && (
+  
+
+)}             
+
+{editingAppointmentId && (
+
+  <button
+
+    onClick={() =>
+
+      completeAppointment(
+        editingAppointmentId
+      )
+
+    }
+
+    className="bg-green-600 text-white px-5 py-3 rounded-2xl"
+
+  >
+
+    Marcar atendida
+
+  </button>
+
+)}
+ {editingAppointmentId && (
   
   
 
@@ -1560,6 +1759,111 @@ eventDrop={async (info) => {
         >
 
           Guardar
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+)}
+
+{showSalesModal && (
+
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+    <div className="bg-white p-8 rounded-3xl w-[500px] shadow-2xl">
+
+      <h3 className="text-2xl font-bold text-[#243847] mb-6">
+
+        Ventas adicionales
+
+      </h3>
+
+      <div className="space-y-4">
+
+        <select
+
+          value={additionalServiceId}
+
+          onChange={(e) =>
+            setAdditionalServiceId(
+              e.target.value
+            )
+          }
+
+          className="w-full border p-4 rounded-2xl"
+
+        >
+
+          <option value="">
+            Seleccionar servicio
+          </option>
+
+          {services.map((service) => (
+
+            <option
+              key={service.id}
+              value={service.id}
+            >
+
+              {service.name}
+
+            </option>
+
+          ))}
+
+        </select>
+
+        <input
+
+          type="number"
+
+          placeholder="Precio vendido"
+
+          value={soldPrice}
+
+          onChange={(e) =>
+            setSoldPrice(
+              e.target.value
+            )
+          }
+
+          className="w-full border p-4 rounded-2xl"
+
+        />
+
+      </div>
+
+      <div className="flex gap-4 mt-8">
+
+        <button
+
+          onClick={() =>
+            setShowSalesModal(false)
+          }
+
+          className="bg-gray-200 px-5 py-3 rounded-2xl"
+
+        >
+
+          Cerrar
+
+        </button>
+
+        <button
+
+         onClick={
+           saveAdditionalService
+  }
+
+          className="bg-[#243847] text-white px-5 py-3 rounded-2xl"
+
+        >
+
+          Guardar venta
 
         </button>
 

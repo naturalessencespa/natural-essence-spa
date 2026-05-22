@@ -58,6 +58,21 @@ export default function InventoryPage() {
   const [notes, setNotes] =
     useState("");
 
+  const [
+  productType,
+  setProductType
+] = useState("cabina");
+
+  const [
+    stock,
+    setStock
+  ] = useState("0");
+
+  const [
+  productTypeFilter,
+  setProductTypeFilter
+] = useState("todos");
+
   // EXPORTAR EXCEL
   const exportToExcel = () => {
 
@@ -157,20 +172,46 @@ export default function InventoryPage() {
       data || [];
 
     // BUSCAR PRODUCTO
-    if (search) {
+// BUSCAR PRODUCTO
+if (search) {
 
-      filteredProducts =
-        filteredProducts.filter(
-          (product) =>
+  filteredProducts =
+    filteredProducts.filter(
+      (product) =>
 
-            product.name
-              ?.toLowerCase()
+        product.name
+          ?.toLowerCase()
 
-              .includes(
-                search.toLowerCase()
-              )
-        );
-    }
+          .includes(
+            search.toLowerCase()
+          )
+
+        &&
+
+        (
+          productTypeFilter ===
+            "todos" ||
+
+          product.product_type ===
+            productTypeFilter
+        )
+    );
+}
+
+      // FILTRAR TIPO PRODUCTO
+if (
+  productTypeFilter !==
+  "todos"
+) {
+
+  filteredProducts =
+    filteredProducts.filter(
+      (product) =>
+
+        product.product_type ===
+        productTypeFilter
+    );
+}
 
     // FILTRAR CATEGORIA
     if (filterCategory) {
@@ -281,6 +322,12 @@ export default function InventoryPage() {
 
             notes,
 
+            product_type:
+              productType,
+
+            stock:
+              Number(stock),
+
           })
 
           .eq(
@@ -335,6 +382,12 @@ export default function InventoryPage() {
 
               notes,
 
+              product_type:
+              productType,
+
+              stock:
+              Number(stock),
+
             },
           ]);
 
@@ -376,6 +429,94 @@ export default function InventoryPage() {
 
     fetchProducts();
   };
+
+  // AGREGAR STOCK
+const addStock = async (
+  productId: number,
+  amount: number
+) => {
+
+  const product =
+    products.find(
+      (p) =>
+        p.id === productId
+    );
+
+  if (!product) return;
+
+  const newStock =
+    Number(
+      product.stock || 0
+    ) + amount;
+
+    const previousStock =
+  Number(
+    product.stock || 0
+  );
+
+  const { error } =
+    await supabase
+
+      .from(
+        "inventory_products"
+      )
+
+      .update({
+        stock: newStock
+      })
+
+      .eq(
+        "id",
+        productId
+      );
+
+  if (error) {
+
+    console.log(error);
+
+    alert(
+      "Error actualizando stock"
+    );
+
+    return;
+  }
+
+  await supabase
+
+  .from(
+    "inventory_movements"
+  )
+
+  .insert([
+    {
+
+      product_id:
+        productId,
+
+      movement_type:
+        "ingreso",
+
+      quantity:
+        amount,
+
+      previous_stock:
+        previousStock,
+
+      new_stock:
+        newStock,
+
+      notes:
+        "Ingreso manual de stock",
+
+    },
+  ]);
+
+  alert(
+    "Stock actualizado"
+  );
+
+  fetchProducts();
+};
 
   // ELIMINAR
   const deleteProduct = async (
@@ -419,15 +560,16 @@ export default function InventoryPage() {
   };
 
   // FILTROS
-  useEffect(() => {
+useEffect(() => {
 
-    fetchProducts();
+  fetchProducts();
 
-  }, [
-    search,
-    filterCategory,
-    sortBy
-  ]);
+}, [
+  search,
+  filterCategory,
+  sortBy,
+  productTypeFilter
+]);
 
   // CATEGORIAS
   useEffect(() => {
@@ -576,6 +718,38 @@ export default function InventoryPage() {
 
         </select>
 
+                <select
+
+          value={productTypeFilter}
+
+          onChange={(e) =>
+            setProductTypeFilter(
+              e.target.value
+            )
+          }
+
+          className="border p-4 rounded-2xl"
+
+        >
+
+          <option value="todos">
+            Todos tipos
+          </option>
+
+          <option value="cabina">
+            Cabina
+          </option>
+
+          <option value="venta">
+            Venta
+          </option>
+
+          <option value="mixto">
+            Mixto
+          </option>
+
+        </select>
+
       </div>
 
       {/* TABLA */}
@@ -596,7 +770,11 @@ export default function InventoryPage() {
               </th>
 
               <th className="text-left p-5">
-                Cantidad
+                Presentación
+              </th>
+
+                <th className="text-left p-5">
+                Stock
               </th>
 
               <th className="text-left p-5">
@@ -643,6 +821,12 @@ export default function InventoryPage() {
                 <td className="p-5">
 
                   {product.measure}
+
+                </td>
+
+                <td className="p-5">
+
+                  {product.stock}
 
                 </td>
 
@@ -700,6 +884,15 @@ export default function InventoryPage() {
                         product.notes || ""
                       );
 
+                      setProductType(
+                        product.product_type || "cabina"
+                      );
+
+                      setStock(
+                        product.stock
+                          ?.toString() || "0"
+                      );
+
                       setShowModal(true);
 
                     }}
@@ -709,6 +902,31 @@ export default function InventoryPage() {
                     Editar
 
                   </button>
+
+                  <button
+
+  onClick={() => {
+
+    const amount =
+      prompt(
+        "Cantidad a agregar"
+      );
+
+    if (!amount) return;
+
+    addStock(
+      product.id,
+      Number(amount)
+    );
+  }}
+
+  className="bg-green-600 text-white px-4 py-2 rounded-xl"
+
+>
+
+  + Stock
+
+</button>
 
                   {/* ELIMINAR */}
                   <button
@@ -1008,7 +1226,55 @@ export default function InventoryPage() {
 
                 Cancelar
 
-              </button>
+                              </button>
+
+                              {/* TIPO PRODUCTO */}
+                <select
+
+                  value={productType}
+
+                  onChange={(e) =>
+                    setProductType(
+                      e.target.value
+                    )
+                  }
+
+                  className="w-full border p-4 rounded-2xl"
+
+                >
+
+                  <option value="cabina">
+                    Cabina
+                  </option>
+
+                  <option value="venta">
+                    Venta
+                  </option>
+
+                  <option value="mixto">
+                    Mixto
+                  </option>
+
+                </select>
+
+                {/* STOCK */}
+                <input
+
+                  type="number"
+
+                  placeholder="Stock inicial"
+
+                  value={stock}
+
+                  onChange={(e) =>
+                    setStock(
+                      e.target.value
+                    )
+                  }
+
+                  className="w-full border p-4 rounded-2xl"
+
+                />
 
               <button
                 onClick={

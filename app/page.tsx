@@ -14,6 +14,12 @@ import WorkersPage from "@/modules/workers/WorkersPage";
 
 import PackagesPage from "@/modules/packages/PackagesPage";
 
+import InternalSalesPage from "@/modules/internal-sales/InternalSalesPage";
+
+import ProductSalesPage from "@/modules/product-sales/ProductSalesPage";
+
+import InventoryMovementsPage from "@/modules/inventory-movements/InventoryMovementsPage";
+
 export default function Home() {
 
   const [page, setPage] =
@@ -88,6 +94,8 @@ export default function Home() {
 
           </button>
 
+        
+
           {/* INVENTARIO */}
           <button
             onClick={() =>
@@ -103,6 +111,24 @@ export default function Home() {
             Inventario
 
           </button>
+
+            <button
+  onClick={() =>
+    setPage(
+      "movimientos-inventario"
+    )
+  }
+  className={`text-left p-4 rounded-2xl transition ${
+    page ===
+    "movimientos-inventario"
+      ? "bg-white text-[#243847]"
+      : "hover:bg-white/10"
+  }`}
+>
+
+  Movimientos Inventario
+
+</button>
 
           {/* TRABAJADORAS */}
           <button
@@ -137,6 +163,42 @@ export default function Home() {
 
          </button>
 
+         <button
+  onClick={() =>
+    setPage(
+      "ventas-internas"
+    )
+  }
+  className={`text-left p-4 rounded-2xl transition ${
+    page ===
+    "ventas-internas"
+      ? "bg-white text-[#243847]"
+      : "hover:bg-white/10"
+  }`}
+>
+
+  Ventas Internas
+
+</button>
+
+<button
+  onClick={() =>
+    setPage(
+      "ventas-productos"
+    )
+  }
+  className={`text-left p-4 rounded-2xl transition ${
+    page ===
+    "ventas-productos"
+      ? "bg-white text-[#243847]"
+      : "hover:bg-white/10"
+  }`}
+>
+
+  Ventas Productos
+
+</button>
+
         </div>
 
       </div>
@@ -164,6 +226,13 @@ export default function Home() {
           <InventoryPage />
         )}
 
+         {/* MOVIMIENTOS INVENTARIO */}
+
+        {page ===
+          "movimientos-inventario" && (
+          <InventoryMovementsPage />
+        )}
+
         {/* TRABAJADORAS */}
         {page === "trabajadoras" && (
           <WorkersPage />
@@ -172,6 +241,18 @@ export default function Home() {
          {/* PAQUETES */}
         {page === "paquetes" && (
           <PackagesPage />
+        )}
+
+       {/* VENTAS INTERNAS */}
+        {page ===
+          "ventas-internas" && (
+          <InternalSalesPage />
+        )}
+
+        {/* VENTAS PRODUCTOS */}
+        {page ===
+          "ventas-productos" && (
+          <ProductSalesPage />
         )}
 
       </div>
