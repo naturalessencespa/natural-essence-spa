@@ -134,15 +134,32 @@ const [
 
           id: appointment.id,
 
-          title:
-            appointment.clients
-              ?.full_name +
-            " - " +
-            appointment.services
-              ?.name +
-            " - " +
-            appointment.workers
-              ?.name,
+         title:
+
+  (
+    appointment.status ===
+    "Atendida"
+
+      ? "✅ "
+
+      : ""
+
+  )
+
+  +
+
+  appointment.clients
+    ?.full_name +
+
+  " - " +
+
+  appointment.services
+    ?.name +
+
+  " - " +
+
+  appointment.workers
+    ?.name,
 
           start: new Date(
             appointment.appointment_date +
@@ -156,15 +173,27 @@ const [
             appointment.end_time
           ),
 
-          backgroundColor:
-            appointment.workers
-              ?.color ||
-            "#243847",
+         backgroundColor:
 
-          borderColor:
-            appointment.workers
-              ?.color ||
-            "#243847",
+  appointment.status ===
+  "Atendida"
+
+    ? "#86efac"
+
+    : appointment.workers
+        ?.color ||
+      "#243847",
+
+borderColor:
+
+  appointment.status ===
+  "Atendida"
+
+    ? "#16a34a"
+
+    : appointment.workers
+        ?.color ||
+      "#243847",
 
           extendedProps: {
 

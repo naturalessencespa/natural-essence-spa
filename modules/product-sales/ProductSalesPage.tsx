@@ -75,6 +75,26 @@ const [
     .split("T")[0]
 );
 
+const [
+  productFilter,
+  setProductFilter
+] = useState("");
+
+const [
+  workerFilter,
+  setWorkerFilter
+] = useState("");
+
+const [
+  fromDate,
+  setFromDate
+] = useState("");
+
+const [
+  toDate,
+  setToDate
+] = useState("");
+
   const fetchSales =
     async () => {
 
@@ -110,9 +130,78 @@ const [
         return;
       }
 
-      setSales(
-        data || []
-      );
+      let filteredSales =
+  data || [];
+
+// PRODUCTO
+if (productFilter) {
+
+  filteredSales =
+    filteredSales.filter(
+      (sale) =>
+
+        sale
+          .inventory_products
+          ?.name
+
+          ?.toLowerCase()
+
+          .includes(
+            productFilter.toLowerCase()
+          )
+    );
+}
+
+// TRABAJADORA
+if (workerFilter) {
+
+  filteredSales =
+    filteredSales.filter(
+      (sale) =>
+
+        sale
+          .workers
+          ?.name
+
+          ?.toLowerCase()
+
+          .includes(
+            workerFilter.toLowerCase()
+          )
+    );
+}
+
+// DESDE
+if (fromDate) {
+
+  filteredSales =
+    filteredSales.filter(
+      (sale) =>
+
+        sale.created_at
+  ?.split("T")[0]
+
+  >= fromDate
+    );
+}
+
+// HASTA
+if (toDate) {
+
+  filteredSales =
+    filteredSales.filter(
+      (sale) =>
+
+        sale.created_at
+  ?.split("T")[0]
+
+  <= toDate
+    );
+}
+
+setSales(
+  filteredSales
+);
     };
 
 
@@ -321,6 +410,39 @@ await supabase
     Number(productId)
   );
 
+// MOVIMIENTO INVENTARIO
+await supabase
+
+  .from(
+    "inventory_movements"
+  )
+
+  .insert([
+    {
+
+      product_id:
+        Number(productId),
+
+      movement_type:
+        "venta",
+
+      quantity:
+        qty,
+
+      previous_stock:
+        currentProduct?.stock || 0,
+
+      new_stock:
+        newStock,
+
+      notes:
+        "Venta producto",
+
+      movement_date:
+        saleDate
+
+    },
+  ]);
     alert(
       "Venta guardada"
     );
@@ -351,7 +473,12 @@ useEffect(() => {
 
   fetchFormData();
 
-}, []);
+}, [
+  productFilter,
+  workerFilter,
+  fromDate,
+  toDate
+]);
 
 
 
@@ -388,6 +515,82 @@ useEffect(() => {
 </button>
 
       </div>
+
+      <div className="flex gap-4 mb-6 flex-wrap">
+
+  {/* PRODUCTO */}
+  <input
+
+    type="text"
+
+    placeholder="Filtrar producto..."
+
+    value={productFilter}
+
+    onChange={(e) =>
+      setProductFilter(
+        e.target.value
+      )
+    }
+
+    className="border p-4 rounded-2xl"
+
+  />
+
+  {/* TRABAJADORA */}
+  <input
+
+    type="text"
+
+    placeholder="Filtrar trabajadora..."
+
+    value={workerFilter}
+
+    onChange={(e) =>
+      setWorkerFilter(
+        e.target.value
+      )
+    }
+
+    className="border p-4 rounded-2xl"
+
+  />
+
+  {/* DESDE */}
+  <input
+
+    type="date"
+
+    value={fromDate}
+
+    onChange={(e) =>
+      setFromDate(
+        e.target.value
+      )
+    }
+
+    className="border p-4 rounded-2xl"
+
+  />
+
+  {/* HASTA */}
+  <input
+
+    type="date"
+
+    value={toDate}
+
+    onChange={(e) =>
+      setToDate(
+        e.target.value
+      )
+    }
+
+    className="border p-4 rounded-2xl"
+
+  />
+
+</div>
 
       <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
 

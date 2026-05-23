@@ -16,6 +16,11 @@ export default function InventoryMovementsPage() {
     setMovements
   ] = useState<any[]>([]);
 
+  const [
+  productFilter,
+  setProductFilter
+] = useState("");
+
   const fetchMovements =
     async () => {
 
@@ -38,7 +43,7 @@ export default function InventoryMovementsPage() {
                 "id",
                 {
                     ascending:
-                    true,
+                    false,
                 }
                 );
 
@@ -49,16 +54,37 @@ export default function InventoryMovementsPage() {
         return;
       }
 
-      setMovements(
-        data || []
-      );
+     let filteredMovements =
+  data || [];
+
+if (productFilter) {
+
+  filteredMovements =
+    filteredMovements.filter(
+      (movement) =>
+
+        movement
+          .inventory_products
+          ?.name
+
+          ?.toLowerCase()
+
+          .includes(
+            productFilter.toLowerCase()
+          )
+    );
+}
+
+setMovements(
+  filteredMovements
+);
     };
 
   useEffect(() => {
 
     fetchMovements();
 
-  }, []);
+    }, [productFilter]);
 
   return (
 
@@ -79,6 +105,24 @@ export default function InventoryMovementsPage() {
         </p>
 
       </div>
+
+      <input
+
+  type="text"
+
+  placeholder="Filtrar producto..."
+
+  value={productFilter}
+
+  onChange={(e) =>
+    setProductFilter(
+      e.target.value
+    )
+  }
+
+  className="border p-4 rounded-2xl mb-6 w-[320px]"
+
+/>
 
       <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
 
@@ -133,6 +177,8 @@ export default function InventoryMovementsPage() {
                   <td className="p-4">
 
                     {
+                    movement.movement_date
+                        ||
                       new Date(
                         movement.created_at
                       ).toLocaleDateString()

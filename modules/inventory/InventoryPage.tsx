@@ -73,6 +73,32 @@ export default function InventoryPage() {
   setProductTypeFilter
 ] = useState("todos");
 
+const [
+  showStockModal,
+  setShowStockModal
+] = useState(false);
+
+const [
+  stockAmount,
+  setStockAmount
+] = useState("");
+
+const [
+  stockDate,
+  setStockDate
+] = useState(
+  new Date()
+    .toISOString()
+    .split("T")[0]
+);
+
+const [
+  selectedProductId,
+  setSelectedProductId
+] = useState<number | null>(
+  null
+);
+
   // EXPORTAR EXCEL
   const exportToExcel = () => {
 
@@ -433,7 +459,8 @@ if (
   // AGREGAR STOCK
 const addStock = async (
   productId: number,
-  amount: number
+  amount: number,
+  movementDate: string
 ) => {
 
   const product =
@@ -507,6 +534,9 @@ const addStock = async (
 
       notes:
         "Ingreso manual de stock",
+
+        movement_date:
+  movementDate,
 
     },
   ]);
@@ -903,30 +933,26 @@ useEffect(() => {
 
                   </button>
 
-                  <button
+                 <button
 
-  onClick={() => {
+                  onClick={() => {
 
-    const amount =
-      prompt(
-        "Cantidad a agregar"
-      );
+                    setSelectedProductId(
+                      product.id
+                    );
 
-    if (!amount) return;
+                    setShowStockModal(
+                      true
+                    );
+                  }}
 
-    addStock(
-      product.id,
-      Number(amount)
-    );
-  }}
+                  className="bg-green-600 text-white px-4 py-2 rounded-xl"
 
-  className="bg-green-600 text-white px-4 py-2 rounded-xl"
+                >
 
->
+                  + Stock
 
-  + Stock
-
-</button>
+                </button>
 
                   {/* ELIMINAR */}
                   <button
@@ -1294,6 +1320,116 @@ useEffect(() => {
         </div>
 
       )}
+
+      {/* MODAL STOCK */}
+{showStockModal && (
+
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+    <div className="bg-white rounded-3xl p-8 w-full max-w-md space-y-6">
+
+      <h3 className="text-2xl font-bold text-[#243847]">
+
+        Agregar Stock
+
+      </h3>
+
+      {/* CANTIDAD */}
+      <input
+
+        type="number"
+
+        placeholder="Cantidad"
+
+        value={stockAmount}
+
+        onChange={(e) =>
+          setStockAmount(
+            e.target.value
+          )
+        }
+
+        className="w-full border p-4 rounded-2xl"
+
+      />
+
+      {/* FECHA */}
+      <input
+
+        type="date"
+
+        value={stockDate}
+
+        onChange={(e) =>
+          setStockDate(
+            e.target.value
+          )
+        }
+
+        className="w-full border p-4 rounded-2xl"
+
+      />
+
+      <div className="flex justify-end gap-4">
+
+        <button
+
+          onClick={() =>
+            setShowStockModal(
+              false
+            )
+          }
+
+          className="bg-gray-200 px-5 py-3 rounded-2xl"
+
+        >
+
+          Cancelar
+
+        </button>
+
+        <button
+
+          onClick={async () => {
+
+            if (
+              !selectedProductId
+            ) return;
+
+            await addStock(
+
+              selectedProductId,
+
+              Number(
+                stockAmount
+              ),
+
+              stockDate
+            );
+
+            setShowStockModal(
+              false
+            );
+
+            setStockAmount("");
+
+          }}
+
+          className="bg-[#243847] text-white px-5 py-3 rounded-2xl"
+
+        >
+
+          Guardar
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+)}
 
     </div>
   );
