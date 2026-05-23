@@ -82,6 +82,11 @@ const [
     setBranchId] =
     useState("");
 
+  const [
+  finalPrice,
+  setFinalPrice
+  ] = useState("");
+
   const [clients, setClients] =
     useState<any[]>([]);
 
@@ -175,25 +180,15 @@ const [
 
          backgroundColor:
 
-  appointment.status ===
-  "Atendida"
 
-    ? "#86efac"
-
-    : appointment.workers
-        ?.color ||
-      "#243847",
+  appointment.workers
+    ?.color ||
+  "#243847",
 
 borderColor:
-
-  appointment.status ===
-  "Atendida"
-
-    ? "#16a34a"
-
-    : appointment.workers
-        ?.color ||
-      "#243847",
+  appointment.workers
+    ?.color ||
+  "#243847",
 
           extendedProps: {
 
@@ -292,6 +287,13 @@ borderColor:
           service.id ===
           parseInt(serviceId)
       );
+
+const originalPrice =
+  selectedService?.price || 0;
+
+const soldPrice =
+  Number(finalPrice || 0);
+
 
     let durationMinutes = 60;
 
@@ -667,6 +669,12 @@ if (hasConflict) {
                 "confirmed",
 
               notes: "",
+
+              original_price:
+                originalPrice,
+
+              final_price:
+                soldPrice,
 
             },
           ]);
@@ -1513,11 +1521,26 @@ eventDrop={async (info) => {
               {/* SERVICIO */}
               <select
                 value={serviceId}
-                onChange={(e) =>
-                  setServiceId(
-                    e.target.value
-                  )
-                }
+               onChange={(e) => {
+
+  setServiceId(
+    e.target.value
+  );
+
+  const service =
+    services.find(
+      (s) =>
+        s.id ===
+        Number(
+          e.target.value
+        )
+    );
+
+  setFinalPrice(
+    service?.price
+      ?.toString() || ""
+  );
+}}
                 className="w-full border p-4 rounded-2xl"
               >
 
@@ -1566,9 +1589,27 @@ eventDrop={async (info) => {
 
                   </option>
 
-                ))}
+                      ))}
 
-              </select>
+                    </select>
+
+                    <input
+
+        type="number"
+
+        placeholder="Precio final"
+
+        value={finalPrice}
+
+        onChange={(e) =>
+          setFinalPrice(
+            e.target.value
+          )
+        }
+
+        className="w-full border p-4 rounded-2xl"
+
+      />
 
               {/* SEDE */}
               <select
