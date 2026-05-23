@@ -113,7 +113,10 @@ const [
         .select(`
           *,
           clients(full_name),
-          services(name),
+          services(
+            name,
+            price
+          ),
           workers(
             name,
             color
@@ -138,8 +141,7 @@ const [
         (appointment) => ({
 
           id: appointment.id,
-
-         title:
+title:
 
   (
     appointment.status ===
@@ -152,6 +154,21 @@ const [
   )
 
   +
+
+  "S/" +
+
+  (
+    appointment.final_price ||
+
+    appointment.services
+      ?.price ||
+
+    0
+  )
+
+  +
+
+  " - " +
 
   appointment.clients
     ?.full_name +
@@ -292,8 +309,12 @@ const originalPrice =
   selectedService?.price || 0;
 
 const soldPrice =
-  Number(finalPrice || 0);
 
+  finalPrice
+
+    ? Number(finalPrice)
+
+    : originalPrice;
 
     let durationMinutes = 60;
 
@@ -477,18 +498,33 @@ const soldPrice =
       appointmentDate
     );
 
-    const hasConflict =
-      conflicts?.some(
-        (appt: any) =>
+ const hasConflict =
+  conflicts?.some(
+    (appt: any) => {
 
-          startTime <
-            appt.end_time
+      // IGNORAR MISMA CITA
+      if (
 
-          &&
+        appt.id ===
+        editingAppointmentId
 
-          endTime >
-            appt.start_time
+      ) {
+
+        return false;
+      }
+
+      return (
+
+        startTime <
+          appt.end_time
+
+        &&
+
+        endTime >
+          appt.start_time
       );
+    }
+  );
 
     if (hasConflict) {
 
@@ -561,69 +597,7 @@ const soldPrice =
       );
 
     } else {
-        // VALIDAR CRUCE
-const { data: conflicts } =
-  await supabase
-
-    .from(
-      "appointments"
-    )
-
-    .select("*")
-
-
-
-    .eq(
-      "appointment_date",
-      appointmentDate
-    );
-
-const hasConflict =
-  conflicts?.some(
-    (appt: any) => {
-
-      const newStart =
-        new Date(
-          `2000-01-01T${startTime}`
-        );
-
-      const newEnd =
-        new Date(
-          `2000-01-01T${endTime}`
-        );
-
-      const existingStart =
-        new Date(
-          `2000-01-01T${appt.start_time}`
-        );
-
-      const existingEnd =
-        new Date(
-          `2000-01-01T${appt.end_time}`
-        );
-
-      return (
-
-        newStart <
-          existingEnd
-
-        &&
-
-        newEnd >
-          existingStart
-
-      );
-    }
-  );
-
-if (hasConflict) {
-
-  alert(
-    "La trabajadora ya tiene una cita en ese horario"
-  );
-
-  return;
-}
+       
       
       // CREAR
       const { error } =
@@ -1168,6 +1142,16 @@ if (
               null
             );
 
+            setClientId("");
+
+setServiceId("");
+
+setWorkerId("");
+
+setBranchId("");
+
+setFinalPrice("");
+
             setSelectedDate(
               info.startStr
             );
@@ -1281,6 +1265,16 @@ eventDrop={async (info) => {
   const hasConflict =
     conflicts?.some(
       (appt: any) => {
+
+        if (
+
+  appt.id ===
+  editingAppointmentId
+
+) {
+
+  return false;
+}
 
         const newStart =
           new Date(
@@ -1566,11 +1560,32 @@ eventDrop={async (info) => {
               {/* TRABAJADORA */}
               <select
                 value={workerId}
-                onChange={(e) =>
-                  setWorkerId(
-                    e.target.value
-                  )
-                }
+                onChange={(e) => {
+
+  setWorkerId(
+    e.target.value
+  );
+
+  const worker =
+    workers.find(
+      (w) =>
+        w.id ===
+        Number(
+          e.target.value
+        )
+    );
+
+  if (
+    worker?.branch_id
+  ) {
+
+    setBranchId(
+      worker.branch_id
+        .toString()
+    );
+  }
+
+}}
                 className="w-full border p-4 rounded-2xl"
               >
 
