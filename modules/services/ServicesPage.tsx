@@ -10,6 +10,7 @@ type Service = {
   name: string;
   price: number;
   duration: string;
+  description?: string;
   protocol_url?: string;
   allow_packages?: boolean;
 };
@@ -47,6 +48,21 @@ export default function ServicesPage() {
   const [sortBy,
     setSortBy] =
     useState("id");
+
+    const [
+  showProtocolModal,
+  setShowProtocolModal
+] = useState(false);
+
+const [
+  protocolText,
+  setProtocolText
+] = useState("");
+
+const [
+  selectedServiceId,
+  setSelectedServiceId
+] = useState<number | null>(null);
 
   // OBTENER SERVICIOS
   const fetchServices =
@@ -603,6 +619,89 @@ export default function ServicesPage() {
 
                       </button>
 
+                      <button
+onClick={async () => {
+
+  console.log(
+  "CLICK IA"
+);
+  setSelectedServiceId(
+    service.id
+  );
+
+  setShowProtocolModal(
+    true
+  );
+
+  setProtocolText(
+    "Generando protocolo..."
+  );
+
+  try {
+
+    const response =
+    
+      await fetch(
+
+        "/api/generate-protocol",
+
+        {
+
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+
+            serviceName:
+              service.name,
+
+            duration:
+              service.duration,
+
+            description:
+              service.description,
+
+          }),
+
+        }
+
+      );
+
+      console.log(response);
+
+    const data =
+      await response.json();
+
+      console.log(data);
+
+    setProtocolText(
+      data.protocol || ""
+    );
+
+  } catch (error) {
+
+    console.log(error);
+
+    setProtocolText(
+      "Error generando protocolo"
+    );
+
+  }
+
+}}
+
+  className="bg-violet-600 text-white px-4 py-2 rounded-2xl"
+
+>
+
+  Generar IA
+
+</button>
+
                     </div>
 
                   </td>
@@ -616,6 +715,125 @@ export default function ServicesPage() {
         </table>
 
       </div>
+
+      {/* MODAL PROTOCOLO */}
+{showProtocolModal && (
+
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+    <div className="bg-white p-8 rounded-3xl w-[900px] shadow-2xl">
+
+      <h3 className="text-2xl font-bold text-[#243847] mb-6">
+
+        Protocolo IA
+
+      </h3>
+
+      <textarea
+
+        value={protocolText}
+
+        onChange={(e) =>
+          setProtocolText(
+            e.target.value
+          )
+        }
+
+        placeholder="Aquí aparecerá el protocolo generado..."
+
+        className="w-full h-[500px] border p-4 rounded-2xl"
+
+      />
+
+      <div className="flex gap-4 mt-6">
+
+        <button
+
+          onClick={() =>
+            setShowProtocolModal(
+              false
+            )
+          }
+
+          className="bg-gray-200 px-5 py-3 rounded-2xl"
+
+        >
+
+          Cancelar
+
+        </button>
+
+        <button
+
+          className="bg-violet-600 text-white px-5 py-3 rounded-2xl"
+
+        >
+
+          Generar IA
+
+        </button>
+
+      <button
+
+  onClick={async () => {
+
+    if (
+      !selectedServiceId
+    ) return;
+
+    const { error } =
+      await supabase
+
+        .from("services")
+
+        .update({
+
+          protocol_text:
+            protocolText
+
+        })
+
+        .eq(
+          "id",
+          selectedServiceId
+        );
+
+    if (error) {
+
+      console.log(error);
+
+      alert(
+        "Error guardando protocolo"
+      );
+
+      return;
+    }
+
+    alert(
+      "Protocolo guardado"
+    );
+
+    setShowProtocolModal(
+      false
+    );
+
+  }}
+
+  className="bg-[#243847] text-white px-5 py-3 rounded-2xl"
+
+>
+
+  Guardar protocolo
+
+</button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+)}
 
     </div>
   );
