@@ -55,6 +55,16 @@ const [
   setSoldPrice
 ] = useState("");
 
+const [
+  appointmentSales,
+  setAppointmentSales
+] = useState<any[]>([]);
+
+const [
+  salesCart,
+  setSalesCart
+] = useState<any[]>([]);
+
   const [selectedDate,
     setSelectedDate] =
     useState("");
@@ -86,6 +96,11 @@ const [
   finalPrice,
   setFinalPrice
   ] = useState("");
+
+  const [
+  isCompleted,
+  setIsCompleted
+] = useState(false);
 
   const [clients, setClients] =
     useState<any[]>([]);
@@ -225,6 +240,9 @@ borderColor:
 
             final_price:
               appointment.final_price,
+
+            status:
+              appointment.status,
 
           },
 
@@ -801,112 +819,203 @@ fetchAppointments();
 setShowModal(false);
   };  
 
-  const saveAdditionalService =
-  async () => {
+const addSaleToCart = () => {
 
-    if (
-      !additionalServiceId ||
-      !soldPrice ||
-      !completedAppointmentId
-    ) {
-
-      alert(
-        "Completa los campos"
-      );
-
-      return;
-    }
-
-    const selectedService =
-      services.find(
-        (service) =>
-          service.id ===
-          parseInt(
-            additionalServiceId
-          )
-      );
-
-    const currentAppointment =
-      events.find(
-        (event) =>
-          event.id ===
-          completedAppointmentId
-      );
-
-    const workerId =
-      currentAppointment
-        ?.extendedProps
-        ?.worker_id;
-
-    const originalPrice =
-      selectedService?.price || 0;
-
-    const sold =
-      parseFloat(
-        soldPrice
-      );
-
-    const commission =
-      sold * 0.20;
-
-    const { error } =
-      await supabase
-
-        .from(
-          "appointment_services"
-        )
-
-        .insert([
-          {
-
-            appointment_id:
-              completedAppointmentId,
-
-            service_id:
-              parseInt(
-                additionalServiceId
-              ),
-
-            worker_id:
-              workerId,
-
-            original_price:
-              originalPrice,
-
-            sold_price:
-              sold,
-
-            commission_percentage:
-              20,
-
-            commission_amount:
-              commission,
-
-          },
-        ]);
-
-    if (error) {
-
-      console.log(error);
-
-      alert(
-        "Error guardando venta"
-      );
-
-      return;
-    }
+  if (
+    !additionalServiceId ||
+    !soldPrice
+  ) {
 
     alert(
-      "Venta guardada"
+      "Completa los campos"
     );
 
-    setAdditionalServiceId("");
+    return;
+  }
 
-    setSoldPrice("");
+  const selectedService =
+    services.find(
+      (service) =>
 
-    setShowSalesModal(false);
+        service.id ===
+        parseInt(
+          additionalServiceId
+        )
+    );
+
+  if (!selectedService)
+    return;
+
+  const newSale = {
+
+    service_id:
+      selectedService.id,
+
+    service_name:
+      selectedService.name,
+
+    original_price:
+      selectedService.price,
+
+    sold_price:
+      parseFloat(
+        soldPrice
+      ),
+
   };
 
+  setSalesCart(
+    [
+      ...salesCart,
+      newSale
+    ]
+  );
+
+  setAdditionalServiceId("");
+
+  setSoldPrice("");
+
+};
+
+  const saveAdditionalService =
+
+async () => {
+
+  if (
+    salesCart.length === 0 ||
+    !completedAppointmentId
+  ) {
+
+    alert(
+      "Agrega al menos un servicio"
+    );
+
+    return;
+  }
+
+  const currentAppointment =
+    events.find(
+      (event) =>
+
+        event.id ===
+        completedAppointmentId
+    );
+
+  const workerId =
+    currentAppointment
+      ?.extendedProps
+      ?.worker_id;
+
+  const salesToInsert =
+
+    salesCart.map(
+      (sale) => ({
+
+        appointment_id:
+          completedAppointmentId,
+
+        service_id:
+          sale.service_id,
+
+        worker_id:
+          workerId,
+
+        original_price:
+          sale.original_price,
+
+        sold_price:
+          sale.sold_price,
+
+        commission_percentage:
+          20,
+
+        commission_amount:
+          sale.sold_price * 0.20,
+
+      })
+    );
+
+  const { error } =
+    await supabase
+
+      .from(
+        "appointment_services"
+      )
+
+      .insert(
+        salesToInsert
+      );
+
+  if (error) {
+
+    console.log(error);
+
+    alert(
+      "Error guardando ventas"
+    );
+
+    return;
+  }
+
+  alert(
+    "Ventas guardadas"
+  );
+
+  setSalesCart([]);
+
+  setAdditionalServiceId("");
+
+  setSoldPrice("");
+
+  setShowSalesModal(false);
+
+};
+  const revertAppointment =
+
+async (
+  appointmentId: number
+) => {
+
+  await supabase
+
+    .from(
+      "appointment_services"
+    )
+
+    .delete()
+
+    .eq(
+      "appointment_id",
+      appointmentId
+    );
+
+  await supabase
+
+    .from(
+      "appointments"
+    )
+
+    .update({
+
+      status:
+        "confirmed"
+
+    })
+
+    .eq(
+      "id",
+      appointmentId
+    );
+
+  alert(
+    "Atención revertida"
+  );
+
+  fetchAppointments();
+
+  setShowModal(false);
+
+};
   const reprogramAppointment =
   async (
     appointmentId: number,
@@ -1176,6 +1285,13 @@ setFinalPrice("");
               info.event
                 .extendedProps;
 
+            setIsCompleted(
+
+                appointment.status ===
+                "Atendida"
+
+              );
+
             setEditingAppointmentId(
               appointment.id
             );
@@ -1207,6 +1323,30 @@ setFinalPrice("");
               info.event.start?.toISOString() ||
                 ""
             );
+
+            supabase
+
+  .from(
+    "appointment_services"
+  )
+
+  .select(`
+    *,
+    services(name)
+  `)
+
+  .eq(
+    "appointment_id",
+    appointment.id
+  )
+
+  .then(({ data }) => {
+
+    setAppointmentSales(
+      data || []
+    );
+
+  });
 
             setShowModal(true);
 
@@ -1644,6 +1784,64 @@ eventDrop={async (info) => {
 
       />
 
+          {isCompleted && (
+
+  <div className="bg-gray-50 p-4 rounded-2xl">
+
+    <h4 className="font-bold text-[#243847] mb-3">
+
+      Ventas adicionales
+
+    </h4>
+
+    {appointmentSales.length === 0 ? (
+
+      <p className="text-gray-500">
+
+        Sin ventas adicionales
+
+      </p>
+
+    ) : (
+
+      <div className="space-y-2">
+
+        {appointmentSales.map(
+          (sale) => (
+
+            <div
+
+              key={sale.id}
+
+              className="flex justify-between bg-white p-3 rounded-xl"
+
+            >
+
+              <span>
+
+                {sale.services?.name}
+
+              </span>
+
+              <span className="font-semibold">
+
+                S/{sale.sold_price}
+
+              </span>
+
+            </div>
+
+          )
+        )}
+
+      </div>
+
+    )}
+
+  </div>
+
+)}
+
               {/* SEDE */}
               <select
                 value={branchId}
@@ -1689,7 +1887,8 @@ eventDrop={async (info) => {
 
               </button>
 
-{editingAppointmentId && (
+{editingAppointmentId &&
+ !isCompleted && (
 
   <button
 
@@ -1715,7 +1914,8 @@ eventDrop={async (info) => {
 
 )}             
 
-{editingAppointmentId && (
+{editingAppointmentId &&
+ !isCompleted && (
 
   <button
 
@@ -1736,7 +1936,28 @@ eventDrop={async (info) => {
   </button>
 
 )}
- {editingAppointmentId && (
+
+{isCompleted && (
+
+  <button
+
+    onClick={() =>
+      revertAppointment(
+        editingAppointmentId!
+      )
+    }
+
+    className="bg-yellow-500 text-white px-5 py-3 rounded-2xl"
+
+  >
+
+    Revertir atención
+
+  </button>
+
+)}
+{editingAppointmentId &&
+ !isCompleted && (
   
   
 
@@ -1759,7 +1980,7 @@ eventDrop={async (info) => {
   </button>
 
 )}
-
+        {!isCompleted && (
               <button
                 onClick={
                   saveAppointment
@@ -1772,7 +1993,7 @@ eventDrop={async (info) => {
                   : "Guardar Reserva"}
 
               </button>
-
+)}
             </div>
 
           </div>
@@ -1891,11 +2112,30 @@ eventDrop={async (info) => {
 
           value={additionalServiceId}
 
-          onChange={(e) =>
-            setAdditionalServiceId(
-              e.target.value
-            )
-          }
+          onChange={(e) => {
+
+  setAdditionalServiceId(
+    e.target.value
+  );
+
+  const service =
+    services.find(
+      (s) =>
+
+        s.id ===
+        Number(
+          e.target.value
+        )
+    );
+
+  setSoldPrice(
+
+    service?.price
+      ?.toString() || ""
+
+  );
+
+}}
 
           className="w-full border p-4 rounded-2xl"
 
@@ -1926,6 +2166,8 @@ eventDrop={async (info) => {
 
           placeholder="Precio vendido"
 
+          
+
           value={soldPrice}
 
           onChange={(e) =>
@@ -1937,6 +2179,84 @@ eventDrop={async (info) => {
           className="w-full border p-4 rounded-2xl"
 
         />
+
+        <button
+
+  onClick={
+    addSaleToCart
+  }
+
+  className="w-full bg-green-600 text-white p-4 rounded-2xl"
+
+>
+
+  Agregar servicio
+
+</button>
+
+{salesCart.length > 0 && (
+
+  <div className="space-y-2 mt-4">
+
+    {salesCart.map(
+      (sale, index) => (
+
+        <div
+
+          key={index}
+
+          className="flex justify-between items-center bg-gray-100 p-3 rounded-2xl"
+
+        >
+
+          <div>
+
+            <p className="font-medium">
+
+              {sale.service_name}
+
+            </p>
+
+            <p className="text-sm text-gray-500">
+
+              S/{sale.sold_price}
+
+            </p>
+
+          </div>
+
+          <button
+
+            onClick={() => {
+
+              const updated =
+                salesCart.filter(
+                  (_, i) =>
+                    i !== index
+                );
+
+              setSalesCart(
+                updated
+              );
+
+            }}
+
+            className="bg-red-500 text-white px-3 py-1 rounded-xl"
+
+          >
+
+            X
+
+          </button>
+
+        </div>
+
+      )
+    )}
+
+  </div>
+
+)}
 
       </div>
 
