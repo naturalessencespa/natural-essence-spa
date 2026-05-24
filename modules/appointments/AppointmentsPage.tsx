@@ -223,6 +223,9 @@ borderColor:
             branch_id:
               appointment.branch_id,
 
+            final_price:
+              appointment.final_price,
+
           },
 
         })
@@ -543,38 +546,44 @@ const soldPrice =
 
           .from("appointments")
 
-          .update({
+      .update({
 
-            client_id:
-              parseInt(
-                clientId
-              ),
+  client_id:
+    parseInt(
+      clientId
+    ),
 
-            service_id:
-              parseInt(
-                serviceId
-              ),
+  service_id:
+    parseInt(
+      serviceId
+    ),
 
-            worker_id:
-              parseInt(
-                workerId
-              ),
+  worker_id:
+    parseInt(
+      workerId
+    ),
 
-            branch_id:
-              parseInt(
-                branchId
-              ),
+  branch_id:
+    parseInt(
+      branchId
+    ),
 
-            appointment_date:
-              appointmentDate,
+  appointment_date:
+    appointmentDate,
 
-            start_time:
-              startTime,
+  start_time:
+    startTime,
 
-            end_time:
-              endTime,
+  end_time:
+    endTime,
 
-          })
+  original_price:
+    originalPrice,
+
+  final_price:
+    soldPrice,
+
+})
 
           .eq(
             "id",
@@ -1187,6 +1196,13 @@ setFinalPrice("");
               appointment.branch_id?.toString()
             );
 
+            setFinalPrice(
+
+              appointment.final_price
+                ?.toString() || ""
+
+            );
+
             setSelectedDate(
               info.event.start?.toISOString() ||
                 ""
@@ -1340,6 +1356,8 @@ eventDrop={async (info) => {
 
         end_time:
           endTime,
+
+
 
       })
 

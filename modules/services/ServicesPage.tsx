@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
+import jsPDF from "jspdf";
 
 import { supabase } from "@/lib/supabase";
 
@@ -12,6 +13,7 @@ type Service = {
   duration: string;
   description?: string;
   protocol_url?: string;
+  protocol_text?: string;
   allow_packages?: boolean;
 };
 
@@ -256,6 +258,9 @@ const [
 
       setProtocolUrl(
         service.protocol_url || ""
+      );
+      setProtocolText(
+        service.protocol_text || ""
       );
     };
 
@@ -558,33 +563,41 @@ const [
                   </td>
 
                   {/* PDF */}
-                  <td className="p-5">
+   <td className="p-5">
 
-                    {service.protocol_url ? (
+  {service.protocol_url ? (
 
-                      <a
-                        href={
-                          service.protocol_url
-                        }
-                        target="_blank"
-                        className="bg-[#243847] text-white px-4 py-2 rounded-xl hover:opacity-90 transition"
-                      >
+    <div className="flex flex-col gap-2">
 
-                        Ver PDF
+      <span className="bg-green-100 text-green-700 px-3 py-1 rounded-xl text-sm font-medium w-fit">
 
-                      </a>
+        Protocolo generado
 
-                    ) : (
+      </span>
 
-                      <span className="text-gray-400">
+      <a
+        href={service.protocol_url}
+        target="_blank"
+        className="bg-[#243847] text-white px-4 py-2 rounded-xl hover:opacity-90 transition text-center"
+      >
 
-                        Sin protocolo
+        Ver PDF
 
-                      </span>
+      </a>
 
-                    )}
+    </div>
 
-                  </td>
+  ) : (
+
+    <span className="text-gray-400">
+
+      Sin protocolo
+
+    </span>
+
+  )}
+
+</td>
 
                   {/* ACCIONES */}
                   <td className="p-5">
@@ -654,18 +667,18 @@ onClick={async () => {
               "application/json"
           },
 
-          body: JSON.stringify({
+        body: JSON.stringify({
 
-            serviceName:
-              service.name,
+          serviceName:
+            service.name,
 
-            duration:
-              service.duration,
+          duration:
+            service.duration,
 
-            description:
-              service.description,
+          description:
+            "Servicio profesional de spa y estética"
 
-          }),
+        }),
 
         }
 
@@ -682,15 +695,27 @@ onClick={async () => {
       data.protocol || ""
     );
 
+    setShowProtocolModal(
+  true
+);
+
+    console.log(
+  data.protocol
+);
+
   } catch (error) {
 
-    console.log(error);
+  console.log(error);
 
-    setProtocolText(
-      "Error generando protocolo"
-    );
+  alert(
+    "Error generando protocolo"
+  );
 
-  }
+  setShowProtocolModal(
+    false
+  );
+
+}
 
 }}
 
@@ -699,6 +724,32 @@ onClick={async () => {
 >
 
   Generar IA
+
+</button>
+
+<button
+
+  onClick={() => {
+
+    setSelectedServiceId(
+      service.id
+    );
+
+    setProtocolText(
+      service.protocol_text || ""
+    );
+
+    setShowProtocolModal(
+      true
+    );
+
+  }}
+
+  className="bg-emerald-600 text-white px-4 py-2 rounded-2xl"
+
+>
+
+  Ver Protocolo
 
 </button>
 
@@ -781,6 +832,98 @@ onClick={async () => {
       !selectedServiceId
     ) return;
 
+const pdf =
+  new jsPDF();
+
+pdf.setFontSize(12);
+
+const lines =
+  pdf.splitTextToSize(
+    protocolText,
+    180
+  );
+
+let y = 10;
+
+const pageHeight =
+  pdf.internal.pageSize.height;
+
+lines.forEach(
+  (line: string) => {
+
+    if (y > pageHeight - 10) {
+
+      pdf.addPage();
+
+      y = 10;
+    }
+
+    pdf.text(
+      line,
+      10,
+      y
+    );
+
+    y += 7;
+
+  }
+);
+
+const pdfBlob =
+  pdf.output("arraybuffer");
+
+const fileName =
+  `protocol-${selectedServiceId}-${Date.now()}.pdf`;
+
+const { error: uploadError } =
+  await supabase.storage
+
+    .from("protocols")
+
+    .upload(
+
+      fileName,
+
+       new Uint8Array(
+    pdfBlob
+  ),
+
+      {
+        upsert: true,
+        contentType:
+          "application/pdf",
+      }
+
+    );
+
+if (uploadError) {
+
+  console.log(
+    "UPLOAD ERROR:",
+    uploadError
+  );
+
+  alert(
+    JSON.stringify(
+      uploadError
+    )
+  );
+
+  return;
+}
+
+const { data: publicData } =
+  supabase.storage
+
+    .from("protocols")
+
+    .getPublicUrl(
+      fileName
+    );
+
+const pdfUrl =
+  publicData.publicUrl;
+
     const { error } =
       await supabase
 
@@ -788,10 +931,13 @@ onClick={async () => {
 
         .update({
 
-          protocol_text:
-            protocolText
+  protocol_text:
+    protocolText,
 
-        })
+  protocol_url:
+    pdfUrl,
+
+})
 
         .eq(
           "id",
@@ -812,6 +958,8 @@ onClick={async () => {
     alert(
       "Protocolo guardado"
     );
+
+    fetchServices();
 
     setShowProtocolModal(
       false

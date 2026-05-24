@@ -1,10 +1,13 @@
 import OpenAI from "openai";
+import { NextResponse } from "next/server";
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY!,
 });
 
-export async function POST(req) {
+export async function POST(
+  req: Request
+) {
 
   try {
 
@@ -63,18 +66,18 @@ Incluye:
       completion.choices[0]
         ?.message?.content || "";
 
-    return Response.json({
+    return NextResponse.json({
       protocol,
     });
 
-  } catch (error) {
+  } catch (error: any) {
 
     console.log(
       "OPENAI ERROR:",
       error
     );
 
-    return Response.json({
+    return NextResponse.json({
 
       error:
         error?.message ||
