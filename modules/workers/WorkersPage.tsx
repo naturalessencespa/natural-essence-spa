@@ -1163,11 +1163,29 @@ setOverrides(
 
                   {photoUrl ? (
 
-                    <img
-                      src={photoUrl}
-                      alt="Foto"
-                      className="w-full h-full object-cover"
-                    />
+
+
+  <div className="relative w-full h-full">
+
+  <img
+    src={photoUrl}
+    alt="Foto"
+    className="w-full h-full object-cover"
+  />
+
+  <a
+    href={photoUrl}
+    target="_blank"
+    className="absolute bottom-2 left-2 bg-[#243847] text-white text-sm px-3 py-1 rounded-xl"
+  >
+
+    Ver foto
+
+  </a>
+
+</div>
+
+
 
                   ) : (
 
