@@ -31,6 +31,15 @@ export default function WorkersPage() {
   const [phone, setPhone] =
     useState("");
 
+    const [
+  birthDate,
+  setBirthDate
+] = useState("");
+
+const [
+  address,
+  setAddress
+] = useState("");
   const [speciality,
     setSpeciality] =
     useState("");
@@ -70,6 +79,11 @@ const [
 const [
   schedules,
   setSchedules
+] = useState<any[]>([]);
+
+const [
+  overrides,
+  setOverrides
 ] = useState<any[]>([]);
 
 const days = [
@@ -179,6 +193,11 @@ const days = [
 
             phone,
 
+            birth_date:
+  birthDate || null,
+
+address,
+
             speciality,
 
             status,
@@ -235,6 +254,11 @@ const days = [
 
               phone,
 
+              birth_date:
+  birthDate || null,
+
+address,
+
               speciality,
 
               status,
@@ -283,6 +307,10 @@ const days = [
     setName("");
 
     setPhone("");
+
+    setBirthDate("");
+
+setAddress("");
 
     setSpeciality("");
 
@@ -376,7 +404,7 @@ const days = [
       .from(
         "worker_schedules"
       )
-
+        
       .upsert(
         schedulesToSave,
         {
@@ -395,6 +423,54 @@ const days = [
 
     return;
   }
+
+  const overridesToSave =
+
+  overrides.map(
+    (override) => ({
+
+      worker_id:
+        selectedWorkerId,
+
+      override_date:
+        override.override_date,
+
+      start_time:
+        override.start_time || null,
+
+      end_time:
+        override.end_time || null,
+
+      is_day_off:
+        override.is_day_off || false,
+
+    })
+  );
+
+const {
+  error: overridesError
+} = await supabase
+
+  .from(
+    "worker_schedule_overrides"
+  )
+
+  .insert(
+    overridesToSave
+  );
+
+if (overridesError) {
+
+  console.log(
+    overridesError
+  );
+
+  alert(
+    "Error guardando excepciones"
+  );
+
+  return;
+}
 
   alert(
     "Horarios guardados"
@@ -451,6 +527,10 @@ const days = [
             setName("");
 
             setPhone("");
+
+            setBirthDate("");
+
+setAddress("");
 
             setSpeciality("");
 
@@ -594,6 +674,14 @@ const days = [
                         worker.phone || ""
                       );
 
+                      setBirthDate(
+                        worker.birth_date || ""
+                      );
+
+                      setAddress(
+                        worker.address || ""
+                      );
+
                       setSpeciality(
                         worker.speciality || ""
                       );
@@ -653,6 +741,10 @@ const days = [
 
  onClick={async () => {
 
+  setSchedules([]);
+
+setOverrides([]);
+
   setSelectedWorkerId(
     worker.id
   );
@@ -681,6 +773,35 @@ const days = [
   setSchedules(
     data || []
   );
+
+  const {
+  data: overridesData,
+  error: overridesError
+} = await supabase
+
+  .from(
+    "worker_schedule_overrides"
+  )
+
+  .select("*")
+
+  .eq(
+    "worker_id",
+    worker.id
+  );
+
+if (overridesError) {
+
+  console.log(
+    overridesError
+  );
+
+  return;
+}
+
+setOverrides(
+  overridesData || []
+);
 
   setShowSchedulesModal(
     true
@@ -764,8 +885,53 @@ const days = [
                   }
                   className="w-full border p-4 rounded-2xl"
                 />
+                 </div>
+                {/* FECHA NACIMIENTO */}
+<div>
 
-              </div>
+  <label className="block mb-2 font-medium text-[#243847]">
+
+    Fecha de nacimiento
+
+  </label>
+
+  <input
+    type="date"
+    value={birthDate}
+    onChange={(e) =>
+      setBirthDate(
+        e.target.value
+      )
+    }
+    className="w-full border p-4 rounded-2xl"
+  />
+
+</div>
+
+{/* DIRECCIÓN */}
+<div>
+
+  <label className="block mb-2 font-medium text-[#243847]">
+
+    Dirección
+
+  </label>
+
+  <input
+    type="text"
+    placeholder="Dirección"
+    value={address}
+    onChange={(e) =>
+      setAddress(
+        e.target.value
+      )
+    }
+    className="w-full border p-4 rounded-2xl"
+  />
+
+</div>
+
+           
 
               {/* ESPECIALIDAD */}
               <div>
@@ -1228,6 +1394,184 @@ const days = [
         ))}
 
       </div>
+
+      <div className="mt-8">
+
+  <div className="flex items-center justify-between mb-4">
+
+    <h3 className="text-xl font-bold">
+
+      Excepciones
+
+    </h3>
+
+    <button
+
+      onClick={() => {
+
+        setOverrides([
+
+          ...overrides,
+
+          {
+
+            override_date: "",
+
+            start_time: "",
+
+            end_time: "",
+
+            is_day_off: false,
+
+          },
+
+        ]);
+
+      }}
+
+      className="bg-[#243847] text-white px-4 py-2 rounded-2xl"
+
+    >
+
+      + Agregar excepción
+
+    </button>
+
+  </div>
+
+  <div className="space-y-4">
+
+    {overrides.map(
+      (override, index) => (
+
+        <div
+
+          key={index}
+
+          className="grid grid-cols-4 gap-4 items-center"
+
+        >
+
+          <input
+
+            type="date"
+
+            value={
+              override.override_date
+            }
+
+            onChange={(e) => {
+
+              const updated =
+                [...overrides];
+
+              updated[index]
+                .override_date =
+                  e.target.value;
+
+              setOverrides(
+                updated
+              );
+
+            }}
+
+            className="border p-2 rounded-xl"
+
+          />
+
+          <input
+
+            type="time"
+
+            value={
+              override.start_time
+            }
+
+            onChange={(e) => {
+
+              const updated =
+                [...overrides];
+
+              updated[index]
+                .start_time =
+                  e.target.value;
+
+              setOverrides(
+                updated
+              );
+
+            }}
+
+            className="border p-2 rounded-xl"
+
+          />
+
+          <input
+
+            type="time"
+
+            value={
+              override.end_time
+            }
+
+            onChange={(e) => {
+
+              const updated =
+                [...overrides];
+
+              updated[index]
+                .end_time =
+                  e.target.value;
+
+              setOverrides(
+                updated
+              );
+
+            }}
+
+            className="border p-2 rounded-xl"
+
+          />
+
+          <label className="flex items-center gap-2">
+
+            <input
+
+              type="checkbox"
+
+              checked={
+                override.is_day_off
+              }
+
+              onChange={(e) => {
+
+                const updated =
+                  [...overrides];
+
+                updated[index]
+                  .is_day_off =
+                    e.target.checked;
+
+                setOverrides(
+                  updated
+                );
+
+              }}
+
+            />
+
+            Descanso
+
+          </label>
+
+        </div>
+
+      )
+    )}
+
+  </div>
+
+</div>
 
       <div className="flex justify-end gap-4 mt-8">
 

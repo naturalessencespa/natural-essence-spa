@@ -569,21 +569,15 @@ const [
 
     <div className="flex flex-col gap-2">
 
-      <span className="bg-green-100 text-green-700 px-3 py-1 rounded-xl text-sm font-medium w-fit">
+    <a
+  href={service.protocol_url}
+  target="_blank"
+  className="bg-[#243847] text-white px-4 py-2 rounded-xl hover:opacity-90 transition text-center inline-block"
+>
 
-        Protocolo generado
+  Ver PDF
 
-      </span>
-
-      <a
-        href={service.protocol_url}
-        target="_blank"
-        className="bg-[#243847] text-white px-4 py-2 rounded-xl hover:opacity-90 transition text-center"
-      >
-
-        Ver PDF
-
-      </a>
+</a>
 
     </div>
 
