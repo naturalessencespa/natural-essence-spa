@@ -57,6 +57,33 @@ export default function WorkersPage() {
   const [notes, setNotes] =
     useState("");
 
+  const [
+  showSchedulesModal,
+  setShowSchedulesModal
+] = useState(false);
+
+const [
+  selectedWorkerId,
+  setSelectedWorkerId
+] = useState<number | null>(null);
+
+const [
+  schedules,
+  setSchedules
+] = useState<any[]>([]);
+
+const days = [
+
+  "Domingo",
+  "Lunes",
+  "Martes",
+  "Miércoles",
+  "Jueves",
+  "Viernes",
+  "Sábado",
+
+];
+
   // OBTENER TRABAJADORAS
   const fetchWorkers = async () => {
 
@@ -315,6 +342,70 @@ export default function WorkersPage() {
     fetchWorkers();
   };
 
+  const saveSchedules = async () => {
+
+  if (!selectedWorkerId)
+    return;
+
+  const schedulesToSave =
+
+    schedules.map(
+      (schedule) => ({
+
+        worker_id:
+          selectedWorkerId,
+
+        day_of_week:
+          schedule.day_of_week,
+
+        start_time:
+          schedule.start_time || null,
+
+        end_time:
+          schedule.end_time || null,
+
+        is_rest_day:
+          schedule.is_rest_day || false,
+
+      })
+    );
+
+  const { error } =
+    await supabase
+
+      .from(
+        "worker_schedules"
+      )
+
+      .upsert(
+        schedulesToSave,
+        {
+          onConflict:
+            "worker_id,day_of_week"
+        }
+      );
+
+  if (error) {
+
+    console.log(error);
+
+    alert(
+      "Error guardando horarios"
+    );
+
+    return;
+  }
+
+  alert(
+    "Horarios guardados"
+  );
+
+  setShowSchedulesModal(
+    false
+  );
+
+};
+
   useEffect(() => {
 
     fetchWorkers();
@@ -557,6 +648,53 @@ export default function WorkersPage() {
                     Eliminar
 
                   </button>
+
+                  <button
+
+ onClick={async () => {
+
+  setSelectedWorkerId(
+    worker.id
+  );
+
+  const { data, error } =
+    await supabase
+
+      .from(
+        "worker_schedules"
+      )
+
+      .select("*")
+
+      .eq(
+        "worker_id",
+        worker.id
+      );
+
+  if (error) {
+
+    console.log(error);
+
+    return;
+  }
+
+  setSchedules(
+    data || []
+  );
+
+  setShowSchedulesModal(
+    true
+  );
+
+}}
+
+  className="bg-blue-500 text-white px-4 py-2 rounded-xl"
+
+>
+
+  Horarios
+
+</button>
 
                 </td>
 
@@ -942,6 +1080,193 @@ export default function WorkersPage() {
         </div>
 
       )}
+
+      {showSchedulesModal && (
+
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+    <div className="bg-white p-6 rounded-3xl w-full max-w-3xl">
+
+      <h2 className="text-2xl font-bold mb-6">
+
+        Horarios laborales
+
+      </h2>
+
+      <div className="space-y-4">
+
+        {days.map((day, index) => (
+
+          <div
+
+            key={index}
+
+            className="grid grid-cols-4 gap-4 items-center"
+
+          >
+
+            <p className="font-medium">
+
+              {day}
+
+            </p>
+
+           <input
+
+  type="time"
+
+  value={
+    schedules[index]
+      ?.start_time || ""
+  }
+
+  onChange={(e) => {
+
+    const updated =
+      [...schedules];
+
+    updated[index] = {
+
+      ...updated[index],
+
+      day_of_week:
+        index,
+
+      start_time:
+        e.target.value,
+
+    };
+
+    setSchedules(
+      updated
+    );
+
+  }}
+
+  className="border p-2 rounded-xl"
+
+/>
+
+            <input
+
+  type="time"
+
+  value={
+    schedules[index]
+      ?.end_time || ""
+  }
+
+  onChange={(e) => {
+
+    const updated =
+      [...schedules];
+
+    updated[index] = {
+
+      ...updated[index],
+
+      day_of_week:
+        index,
+
+      end_time:
+        e.target.value,
+
+    };
+
+    setSchedules(
+      updated
+    );
+
+  }}
+
+  className="border p-2 rounded-xl"
+
+/>
+
+            <label className="flex items-center gap-2">
+
+             <input
+
+  type="checkbox"
+
+  checked={
+    schedules[index]
+      ?.is_rest_day || false
+  }
+
+  onChange={(e) => {
+
+    const updated =
+      [...schedules];
+
+    updated[index] = {
+
+      ...updated[index],
+
+      day_of_week:
+        index,
+
+      is_rest_day:
+        e.target.checked,
+
+    };
+
+    setSchedules(
+      updated
+    );
+
+  }}
+
+/>
+
+              Descanso
+
+            </label>
+
+          </div>
+
+        ))}
+
+      </div>
+
+      <div className="flex justify-end gap-4 mt-8">
+
+        <button
+
+          onClick={() =>
+            setShowSchedulesModal(false)
+          }
+
+          className="bg-gray-300 px-5 py-3 rounded-2xl"
+
+        >
+
+          Cerrar
+
+        </button>
+
+        <button
+
+  onClick={
+    saveSchedules
+  }
+
+  className="bg-[#243847] text-white px-5 py-3 rounded-2xl"
+
+>
+
+  Guardar horarios
+
+</button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+)}
+      
 
     </div>
 
