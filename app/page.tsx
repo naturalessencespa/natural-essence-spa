@@ -20,10 +20,12 @@ import ProductSalesPage from "@/modules/product-sales/ProductSalesPage";
 
 import InventoryMovementsPage from "@/modules/inventory-movements/InventoryMovementsPage";
 
+import DashboardPage from "@/modules/dashboard/DashboardPage";
+
 export default function Home() {
 
-  const [page, setPage] =
-    useState("reservas");
+const [page, setPage] =
+  useState("dashboard");
 
   return (
 
@@ -45,6 +47,21 @@ export default function Home() {
 
         {/* MENU */}
         <div className="flex flex-col gap-3">
+
+          <button
+  onClick={() =>
+    setPage("dashboard")
+  }
+  className={`text-left p-4 rounded-2xl transition font-medium ${
+    page === "dashboard"
+      ? "bg-white text-[#243847]"
+      : "hover:bg-white/10"
+  }`}
+>
+
+  Dashboard
+
+</button>
 
           {/* RESERVAS */}
           <button
@@ -209,6 +226,10 @@ export default function Home() {
         {/* RESERVAS */}
         {page === "reservas" && (
           <AppointmentsPage />
+        )}
+
+        {page === "dashboard" && (
+          <DashboardPage />
         )}
 
         {/* CLIENTES */}
