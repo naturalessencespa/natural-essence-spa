@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";  
+import * as XLSX from "xlsx";
 
 export default function DashboardPage() {
 
@@ -68,6 +69,8 @@ useEffect(() => {
 }, [startDate, endDate]);
 
 
+
+
 const loadAppointments =
   async () => {
 
@@ -80,7 +83,7 @@ const loadAppointments =
 
         .select(`
           *,
-          clients(full_name),
+          clients(full_name, phone),
           services(name),
           workers(name)
         `)
@@ -157,6 +160,36 @@ setTicketAverage(
 
     : 0
 );
+
+const exportToExcel = () => {
+const data = todayAppointments.map(
+  (appointment) => ({
+    Fecha: appointment.appointment_date,
+    Hora: appointment.start_time,
+    Cliente: appointment.clients?.full_name,
+    Telefono: appointment.clients?.phone,
+    Servicio: appointment.services?.name,
+    Precio: appointment.final_price,
+    Trabajadora: appointment.workers?.name
+  })
+);
+  const worksheet =
+    XLSX.utils.json_to_sheet(data);
+
+  const workbook =
+    XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    "Reporte"
+  );
+
+  XLSX.writeFile(
+    workbook,
+    `Reporte_${startDate}_${endDate}.xlsx`
+  );
+};
 
 const dailySales: any = {};
 
@@ -389,6 +422,56 @@ setInactiveClients(
 
 };
 
+const exportToExcel = () => {
+
+ const data = todayAppointments.map(
+  (appointment) => ({
+    Fecha: appointment.appointment_date,
+    Hora: appointment.start_time,
+    Cliente: appointment.clients?.full_name,
+    Telefono: appointment.clients?.phone,
+    Servicio: appointment.services?.name,
+    Precio: appointment.final_price,
+    Trabajadora: appointment.workers?.name
+  })
+);
+
+const workbook =
+  XLSX.utils.book_new();
+
+const citasSheet =
+  XLSX.utils.json_to_sheet(data);
+
+XLSX.utils.book_append_sheet(
+  workbook,
+  citasSheet,
+  "Citas"
+);
+
+const workersSheet =
+  XLSX.utils.json_to_sheet(
+
+    salesByWorker.map(
+      (item) => ({
+        Trabajadora: item.worker,
+        Ventas: item.sales
+      })
+    )
+
+  );
+
+XLSX.utils.book_append_sheet(
+  workbook,
+  workersSheet,
+  "Trabajadoras"
+);
+
+  XLSX.writeFile(
+    workbook,
+    `Reporte_${startDate}_${endDate}.xlsx`
+  );
+
+};
 
 
   return (
@@ -428,6 +511,13 @@ setInactiveClients(
       className="border rounded-xl p-2"
     />
   </div>
+
+  <button
+  onClick={exportToExcel}
+  className="bg-green-600 text-white px-4 py-2 rounded-xl self-end"
+>
+  📊 Exportar Excel
+</button>
 
 </div>
 
@@ -496,16 +586,21 @@ setInactiveClients(
       </th>
 
       <th className="text-left p-3">
+        Teléfono
+      </th>
+
+      <th className="text-left p-3">
         Servicio
+      </th>
+
+      <th className="text-left p-3">
+        Precio
       </th>
 
       <th className="text-left p-3">
         Trabajadora
       </th>
 
-      <th className="text-left p-3">
-        Estado
-      </th>
 
     </tr>
 
@@ -547,25 +642,32 @@ setInactiveClients(
           <td className="p-3">
 
             {
-              appointment.services
-                ?.name
+              appointment.clients?.phone
             }
 
           </td>
+<td className="p-3">
 
+  {
+    appointment.services?.name
+  }
+
+</td>
+
+<td className="p-3 font-semibold">
+
+  S/ {
+    Number(
+      appointment.final_price || 0
+    ).toFixed(2)
+  }
+
+</td>
           <td className="p-3">
 
             {
               appointment.workers
                 ?.name
-            }
-
-          </td>
-
-          <td className="p-3">
-
-            {
-              appointment.status
             }
 
           </td>
@@ -719,6 +821,10 @@ setInactiveClients(
 
         <th className="text-left p-3">
           Servicio
+        </th>
+
+        <th className="text-left p-3">
+          Precio
         </th>
 
         <th className="text-left p-3">
