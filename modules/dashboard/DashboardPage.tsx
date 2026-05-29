@@ -100,6 +100,8 @@ const loadAppointments =
           "Atendida"
         )
 
+        
+
         .order(
           "appointment_date",
         { ascending: true }
@@ -308,14 +310,19 @@ const { data: allAppointments } =
       "Atendida"
     );
 
+    console.log("allAppointments");
+console.log(
+  allAppointments?.[0]?.clients
+);
+
 const clientsLastVisit: any = {};
 
 (allAppointments || []).forEach(
   (appointment) => {
 
     const client =
-     appointment.clients?.[0]?.full_name ||
-     "Sin nombre";
+      (appointment.clients as any)?.full_name ||
+ "Sin nombre";
 
     if (!client) return;
 
