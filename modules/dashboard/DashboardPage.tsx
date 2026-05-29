@@ -528,9 +528,10 @@ setInactiveClients(
           </td>
 
           <td className="p-3">
+            
 
             {
-              appointment.clients
+              appointment.clients 
                 ?.full_name
             }
 
