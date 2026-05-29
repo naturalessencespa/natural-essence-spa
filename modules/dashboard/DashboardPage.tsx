@@ -314,7 +314,8 @@ const clientsLastVisit: any = {};
   (appointment) => {
 
     const client =
-      appointment.clients?.full_name;
+     appointment.clients?.[0]?.full_name ||
+     "Sin nombre";
 
     if (!client) return;
 
@@ -528,11 +529,10 @@ setInactiveClients(
           </td>
 
           <td className="p-3">
-            
+
 
             {
-              appointment.clients 
-                ?.full_name
+                appointment.clients?.full_name
             }
 
           </td>
