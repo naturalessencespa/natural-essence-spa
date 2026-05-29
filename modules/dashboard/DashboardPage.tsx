@@ -666,8 +666,8 @@ XLSX.utils.book_append_sheet(
           <td className="p-3">
 
             {
-              appointment.workers
-                ?.name
+              appointment.workers?.name
+      ?.split(" ")[0]
             }
 
           </td>
@@ -791,7 +791,7 @@ XLSX.utils.book_append_sheet(
           >
 
             <td className="p-3">
-              {item.worker}
+              {item.worker?.split(" ")[0]}
             </td>
 
             <td className="p-3 font-semibold">
