@@ -37,6 +37,14 @@ const [salesByService,
   setTopClients] =
   useState<any[]>([]);
 
+  const [inactiveClients,
+  setInactiveClients] =
+  useState<any[]>([]);
+
+  const [salesByDay,
+  setSalesByDay] =
+  useState<any[]>([]);
+
 const [startDate,
   setStartDate] =
   useState(
@@ -93,8 +101,13 @@ const loadAppointments =
         )
 
         .order(
-          "start_time"
-        );
+          "appointment_date",
+        { ascending: true }
+        )
+        .order(
+          "start_time",
+          { ascending: true }
+                );
 
     if (error) {
 
@@ -141,6 +154,38 @@ setTicketAverage(
       data.length
 
     : 0
+);
+
+const dailySales: any = {};
+
+(data || []).forEach(
+  (appointment) => {
+
+    const date =
+      appointment.appointment_date;
+
+    if (!dailySales[date]) {
+
+      dailySales[date] = 0;
+
+    }
+
+    dailySales[date] += Number(
+      appointment.final_price || 0
+    );
+
+  }
+);
+
+setSalesByDay(
+
+  Object.entries(dailySales).map(
+    ([date, sales]) => ({
+      date,
+      sales
+    })
+  )
+
 );
 
 const workerSales: any = {};
@@ -248,6 +293,92 @@ setTopClients(
 
 );
 
+const { data: allAppointments } =
+  await supabase
+
+    .from("appointments")
+
+    .select(`
+      appointment_date,
+      clients(full_name)
+    `)
+
+    .eq(
+      "status",
+      "Atendida"
+    );
+
+const clientsLastVisit: any = {};
+
+(allAppointments || []).forEach(
+  (appointment) => {
+
+    const client =
+      appointment.clients?.full_name;
+
+    if (!client) return;
+
+    const visitDate =
+      appointment.appointment_date;
+
+    if (
+      !clientsLastVisit[client] ||
+      visitDate >
+      clientsLastVisit[client]
+    ) {
+
+      clientsLastVisit[client] =
+        visitDate;
+
+    }
+
+  }
+);
+
+const today =
+  new Date();
+
+const inactive =
+  Object.entries(
+    clientsLastVisit
+  ).map(
+    ([client, lastVisit]) => {
+
+      const diffTime =
+        today.getTime() -
+        new Date(
+          String(lastVisit)
+        ).getTime();
+
+      const days =
+        Math.floor(
+          diffTime /
+          (1000 * 60 * 60 * 24)
+        );
+
+      return {
+        client,
+        lastVisit,
+        days
+      };
+
+    }
+  );
+
+setInactiveClients(
+
+  inactive
+    .filter(
+      (client) =>
+        client.days >= 1
+    )
+    .sort(
+      (a, b) =>
+        b.days - a.days
+    )
+
+);
+
 };
 
 
@@ -345,6 +476,10 @@ setTopClients(
     <tr>
 
       <th className="text-left p-3">
+        Fecha
+      </th>
+
+      <th className="text-left p-3">
         Hora
       </th>
 
@@ -377,6 +512,12 @@ setTopClients(
           key={appointment.id}
           className="border-t"
         >
+
+          <td className="p-3">
+              {new Date(
+                appointment.appointment_date
+              ).toLocaleDateString("es-PE")}
+          </td>
 
           <td className="p-3">
 
@@ -431,6 +572,75 @@ setTopClients(
 </table>
 
       </div>
+
+      <div className="bg-white rounded-3xl shadow mt-8 p-6">
+
+  <h2 className="text-2xl font-bold text-[#243847] mb-4">
+    Ventas por Día
+  </h2>
+
+  <table className="w-full">
+
+    <thead>
+
+      <tr>
+
+        <th className="text-left p-3">
+          Fecha
+        </th>
+
+        <th className="text-left p-3">
+          Ventas
+        </th>
+
+      </tr>
+
+    </thead>
+
+    <tbody>
+
+      {salesByDay
+        .sort(
+          (a, b) =>
+            new Date(a.date).getTime() -
+            new Date(b.date).getTime()
+        )
+        .map((item) => (
+
+          <tr
+            key={item.date}
+            className="border-t"
+          >
+
+            <td className="p-3">
+
+              {new Date(
+                item.date
+              ).toLocaleDateString(
+                "es-PE"
+              )}
+
+            </td>
+
+            <td className="p-3 font-semibold">
+
+              S/ {
+                Number(
+                  item.sales
+                ).toFixed(2)
+              }
+
+            </td>
+
+          </tr>
+
+      ))}
+
+    </tbody>
+
+  </table>
+
+</div>
 
   <div className="bg-white rounded-3xl shadow mt-8 p-6">
 
@@ -596,6 +806,72 @@ setTopClients(
 
             <td className="p-3 font-semibold">
               S/ {client.spent.toFixed(2)}
+            </td>
+
+          </tr>
+
+      ))}
+
+    </tbody>
+
+  </table>
+
+</div>
+
+
+<div className="bg-white rounded-3xl shadow mt-8 p-6">
+
+  <h2 className="text-2xl font-bold text-[#243847] mb-4">
+    Clientes Inactivos
+  </h2>
+
+  <table className="w-full">
+
+    <thead>
+
+      <tr>
+
+        <th className="text-left p-3">
+          Cliente
+        </th>
+
+        <th className="text-left p-3">
+          Última Visita
+        </th>
+
+        <th className="text-left p-3">
+          Días Sin Venir
+        </th>
+
+      </tr>
+
+    </thead>
+
+    <tbody>
+
+      {inactiveClients
+        .slice(0, 20)
+        .map((client) => (
+
+          <tr
+            key={client.client}
+            className="border-t"
+          >
+
+            <td className="p-3">
+              {client.client}
+            </td>
+
+            <td className="p-3">
+              {new Date(
+                client.lastVisit
+              ).toLocaleDateString(
+                "es-PE"
+              )}
+            </td>
+
+            <td className="p-3 font-semibold">
+              {client.days}
             </td>
 
           </tr>
