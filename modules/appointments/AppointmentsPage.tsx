@@ -191,17 +191,29 @@ title:
   " - " +
 
   appointment.clients
-    ?.full_name +
+  ?.full_name +
 
-  " - " +
+" - " +
 
-  appointment.services
-    ?.name +
+appointment.services
+  ?.name +
 
-  " - " +
+(
 
-  appointment.workers
-    ?.name,
+  appointment.notes
+
+    ? " - " +
+      appointment.notes
+
+    : ""
+
+)
+
++
+
+" - " +
+
+appointment.workers?.name?.split(" ")[0],
 
           start: new Date(
             appointment.appointment_date +
@@ -1621,6 +1633,18 @@ eventDrop={async (info) => {
             day: "Día",
 
           }}
+
+          eventContent={(info) => (
+
+  <div className="text-xs">
+
+    <div>
+      {info.event.title}
+    </div>
+
+  </div>
+
+)}
 
           events={events}
 

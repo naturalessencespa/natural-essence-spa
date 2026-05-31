@@ -500,48 +500,7 @@ export default function PackagesPage() {
             );
         }
 
-        // CREAR CITA AUTOMATICA
-
-await supabase
-
-  .from(
-    "appointments"
-  )
-
-  .insert([
-    {
-
-      client_id:
-        parseInt(
-          clientId
-        ),
-
-      service_id:
-        parseInt(
-          serviceId
-        ),
-
-      worker_id: 1,
-
-      branch_id: 1,
-
-      appointment_date:
-        startDate,
-
-      start_time:
-        startTime,
-
-      end_time:
-        startTime,
-
-      status:
-        "Pendiente",
-
-      notes:
-        "Sesión #1 paquete",
-
-    },
-  ]);
+      
 
         // GENERAR SESIONES
         const sessionsToInsert = [];
@@ -593,41 +552,95 @@ await supabase
           );
 
           // CREAR CITA AUTOMATICA
+console.log(
+  "SELECTED ZONES",
+  selectedZones
+);
 
-await supabase
+const zonesText =
+  selectedZones.length > 0
 
-  .from(
-    "appointments"
-  )
+    ? selectedZones
+        .map((zone) =>
+  zone.label.split(" - ")[0]
+)
+        .join(", ")
+
+    : "SIN ZONAS";
+
+// CREAR CITA AUTOMATICA
+
+const {
+  data: appointmentData,
+  error: appointmentError,
+} = await supabase
+
+  .from("appointments")
 
   .insert([
     {
+      client_id: parseInt(clientId),
+      service_id: parseInt(serviceId),
 
-      client_id:
-        parseInt(
-          clientId
-        ),
+      worker_id: 1,
+      branch_id: 1,
 
-      service_id:
-        parseInt(
-          serviceId
-        ),
+      appointment_date: startDate,
+      start_time: startTime,
+      end_time: startTime,
 
-      appointment_date:
-        startDate,
+      status: "Pendiente",
 
-      start_time:
-        startTime,
+      final_price: totalPrice,
 
-      status:
-        "Pendiente",
-
-      notes:
-        `Sesión #1 paquete`,
-
+      notes: zonesText,
     },
-  ]);
+  ])
 
+  .select()
+
+  .single();
+
+if (appointmentError) {
+
+  console.log(
+    appointmentError
+  );
+
+  return;
+}
+
+console.log(
+  "PACKAGE ID:",
+  data?.id
+);
+
+console.log(
+  "APPOINTMENT ID:",
+  appointmentData?.id
+);
+
+const { error: updateError } =
+  await supabase
+
+    .from("client_packages")
+
+    .update({
+
+      appointment_id:
+        appointmentData?.id,
+
+    })
+
+    .eq(
+      "id",
+      data?.id
+    );
+
+console.log(
+  "UPDATE ERROR:",
+  updateError
+);
         alert(
           "Paquete creado"
         );
@@ -660,31 +673,132 @@ await supabase
     };
 
   // ELIMINAR
-  const deletePackage =
-    async (id: number) => {
+const deletePackage =
+  async (id: number) => {
 
-      const confirmDelete =
-        confirm(
-          "¿Eliminar paquete?"
-        );
+    const confirmDelete =
+      confirm(
+        "¿Eliminar paquete?"
+      );
 
-      if (!confirmDelete)
-        return;
+    if (!confirmDelete)
+      return;
 
+    const { data: pkg } =
       await supabase
 
         .from(
           "client_packages"
         )
 
-        .delete()
+        .select("*")
 
-        .eq("id", id);
+        .eq(
+          "id",
+          id
+        )
 
-      fetchPackages();
-    };
+        .single();
 
-    // ACTUALIZAR SESION
+    if (!pkg)
+      return;
+
+    if (
+      pkg.appointment_id
+    ) {
+
+   const {
+  error: deleteAppointmentError
+} = await supabase
+
+  .from(
+    "appointments"
+  )
+
+  .delete()
+
+  .eq(
+    "id",
+    pkg.appointment_id
+  );
+
+  const { data: verifyAppointment } =
+  await supabase
+
+    .from("appointments")
+
+    .select("id")
+
+    .eq(
+      "id",
+      pkg.appointment_id
+    );
+
+console.log(
+  "VERIFY AFTER DELETE:",
+  verifyAppointment
+);
+
+console.log(
+  "DELETE APPOINTMENT:",
+  pkg.appointment_id
+);
+
+console.log(
+  "DELETE ERROR:",
+  deleteAppointmentError
+);
+
+    }
+
+    await supabase
+
+      .from(
+        "package_sessions"
+      )
+
+      .delete()
+
+      .eq(
+        "package_id",
+        id
+      );
+
+    await supabase
+
+      .from(
+        "client_package_zones"
+      )
+
+      .delete()
+
+      .eq(
+        "package_id",
+        id
+      );
+
+    await supabase
+
+      .from(
+        "client_packages"
+      )
+
+      .delete()
+
+      .eq(
+        "id",
+        id
+      );
+
+    fetchPackages();
+
+    alert(
+      "Paquete eliminado"
+    );
+
+  };
+  
+  // ACTUALIZAR SESION
 // ACTUALIZAR SESION
 const updateSession =
   async (
