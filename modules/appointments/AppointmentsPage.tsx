@@ -77,6 +77,11 @@ const [
     setEditingAppointmentId] =
     useState<number | null>(null);
 
+  const [
+  clientSearch,
+  setClientSearch
+] = useState("");
+
   const [clientId, setClientId] =
     useState("");
 
@@ -1641,34 +1646,79 @@ eventDrop={async (info) => {
             <div className="space-y-4">
 
               {/* CLIENTE */}
-              <select
-                value={clientId}
-                onChange={(e) =>
-                  setClientId(
-                    e.target.value
-                  )
-                }
-                className="w-full border p-4 rounded-2xl"
-              >
+                  <div className="space-y-2">
 
-                <option value="">
-                  Seleccionar cliente
-                </option>
+  <input
+    type="text"
+    placeholder="🔍 Buscar cliente..."
+    value={clientSearch}
+    onChange={(e) =>
+      setClientSearch(
+        e.target.value
+      )
+    }
+    className="w-full border p-4 rounded-2xl"
+  />
 
-                {clients.map((client) => (
+  <select
+    value={clientId}
+    onChange={(e) =>
+      setClientId(
+        e.target.value
+      )
+    }
+    className="w-full border p-4 rounded-2xl"
+  >
 
-                  <option
-                    key={client.id}
-                    value={client.id}
-                  >
+    <option value="">
+      Seleccionar cliente
+    </option>
 
-                    {client.full_name}
+    {clients
 
-                  </option>
+      .filter(
+        (client) =>
 
-                ))}
+          client.full_name
+            ?.toLowerCase()
+            .includes(
+              clientSearch
+                .toLowerCase()
+            )
 
-              </select>
+          ||
+
+          client.phone
+            ?.includes(
+              clientSearch
+            )
+      )
+
+      .sort(
+        (a, b) =>
+          a.full_name.localeCompare(
+            b.full_name
+          )
+      )
+
+      .map((client) => (
+
+        <option
+          key={client.id}
+          value={client.id}
+        >
+
+          {client.full_name}
+          {" - "}
+          {client.phone || ""}
+
+        </option>
+
+      ))}
+
+  </select>
+
+</div>
 
               {/* SERVICIO */}
               <select

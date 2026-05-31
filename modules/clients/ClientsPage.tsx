@@ -9,6 +9,11 @@ export default function ClientsPage() {
   const [clients, setClients] =
     useState<any[]>([]);
 
+    const [
+  search,
+  setSearch
+] = useState("");
+
   const [showModal, setShowModal] =
     useState(false);
 
@@ -373,6 +378,22 @@ export default function ClientsPage() {
       {/* TABLA */}
       <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
 
+      <div className="mb-6">
+
+  <input
+    type="text"
+    placeholder="🔍 Buscar por nombre o teléfono"
+    value={search}
+    onChange={(e) =>
+      setSearch(
+        e.target.value
+      )
+    }
+    className="w-full border p-4 rounded-2xl"
+  />
+
+</div>
+
         <table className="w-full">
 
           <thead className="bg-[#243847] text-white">
@@ -405,7 +426,31 @@ export default function ClientsPage() {
 
           <tbody>
 
-            {clients.map((client) => (
+{clients
+
+  .filter(
+    (client) =>
+
+      client.full_name
+        ?.toLowerCase()
+        .includes(
+          search.toLowerCase()
+        )
+
+      ||
+
+      client.phone
+        ?.includes(search)
+  )
+
+  .sort(
+    (a, b) =>
+      a.full_name.localeCompare(
+        b.full_name
+      )
+  )
+
+  .map((client) => (
 
               <tr
                 key={client.id}
