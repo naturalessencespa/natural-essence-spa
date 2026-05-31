@@ -22,6 +22,8 @@ import InventoryMovementsPage from "@/modules/inventory-movements/InventoryMovem
 
 import DashboardPage from "@/modules/dashboard/DashboardPage";
 
+import LaserZonesPage from "@/modules/laser-zones/LaserZonesPage";
+
 export default function Home() {
 
 const [page, setPage] =
@@ -182,6 +184,21 @@ const [page, setPage] =
 
          <button
   onClick={() =>
+    setPage("zonas-laser")
+  }
+  className={`text-left p-4 rounded-2xl transition font-medium ${
+    page === "zonas-laser"
+      ? "bg-white text-[#243847]"
+      : "hover:bg-white/10"
+  }`}
+>
+
+  Zonas Láser
+
+</button>
+
+         <button
+  onClick={() =>
     setPage(
       "ventas-internas"
     )
@@ -262,6 +279,11 @@ const [page, setPage] =
          {/* PAQUETES */}
         {page === "paquetes" && (
           <PackagesPage />
+        )}
+
+        {/* ZONA LÁSER */}
+        {page === "zonas-laser" && (
+          <LaserZonesPage />
         )}
 
        {/* VENTAS INTERNAS */}
