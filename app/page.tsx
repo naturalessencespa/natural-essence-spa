@@ -24,6 +24,8 @@ import DashboardPage from "@/modules/dashboard/DashboardPage";
 
 import LaserZonesPage from "@/modules/laser-zones/LaserZonesPage";
 
+import ExpensesPage from "@/modules/expenses/ExpensesPage";
+
 export default function Home() {
 
 const [page, setPage] =
@@ -233,6 +235,21 @@ const [page, setPage] =
 
 </button>
 
+<button
+  onClick={() =>
+    setPage("gastos")
+  }
+  className={`text-left p-4 rounded-2xl transition ${
+    page === "gastos"
+      ? "bg-white text-[#243847]"
+      : "hover:bg-white/10"
+  }`}
+>
+
+  Gastos
+
+</button>
+
         </div>
 
       </div>
@@ -296,6 +313,10 @@ const [page, setPage] =
         {page ===
           "ventas-productos" && (
           <ProductSalesPage />
+        )}
+
+        {page === "gastos" && (
+          <ExpensesPage />
         )}
 
       </div>
