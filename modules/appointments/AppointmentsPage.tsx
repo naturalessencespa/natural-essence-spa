@@ -684,7 +684,7 @@ const soldPrice =
                 endTime,
 
               status:
-                "confirmed",
+                "Pendiente",
 
               notes: "",
 
@@ -1015,7 +1015,7 @@ async (
     .update({
 
       status:
-        "confirmed"
+        "Pendiente"
 
     })
 

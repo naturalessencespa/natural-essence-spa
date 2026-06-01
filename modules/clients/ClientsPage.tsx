@@ -25,6 +25,10 @@ export default function ClientsPage() {
     setSelectedClient] =
     useState<any>(null);
 
+  const [clientHistory,
+  setClientHistory] =
+  useState<any[]>([]);
+
   const [editingClientId,
     setEditingClientId] =
     useState<number | null>(null);
@@ -264,6 +268,52 @@ export default function ClientsPage() {
     fetchClients();
   };
 
+    const loadClientHistory =
+  async (
+    clientId: number
+  ) => {
+
+    const {
+      data,
+      error
+    } = await supabase
+
+      .from("appointments")
+
+      .select(`
+        *,
+        services(name)
+      `)
+
+      .eq(
+        "client_id",
+        clientId
+      )
+
+      .neq(
+        "status",
+        "Cancelada"
+      )
+
+      .order(
+        "appointment_date",
+        {
+          ascending: false
+        }
+      );
+
+    if (error) {
+
+      console.log(error);
+
+      return;
+    }
+
+    setClientHistory(
+      data || []
+    );
+
+  };
   // ELIMINAR
   const deleteClient = async (
     id: number
@@ -487,15 +537,21 @@ export default function ClientsPage() {
 
                   {/* VER */}
                   <button
-                    onClick={() => {
+  onClick={async () => {
 
-                      setSelectedClient(
-                        client
-                      );
+    setSelectedClient(
+      client
+    );
 
-                      setShowViewModal(true);
+    await loadClientHistory(
+      client.id
+    );
 
-                    }}
+    setShowViewModal(
+      true
+    );
+
+  }}
                     className="bg-[#243847] text-white px-4 py-2 rounded-xl"
                   >
 
@@ -825,6 +881,107 @@ export default function ClientsPage() {
                 </p>
 
               </div>
+
+              <div className="md:col-span-2 mt-8">
+
+  <h3 className="text-2xl font-bold text-[#243847] mb-4">
+
+    Historial de Servicios
+
+  </h3>
+
+  <div className="border rounded-2xl overflow-hidden">
+
+    <table className="w-full">
+
+      <thead className="bg-[#243847] text-white">
+
+        <tr>
+
+          <th className="p-3 text-left">
+
+            Fecha
+
+          </th>
+
+          <th className="p-3 text-left">
+
+            Servicio
+
+          </th>
+
+          <th className="p-3 text-left">
+
+            Estado
+
+          </th>
+
+          <th className="p-3 text-left">
+
+            Monto
+
+          </th>
+
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+        {clientHistory.map(
+          (item) => (
+
+            <tr
+              key={item.id}
+              className="border-t"
+            >
+
+              <td className="p-3">
+
+                {
+                  item.appointment_date
+                }
+
+              </td>
+
+              <td className="p-3">
+
+                {
+                  item.services?.name
+                }
+
+              </td>
+
+              <td className="p-3">
+
+                {
+                  item.status
+                }
+
+              </td>
+
+              <td className="p-3">
+
+                S/
+                {
+                  item.final_price ||
+                  0
+                }
+
+              </td>
+
+            </tr>
+
+          )
+        )}
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</div>
 
               {selectedClient.file_url && (
 
