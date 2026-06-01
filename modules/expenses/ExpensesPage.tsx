@@ -804,6 +804,10 @@ export default function ExpensesPage() {
             Limpieza
           </option>
 
+           <option>
+            Coffee Bar
+          </option>
+
           <option>
             Alquiler
           </option>
