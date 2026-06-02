@@ -49,7 +49,10 @@ const [salesByService,
 const [startDate,
   setStartDate] =
   useState(
-    new Date()
+    new Date(
+      Date.now() -
+      new Date().getTimezoneOffset() * 60000
+    )
       .toISOString()
       .split("T")[0]
   );
@@ -57,7 +60,10 @@ const [startDate,
 const [endDate,
   setEndDate] =
   useState(
-    new Date()
+    new Date(
+      Date.now() -
+      new Date().getTimezoneOffset() * 60000
+    )
       .toISOString()
       .split("T")[0]
   );
@@ -81,12 +87,19 @@ const loadAppointments =
 
         .from("appointments")
 
-        .select(`
-          *,
-          clients(full_name, phone),
-          services(name),
-          workers(name)
-        `)
+      .select(`
+        *,
+        clients(full_name, phone),
+        services(name),
+        workers(name),
+     appointment_reserved_services(
+        service_id,
+        services(
+          name,
+          price
+        )
+)
+      `)
 
         .gte(
           "appointment_date",
@@ -147,8 +160,24 @@ setClientsToday(
   data?.length || 0
 );
 
+const totalServices =
+
+  (data || []).reduce(
+    (sum, appointment) =>
+
+      sum +
+
+      (
+        appointment
+          .appointment_reserved_services
+          ?.length || 1
+      ),
+
+    0
+  );
+
 setServicesToday(
-  data?.length || 0
+  totalServices
 );
 
 setTicketAverage(
@@ -168,7 +197,21 @@ const data = todayAppointments.map(
     Hora: appointment.start_time,
     Cliente: appointment.clients?.full_name,
     Telefono: appointment.clients?.phone,
-    Servicio: appointment.services?.name,
+    Servicio:
+
+  appointment
+    .appointment_reserved_services
+    ?.length > 0
+
+    ? appointment
+        .appointment_reserved_services
+        .map(
+          (item: any) =>
+            item.services?.name
+        )
+        .join(" + ")
+
+    : appointment.services?.name,
     Precio: appointment.final_price,
     Trabajadora: appointment.workers?.name
   })
@@ -257,22 +300,102 @@ setSalesByWorker(
 );
 
 const serviceSales: any = {};
+const serviceCounts: any = {};
 
 (data || []).forEach(
   (appointment) => {
 
-    const service =
-      appointment.services?.name ||
-      "Sin servicio";
+    const reservedServices =
 
-    if (!serviceSales[service]) {
+      appointment
+        .appointment_reserved_services
+        ?.length > 0
 
-      serviceSales[service] = 0;
+        ? appointment
+            .appointment_reserved_services
 
-    }
+        : [];
 
-    serviceSales[service] += Number(
-      appointment.final_price || 0
+    const totalListPrice =
+
+      reservedServices.reduce(
+        (sum: number, item: any) =>
+
+          sum +
+
+          Number(
+            item.services?.price || 0
+          ),
+
+        0
+      );
+
+    reservedServices.forEach(
+      (item: any) => {
+
+        const serviceName =
+          item.services?.name ||
+          "Sin servicio";
+
+        const servicePrice =
+          Number(
+            item.services?.price || 0
+          );
+
+        const proportionalAmount =
+
+          totalListPrice > 0
+
+            ? Math.round(
+
+                (
+                  servicePrice /
+                  totalListPrice
+                )
+
+                *
+
+                Number(
+                  appointment.final_price || 0
+                )
+
+              )
+
+            : 0;
+
+        if (
+          !serviceSales[
+            serviceName
+          ]
+        ) {
+
+          serviceSales[
+            serviceName
+          ] = 0;
+
+        }
+
+        if (
+  !serviceCounts[
+    serviceName
+  ]
+) {
+
+  serviceCounts[
+    serviceName
+  ] = 0;
+
+}
+
+        serviceSales[
+          serviceName
+        ] += proportionalAmount;
+
+        serviceCounts[
+  serviceName
+] += 1;
+
+      }
     );
 
   }
@@ -282,8 +405,16 @@ setSalesByService(
 
   Object.entries(serviceSales).map(
     ([service, sales]) => ({
+
       service,
-      sales
+
+      sales,
+
+      count:
+        serviceCounts[
+          service
+        ] || 0
+
     })
   )
 
@@ -411,7 +542,7 @@ setInactiveClients(
   inactive
     .filter(
       (client) =>
-        client.days >= 1
+        client.days >= 60
     )
     .sort(
       (a, b) =>
@@ -430,7 +561,21 @@ const exportToExcel = () => {
     Hora: appointment.start_time,
     Cliente: appointment.clients?.full_name,
     Telefono: appointment.clients?.phone,
-    Servicio: appointment.services?.name,
+    Servicio:
+
+  appointment
+    .appointment_reserved_services
+    ?.length > 0
+
+    ? appointment
+        .appointment_reserved_services
+        .map(
+          (item: any) =>
+            item.services?.name
+        )
+        .join(" + ")
+
+    : appointment.services?.name,
     Precio: appointment.final_price,
     Trabajadora: appointment.workers?.name
   })
@@ -616,12 +761,12 @@ XLSX.utils.book_append_sheet(
           className="border-t"
         >
 
-          <td className="p-3">
-              {new Date(
-                appointment.appointment_date
-              ).toLocaleDateString("es-PE")}
-          </td>
-
+         <td className="p-3">
+  {appointment.appointment_date
+    ?.split("-")
+    .reverse()
+    .join("/")}
+</td>
           <td className="p-3">
 
             {
@@ -648,9 +793,21 @@ XLSX.utils.book_append_sheet(
           </td>
 <td className="p-3">
 
-  {
-    appointment.services?.name
-  }
+ {
+  appointment
+    .appointment_reserved_services
+    ?.length > 0
+
+    ? appointment
+        .appointment_reserved_services
+        .map(
+          (item: any) =>
+            item.services?.name
+        )
+        .join(" + ")
+
+    : appointment.services?.name
+}
 
 </td>
 
@@ -724,11 +881,10 @@ XLSX.utils.book_append_sheet(
 
             <td className="p-3">
 
-              {new Date(
-                item.date
-              ).toLocaleDateString(
-                "es-PE"
-              )}
+         {item.date
+  ?.split("-")
+  .reverse()
+  .join("/")}
 
             </td>
 
@@ -823,8 +979,8 @@ XLSX.utils.book_append_sheet(
           Servicio
         </th>
 
-        <th className="text-left p-3">
-          Precio
+     <th className="text-left p-3">
+          Cantidad
         </th>
 
         <th className="text-left p-3">
@@ -853,9 +1009,13 @@ XLSX.utils.book_append_sheet(
               {item.service}
             </td>
 
-            <td className="p-3 font-semibold">
-              S/ {Number(item.sales).toFixed(2)}
-            </td>
+            <td className="p-3">
+  {item.count}
+</td>
+
+<td className="p-3 font-semibold">
+  S/ {Math.round(item.sales)}
+</td>
 
           </tr>
 

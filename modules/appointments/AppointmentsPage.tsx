@@ -89,6 +89,11 @@ const [
     setServiceId] =
     useState("");
 
+    const [
+  selectedServices,
+  setSelectedServices
+] = useState<number[]>([]);
+
   const [workerId,
     setWorkerId] =
     useState("");
@@ -131,17 +136,24 @@ const [
         .from("appointments")
 
         .select(`
-          *,
-          clients(full_name),
-          services(
-            name,
-            price
-          ),
-          workers(
-            name,
-            color
-          )
-        `)
+  *,
+  clients(full_name),
+  services(
+    name,
+    price
+  ),
+  workers(
+    name,
+    color
+  ),
+appointment_reserved_services(
+  service_id,
+  services(
+    name,
+    duration
+  )
+)
+`)
         
                         .neq(
           "status",
@@ -195,8 +207,24 @@ title:
 
 " - " +
 
-appointment.services
-  ?.name +
+(
+  appointment
+    .appointment_reserved_services
+    ?.length > 0
+
+    ? appointment
+        .appointment_reserved_services
+        .map(
+          (item: any) =>
+            item.services?.name
+        )
+        .join(" + ")
+
+    : appointment.services
+        ?.name
+)
+
++
 
 (
 
@@ -248,6 +276,10 @@ borderColor:
 
             service_id:
               appointment.service_id,
+
+                reserved_services:
+    appointment
+      .appointment_reserved_services,
 
             worker_id:
               appointment.worker_id,
@@ -318,12 +350,12 @@ borderColor:
   // GUARDAR / EDITAR CITA
   const saveAppointment = async () => {
 
-    if (
-      !clientId ||
-      !serviceId ||
-      !workerId ||
-      !branchId
-    ) {
+   if (
+  !clientId ||
+  selectedServices.length === 0 ||
+  !workerId ||
+  !branchId
+) {
 
       alert(
         "Completa todos los campos"
@@ -335,16 +367,25 @@ borderColor:
     const start =
       new Date(selectedDate);
 
-    // OBTENER SERVICIO
-    const selectedService =
-      services.find(
-        (service) =>
-          service.id ===
-          parseInt(serviceId)
-      );
+ const selectedServicesData =
+  services.filter(
+    (service) =>
+      selectedServices.includes(
+        service.id
+      )
+  );
 
 const originalPrice =
-  selectedService?.price || 0;
+  selectedServicesData.reduce(
+    (sum, service) =>
+
+      sum +
+      Number(
+        service.price || 0
+      ),
+
+    0
+  );
 
 const soldPrice =
 
@@ -354,70 +395,87 @@ const soldPrice =
 
     : originalPrice;
 
-    let durationMinutes = 60;
+let durationMinutes = 0;
+
+selectedServicesData.forEach(
+  (service) => {
 
     if (
-      selectedService?.duration
+      !service.duration
     ) {
 
-      const durationText =
-        selectedService.duration
-          .toLowerCase();
+      durationMinutes += 60;
 
-      // HORAS
-      if (
-        durationText.includes(
-          "hora"
-        )
-      ) {
-
-        const hours =
-          parseInt(
-            durationText
-          ) || 1;
-
-        durationMinutes =
-          hours * 60;
-      }
-
-      // MINUTOS
-      if (
-        durationText.includes(
-          "minuto"
-        )
-      ) {
-
-        durationMinutes =
-          parseInt(
-            durationText
-          ) || 60;
-      }
-
+      return;
     }
 
-    const end =
-      new Date(start);
+    const durationText =
+      service.duration
+        .toLowerCase();
 
-    end.setMinutes(
-      end.getMinutes() +
-        durationMinutes
-    );
+    if (
+      durationText.includes(
+        "hora"
+      )
+    ) {
 
-    // VALIDAR SOLAPAMIENTO REAL
-    const appointmentDate =
-      start
-        .toISOString()
-        .split("T")[0];
+      const hours =
+        parseInt(
+          durationText
+        ) || 1;
 
-    const startTime =
-      start
-        .toTimeString()
-        .slice(0, 5);
+      durationMinutes +=
+        hours * 60;
 
-    const endTime =
-      end
-        .toTimeString()
-        .slice(0, 5);
+      return;
+    }
+
+    if (
+      durationText.includes(
+        "minuto"
+      )
+    ) {
+
+      durationMinutes +=
+        parseInt(
+          durationText
+        ) || 60;
+
+      return;
+    }
+
+    durationMinutes += 60;
+
+  }
+);
+
+const end =
+  new Date(start);
+
+end.setMinutes(
+  end.getMinutes() +
+    durationMinutes
+);
+
+const appointmentDate =
+  `${start.getFullYear()}-${
+    String(
+      start.getMonth() + 1
+    ).padStart(2, "0")
+  }-${
+    String(
+      start.getDate()
+    ).padStart(2, "0")
+  }`;
+const startTime =
+  start
+    .toTimeString()
+    .slice(0, 5);
+
+const endTime =
+  end
+    .toTimeString()
+    .slice(0, 5);
 
     const {
       data:
@@ -577,140 +635,240 @@ const soldPrice =
     if (editingAppointmentId) {
 
       const { error } =
-        await supabase
+  await supabase
 
-          .from("appointments")
+    .from("appointments")
 
-      .update({
+    .update({
 
-  client_id:
-    parseInt(
-      clientId
-    ),
+      client_id:
+        parseInt(
+          clientId
+        ),
 
-  service_id:
-    parseInt(
-      serviceId
-    ),
+      service_id:
+        selectedServices[0],
 
-  worker_id:
-    parseInt(
-      workerId
-    ),
+      worker_id:
+        parseInt(
+          workerId
+        ),
 
-  branch_id:
-    parseInt(
-      branchId
-    ),
+      branch_id:
+        parseInt(
+          branchId
+        ),
 
-  appointment_date:
-    appointmentDate,
+      appointment_date:
+        appointmentDate,
 
-  start_time:
-    startTime,
+      start_time:
+        startTime,
 
-  end_time:
-    endTime,
+      end_time:
+        endTime,
 
-  original_price:
-    originalPrice,
+      original_price:
+        originalPrice,
 
-  final_price:
-    soldPrice,
+      final_price:
+        soldPrice,
 
-})
+    })
 
-          .eq(
-            "id",
-            editingAppointmentId
-          );
+    .eq(
+      "id",
+      editingAppointmentId
+    );
 
-      if (error) {
+if (error) {
 
-        console.log(error);
+  console.log(error);
 
-        alert(
-          "Error al editar"
-        );
+  alert(
+    "Error al editar"
+  );
 
-        return;
-      }
+  return;
+}
 
-      alert(
-        "Reserva actualizada"
-      );
+await supabase
+
+  .from(
+    "appointment_reserved_services"
+  )
+
+  .delete()
+
+  .eq(
+    "appointment_id",
+    editingAppointmentId
+  );
+
+const reservedServices =
+
+  selectedServices.map(
+    (serviceId) => ({
+
+      appointment_id:
+        editingAppointmentId,
+
+      service_id:
+        serviceId,
+
+    })
+  );
+
+const {
+  error:
+    reservedServicesError
+} =
+  await supabase
+
+    .from(
+      "appointment_reserved_services"
+    )
+
+    .insert(
+      reservedServices
+    );
+
+if (
+  reservedServicesError
+) {
+
+  console.log(
+    reservedServicesError
+  );
+
+  alert(
+    "Error actualizando servicios"
+  );
+
+  return;
+}
+
+alert(
+  "Reserva actualizada"
+);
 
     } else {
        
       
       // CREAR
-      const { error } =
-        await supabase
+      const {
+  data: newAppointment,
+  error
+} =
+  await supabase
 
-          .from("appointments")
+    .from("appointments")
 
-          
+    .insert([
+      {
 
-          .insert([
-            {
+        client_id:
+          parseInt(
+            clientId
+          ),
 
-              client_id:
-                parseInt(
-                  clientId
-                ),
+        service_id:
+          selectedServices[0],
 
-              service_id:
-                parseInt(
-                  serviceId
-                ),
+        worker_id:
+          parseInt(
+            workerId
+          ),
 
-              worker_id:
-                parseInt(
-                  workerId
-                ),
+        branch_id:
+          parseInt(
+            branchId
+          ),
 
-              branch_id:
-                parseInt(
-                  branchId
-                ),
+        appointment_date:
+          appointmentDate,
 
-              appointment_date:
-                appointmentDate,
+        start_time:
+          startTime,
 
-              start_time:
-                startTime,
+        end_time:
+          endTime,
 
-              end_time:
-                endTime,
+        status:
+          "Pendiente",
 
-              status:
-                "Pendiente",
+        notes: "",
 
-              notes: "",
+        original_price:
+          originalPrice,
 
-              original_price:
-                originalPrice,
+        final_price:
+          soldPrice,
 
-              final_price:
-                soldPrice,
+      },
+    ])
 
-            },
-          ]);
+    .select()
 
-      if (error) {
+    .single();
 
-        console.log(error);
+if (error) {
 
-        alert(
-          "Error al guardar"
-        );
+  console.log(error);
 
-        return;
-      }
+  alert(
+    "Error al guardar"
+  );
 
-      alert(
-        "Reserva guardada"
-      );
+  return;
+}
+
+const reservedServices =
+
+  selectedServices.map(
+    (serviceId) => ({
+
+      appointment_id:
+        newAppointment.id,
+
+      service_id:
+        serviceId,
+
+    })
+  );
+
+const {
+  error:
+    reservedServicesError
+} =
+  await supabase
+
+    .from(
+      "appointment_reserved_services"
+    )
+
+    .insert(
+      reservedServices
+    );
+
+if (
+  reservedServicesError
+) {
+
+  console.log(
+    reservedServicesError
+  );
+
+  alert(
+    "Error guardando servicios"
+  );
+
+  return;
+}
+
+alert(
+  "Reserva guardada"
+);
     }
 
     setShowModal(false);
@@ -726,6 +884,8 @@ const soldPrice =
     setWorkerId("");
 
     setBranchId("");
+
+    setSelectedServices([]);
 
     fetchAppointments();
   };
@@ -1046,57 +1206,64 @@ async (
       appointmentId
   );
 
- 
+const reservedServices =
 
-const currentServiceId  =
   currentEvent
     ?.extendedProps
-    ?.service_id;
+    ?.reserved_services || [];
 
-const selectedService =
-  services.find(
-    (service) =>
-      service.id ===
-      currentServiceId
-  );
+let durationMinutes = 0;
 
-let durationMinutes = 60;
+reservedServices.forEach(
+  (item: any) => {
+
+    const durationText =
+      item.services?.duration
+        ?.toLowerCase() || "";
+
+    if (
+      durationText.includes(
+        "hora"
+      )
+    ) {
+
+      durationMinutes +=
+        (
+          parseInt(
+            durationText
+          ) || 1
+        ) * 60;
+
+      return;
+    }
+
+    if (
+      durationText.includes(
+        "minuto"
+      )
+    ) {
+
+      durationMinutes +=
+        parseInt(
+          durationText
+        ) || 60;
+
+      return;
+    }
+
+    durationMinutes += 60;
+
+  }
+);
 
 if (
-  selectedService?.duration
+  durationMinutes === 0
 ) {
 
-  const durationText =
-    selectedService.duration
-      .toLowerCase();
+  durationMinutes = 60;
 
-  if (
-    durationText.includes(
-      "hora"
-    )
-  ) {
+} 
 
-    const hours =
-      parseInt(
-        durationText
-      ) || 1;
-
-    durationMinutes =
-      hours * 60;
-  }
-
-  if (
-    durationText.includes(
-      "minuto"
-    )
-  ) {
-
-    durationMinutes =
-      parseInt(
-        durationText
-      ) || 60;
-  }
-}
 
 const start =
   new Date(
@@ -1159,6 +1326,22 @@ if (
   selectedService
     ?.allow_packages
 ) {
+
+  const moveNextSessions =
+    confirm(
+      "¿Mover también las siguientes sesiones?"
+    );
+
+  if (
+    moveNextSessions
+  ) {
+
+    alert(
+      "Próximamente moverá las siguientes sesiones automáticamente"
+    );
+
+  }
+}{
 
   const moveNextSessions =
     confirm(
@@ -1281,11 +1464,15 @@ if (
 
 setServiceId("");
 
+setSelectedServices([]);
+
 setWorkerId("");
 
 setBranchId("");
 
 setFinalPrice("");
+
+
 
             setSelectedDate(
               info.startStr
@@ -1296,7 +1483,7 @@ setFinalPrice("");
           }}
 
           // EDITAR
-          eventClick={(info) => {
+          eventClick={async (info) => {
 
             const appointment =
               info.event
@@ -1321,6 +1508,31 @@ setFinalPrice("");
               appointment.service_id?.toString()
             );
 
+            const { data: reservedServices } =
+  await supabase
+
+    .from(
+      "appointment_reserved_services"
+    )
+
+    .select(
+      "service_id"
+    )
+
+    .eq(
+      "appointment_id",
+      appointment.id
+    );
+
+setSelectedServices(
+
+  reservedServices?.map(
+    (item) =>
+      item.service_id
+  ) || []
+
+);
+
             setWorkerId(
               appointment.worker_id?.toString()
             );
@@ -1336,10 +1548,30 @@ setFinalPrice("");
 
             );
 
-            setSelectedDate(
-              info.event.start?.toISOString() ||
-                ""
-            );
+            const startDate =
+  info.event.start;
+
+if (startDate) {
+
+  setSelectedDate(
+
+    `${startDate.getFullYear()}-${
+      String(
+        startDate.getMonth() + 1
+      ).padStart(2, "0")
+    }-${
+      String(
+        startDate.getDate()
+      ).padStart(2, "0")
+    }T${
+      startDate
+        .toTimeString()
+        .slice(0, 5)
+    }`
+
+  );
+
+}
 
             supabase
 
@@ -1387,9 +1619,15 @@ eventDrop={async (info) => {
   ) return;
 
   const appointmentDate =
-    start
-      .toISOString()
-      .split("T")[0];
+
+  new Date(
+    start.getTime() -
+    start.getTimezoneOffset() * 60000
+  )
+
+    .toISOString()
+
+    .split("T")[0];
 
   const startTime =
     start
@@ -1568,10 +1806,17 @@ eventDrop={async (info) => {
 
                 .update({
 
-                  appointment_date:
-                    start
-                      .toISOString()
-                      .split("T")[0],
+              appointment_date:
+
+  `${start.getFullYear()}-${
+    String(
+      start.getMonth() + 1
+    ).padStart(2, "0")
+  }-${
+    String(
+      start.getDate()
+    ).padStart(2, "0")
+  }`,
 
                   start_time:
                     start
@@ -1657,7 +1902,7 @@ eventDrop={async (info) => {
 
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
-          <div className="bg-white p-8 rounded-3xl w-[500px] shadow-2xl">
+          <div className="bg-white p-8 rounded-3xl w-[700px] max-h-[90vh] overflow-y-auto shadow-2xl">
 
             <h3 className="text-2xl font-bold text-[#243847] mb-6">
 
@@ -1745,50 +1990,111 @@ eventDrop={async (info) => {
 </div>
 
               {/* SERVICIO */}
-              <select
-                value={serviceId}
-               onChange={(e) => {
+           <div className="border rounded-2xl p-4">
 
-  setServiceId(
-    e.target.value
+  <p className="font-medium mb-3">
+
+    Servicios
+
+  </p>
+
+  <div className="space-y-2 max-h-52 overflow-y-auto">
+
+    {services.map((service) => (
+
+      <label
+        key={service.id}
+        className="flex items-center gap-3"
+      >
+
+        <input
+          type="checkbox"
+
+          checked={
+            selectedServices.includes(
+              service.id
+            )
+          }
+
+      onChange={(e) => {
+
+  let updatedServices =
+    [];
+
+  if (
+    e.target.checked
+  ) {
+
+    updatedServices = [
+
+      ...selectedServices,
+
+      service.id
+
+    ];
+
+  } else {
+
+    updatedServices =
+
+      selectedServices.filter(
+        (id) =>
+          id !== service.id
+      );
+
+  }
+
+  setSelectedServices(
+    updatedServices
   );
 
-  const service =
-    services.find(
-      (s) =>
-        s.id ===
-        Number(
-          e.target.value
-        )
-    );
+  const totalPrice =
+
+    services
+
+      .filter(
+        (s) =>
+
+          updatedServices.includes(
+            s.id
+          )
+      )
+
+      .reduce(
+        (sum, s) =>
+
+          sum +
+          Number(
+            s.price || 0
+          ),
+
+        0
+      );
 
   setFinalPrice(
-    service?.price
-      ?.toString() || ""
+    totalPrice.toString()
   );
+
 }}
-                className="w-full border p-4 rounded-2xl"
-              >
+        />
 
-                <option value="">
-                  Seleccionar servicio
-                </option>
+        <span>
 
-                {services.map((service) => (
+          {service.name}
 
-                  <option
-                    key={service.id}
-                    value={service.id}
-                  >
+          {" - S/"}
 
-                    {service.name}
+          {service.price}
 
-                  </option>
+        </span>
 
-                ))}
+      </label>
 
-              </select>
+    ))}
 
+  </div>
+
+</div>
               {/* TRABAJADORA */}
               <select
                 value={workerId}

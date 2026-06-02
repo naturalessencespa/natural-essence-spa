@@ -281,9 +281,13 @@ export default function ClientsPage() {
       .from("appointments")
 
       .select(`
-        *,
-        services(name)
-      `)
+  *,
+  services(name),
+  appointment_reserved_services(
+    service_id,
+    services(name)
+  )
+`)
 
       .eq(
         "client_id",
@@ -946,9 +950,21 @@ export default function ClientsPage() {
 
               <td className="p-3">
 
-                {
-                  item.services?.name
-                }
+              {
+  item
+    .appointment_reserved_services
+    ?.length > 0
+
+    ? item
+        .appointment_reserved_services
+        .map(
+          (service: any) =>
+            service.services?.name
+        )
+        .join(" + ")
+
+    : item.services?.name
+}
 
               </td>
 
