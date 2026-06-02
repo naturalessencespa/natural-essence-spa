@@ -1322,43 +1322,8 @@ const endTime =
 
 
 
-if (
-  selectedService
-    ?.allow_packages
-) {
-
-  const moveNextSessions =
-    confirm(
-      "¿Mover también las siguientes sesiones?"
-    );
-
-  if (
-    moveNextSessions
-  ) {
-
-    alert(
-      "Próximamente moverá las siguientes sesiones automáticamente"
-    );
-
-  }
-}{
-
-  const moveNextSessions =
-    confirm(
-      "¿Mover también las siguientes sesiones?"
-    );
-
-  if (
-    moveNextSessions
-  ) {
-
-    alert(
-      "Próximamente moverá las siguientes sesiones automáticamente"
-    );
-
-  }
-}
-
+// Pendiente:
+// mover sesiones de paquetes
     alert(
       "Reserva reprogramada"
     );
