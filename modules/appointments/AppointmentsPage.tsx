@@ -1402,7 +1402,7 @@ const endTime =
 
           initialView="timeGridWeek"
 
-          height="auto"
+          height={900}
 
           slotMinTime="09:00:00"
 
@@ -1844,17 +1844,32 @@ eventDrop={async (info) => {
 
           }}
 
-          eventContent={(info) => (
+         eventContent={(info) => (
 
-  <div className="text-xs">
+  <div
+    className="text-xs"
+    style={{
+      overflow: "hidden",
+      display: "-webkit-box",
+      WebkitLineClamp: 3,
+      WebkitBoxOrient: "vertical",
+      lineHeight: "14px"
+    }}
+  >
 
-    <div>
-      {info.event.title}
-    </div>
+    {info.event.title}
 
   </div>
 
 )}
+
+eventDidMount={(info) => {
+
+  info.el.title =
+    info.event.title;
+
+}}
+      
 
           events={events}
 
