@@ -34,6 +34,16 @@ const [salesByService,
   setSalesByService] =
   useState<any[]>([]);
 
+  const [
+  additionalSales,
+  setAdditionalSales
+] = useState<any[]>([]);
+
+const [
+  additionalSalesTotal,
+  setAdditionalSalesTotal
+] = useState(0);
+
   const [topClients,
   setTopClients] =
   useState<any[]>([]);
@@ -551,6 +561,70 @@ setInactiveClients(
 
 );
 
+const {
+  data: additionalSalesData
+} = await supabase
+
+  .from(
+    "appointment_services"
+  )
+
+  .select(`
+    sold_price,
+    services(name),
+    commission_amount,
+    workers(name),
+    appointments(
+      appointment_date,
+      clients(full_name)
+    )
+  `);
+
+const filteredAdditionalSales =
+
+  (additionalSalesData || [])
+    .filter(
+      (sale: any) => {
+
+        const date =
+          sale
+            ?.appointments
+            ?.appointment_date;
+
+        return (
+
+          date >= startDate &&
+
+          date <= endDate
+
+        );
+
+      }
+    );
+
+   console.log(
+  additionalSalesData?.[0]
+);
+
+setAdditionalSales(
+  filteredAdditionalSales
+);
+
+setAdditionalSalesTotal(
+
+  (filteredAdditionalSales || [])
+    .reduce(
+      (sum, sale: any) =>
+
+        sum +
+        Number(
+          sale.sold_price || 0
+        ),
+
+      0
+    )
+
+);
 };
 
 const exportToExcel = () => {
@@ -609,6 +683,50 @@ XLSX.utils.book_append_sheet(
   workbook,
   workersSheet,
   "Trabajadoras"
+);
+
+const additionalSalesSheet =
+  XLSX.utils.json_to_sheet(
+
+    additionalSales.map(
+      (sale: any) => ({
+
+        Fecha:
+          sale
+            ?.appointments
+            ?.appointment_date,
+
+        Cliente:
+          sale
+            ?.appointments
+            ?.clients
+            ?.full_name,
+
+        Servicio:
+          sale
+            ?.services
+            ?.name,
+
+        Trabajadora:
+          sale
+            ?.workers
+            ?.name,
+
+        Venta:
+          sale.sold_price,
+
+        Comision:
+          sale.commission_amount || 0
+
+      })
+    )
+
+  );
+
+XLSX.utils.book_append_sheet(
+  workbook,
+  additionalSalesSheet,
+  "Ventas Adicionales"
 );
 
   XLSX.writeFile(
@@ -761,7 +879,7 @@ XLSX.utils.book_append_sheet(
           className="border-t"
         >
 
-         <td className="p-3">
+  <td className="p-3">
   {appointment.appointment_date
     ?.split("-")
     .reverse()
@@ -1151,6 +1269,119 @@ XLSX.utils.book_append_sheet(
           </tr>
 
       ))}
+
+    </tbody>
+
+  </table>
+
+</div>
+
+<div className="bg-white rounded-3xl shadow mt-8 p-6">
+
+  <h2 className="text-2xl font-bold text-[#243847] mb-4">
+    ⭐ Ventas Adicionales
+  </h2>
+
+  <p className="mb-4 text-lg font-semibold">
+
+    Total vendido:
+    S/ {additionalSalesTotal}
+
+  </p>
+
+  <table className="w-full">
+
+    <thead>
+
+      <tr>
+
+          <th className="text-left p-3">
+          Fecha
+        </th>
+
+        <th className="text-left p-3">
+          Cliente
+        </th>
+
+        <th className="text-left p-3">
+          Servicio
+        </th>
+
+        <th className="text-left p-3">
+          Trabajadora
+        </th>
+
+        <th className="text-left p-3">
+          Venta
+        </th>
+
+      </tr>
+
+    </thead>
+
+    <tbody>
+
+      {additionalSales.map(
+        (sale: any, index) => (
+
+          <tr
+            key={index}
+            className="border-t"
+          >
+            <td className="p-3">
+
+  {
+    sale
+      ?.appointments
+      ?.appointment_date
+      ?.split("-")
+      .reverse()
+      .join("/")
+  }
+
+</td>
+
+            <td className="p-3">
+
+              {
+                sale
+                  ?.appointments
+                  ?.clients
+                  ?.full_name
+              }
+
+            </td>
+
+            <td className="p-3">
+
+              {
+                sale
+                  ?.services
+                  ?.name
+              }
+
+            </td>
+
+            <td className="p-3">
+
+              {
+                sale
+                  ?.workers
+                  ?.name
+              }
+
+            </td>
+
+            <td className="p-3 font-semibold">
+
+              S/ {sale.sold_price}
+
+            </td>
+
+          </tr>
+
+        )
+      )}
 
     </tbody>
 
