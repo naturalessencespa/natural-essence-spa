@@ -164,8 +164,21 @@ const loadAppointments =
     0
   );
 
+const uniqueClients = [
+
+  ...new Set(
+
+    (data || []).map(
+      (appointment) =>
+        appointment.clients?.full_name
+    )
+
+  )
+
+];
+
 setClientsToday(
-  data?.length || 0
+  uniqueClients.length
 );
 
 const totalServices =
