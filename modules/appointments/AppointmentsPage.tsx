@@ -985,6 +985,56 @@ const cancelAppointment =
       return;
     }
 
+    const {
+  data: packageSession
+} =
+  await supabase
+
+    .from(
+      "package_sessions"
+    )
+
+    .select("*")
+
+    .eq(
+      "appointment_id",
+      appointmentId
+    )
+
+    .single();
+
+if (
+  packageSession
+) {
+
+  await supabase
+
+    .from(
+      "package_sessions"
+    )
+
+    .update({
+
+      completed: true,
+
+      attended_date:
+        new Date()
+          .toISOString()
+          .split("T")[0],
+
+      completed_at:
+        new Date()
+          .toISOString()
+
+    })
+
+    .eq(
+      "id",
+      packageSession.id
+    );
+
+}
+
         setCompletedAppointmentId(
   appointmentId
 );

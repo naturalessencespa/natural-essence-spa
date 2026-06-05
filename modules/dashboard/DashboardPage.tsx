@@ -78,6 +78,8 @@ const [endDate,
       .split("T")[0]
   );
 
+  
+
 useEffect(() => {
 
   loadAppointments();
@@ -161,10 +163,6 @@ const loadAppointments =
 
     0
   );
-
-setSalesToday(
-  sales
-);
 
 setClientsToday(
   data?.length || 0
@@ -276,38 +274,6 @@ setSalesByDay(
 
 );
 
-const workerSales: any = {};
-
-(data || []).forEach(
-  (appointment) => {
-
-    const worker =
-      appointment.workers?.name ||
-      "Sin asignar";
-
-    if (!workerSales[worker]) {
-
-      workerSales[worker] = 0;
-
-    }
-
-    workerSales[worker] += Number(
-      appointment.final_price || 0
-    );
-
-  }
-);
-
-setSalesByWorker(
-
-  Object.entries(workerSales).map(
-    ([worker, sales]) => ({
-      worker,
-      sales
-    })
-  )
-
-);
 
 const serviceSales: any = {};
 const serviceCounts: any = {};
@@ -410,6 +376,7 @@ const serviceCounts: any = {};
 
   }
 );
+
 
 setSalesByService(
 
@@ -606,6 +573,66 @@ const filteredAdditionalSales =
   additionalSalesData?.[0]
 );
 
+const workerSales: any = {};
+
+(data || []).forEach(
+  (appointment) => {
+
+    const worker =
+      appointment.workers?.name ||
+      "Sin asignar";
+
+    if (!workerSales[worker]) {
+
+      workerSales[worker] = {
+        ventas: 0,
+        internas: 0
+      };
+
+    }
+
+    workerSales[worker].ventas += Number(
+      appointment.final_price || 0
+    );
+
+  }
+);
+
+(filteredAdditionalSales || []).forEach(
+  (sale: any) => {
+
+    const worker =
+      sale?.workers?.name ||
+      "Sin asignar";
+
+    if (!workerSales[worker]) {
+
+      workerSales[worker] = {
+        ventas: 0,
+        internas: 0
+      };
+
+    }
+
+    workerSales[worker].internas += Number(
+      sale.sold_price || 0
+    );
+
+  }
+);
+
+setSalesByWorker(
+
+  Object.entries(workerSales).map(
+    ([worker, values]: any) => ({
+      worker,
+      sales: values.ventas,
+      internalSales: values.internas
+    })
+  )
+
+);
+
 setAdditionalSales(
   filteredAdditionalSales
 );
@@ -624,6 +651,24 @@ setAdditionalSalesTotal(
       0
     )
 
+);
+
+const internalSalesTotal =
+
+  (filteredAdditionalSales || [])
+    .reduce(
+      (sum, sale: any) =>
+
+        sum +
+        Number(
+          sale.sold_price || 0
+        ),
+
+      0
+    );
+
+setSalesToday(
+  sales
 );
 };
 
@@ -1046,6 +1091,10 @@ XLSX.utils.book_append_sheet(
           Ventas
         </th>
 
+        <th className="text-left p-3">
+        Ventas Internas
+      </th>
+
       </tr>
 
     </thead>
@@ -1070,6 +1119,10 @@ XLSX.utils.book_append_sheet(
 
             <td className="p-3 font-semibold">
               S/ {Number(item.sales).toFixed(2)}
+            </td>
+
+            <td className="p-3 font-semibold">
+              S/ {Number(item.internalSales || 0).toFixed(2)}
             </td>
 
           </tr>

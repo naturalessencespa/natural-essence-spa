@@ -4,10 +4,17 @@ import { useEffect, useState } from "react";
 
 import { supabase } from "@/lib/supabase";
 
+import * as XLSX from "xlsx";
+
 export default function ClientsPage() {
 
   const [clients, setClients] =
     useState<any[]>([]);
+
+  const [
+  clientAdditionalSales,
+  setClientAdditionalSales
+] = useState<any[]>([]);
 
     const [
   search,
@@ -78,6 +85,56 @@ export default function ClientsPage() {
 
   const [fileUrl, setFileUrl] =
     useState("");
+
+    const [clientStats, setClientStats] =
+  useState<any>(null);
+
+  const exportToExcel = () => {
+
+  const data =
+
+    clients
+
+      .filter(
+        (client) =>
+          client.phone
+      )
+
+      .map(
+        (client) => ({
+
+          Nombre:
+            client.full_name,
+
+          Telefono:
+            client.phone,
+
+          FechaNacimiento:
+            client.birth_date,
+
+        })
+      );
+
+  const worksheet =
+    XLSX.utils.json_to_sheet(
+      data
+    );
+
+  const workbook =
+    XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    "Clientes"
+  );
+
+  XLSX.writeFile(
+    workbook,
+    "clientes.xlsx"
+  );
+
+};
 
   // OBTENER CLIENTES
   const fetchClients = async () => {
@@ -313,11 +370,149 @@ export default function ClientsPage() {
       return;
     }
 
-    setClientHistory(
-      data || []
-    );
+
+    
+   const history =
+  data || [];
+
+setClientHistory(
+  history
+);
+
+return history;
 
   };
+
+
+ const loadClientAdditionalSales =
+async (
+  clientId: number
+) => {
+
+  const {
+    data,
+    error
+  } = await supabase
+
+    .from(
+      "appointment_services"
+    )
+
+    .select(`
+  sold_price,
+  services(name),
+  workers(name),
+  appointments(
+    client_id,
+    appointment_date
+  )
+`)
+
+  if (error) {
+
+    console.log(error);
+
+    return;
+
+  }
+console.log("VENTAS ADICIONALES");
+console.log(data);
+ const filteredSales =
+
+  (data || []).filter(
+    (sale: any) =>
+
+      sale
+        ?.appointments
+        ?.client_id ===
+      clientId
+  );
+
+    console.log(filteredSales);
+
+  setClientAdditionalSales(
+    filteredSales
+  );
+
+    return filteredSales;
+};
+
+ const calculateClientStats =
+(
+  history: any[],
+  additionalSales: any[]
+) => {
+
+  const visits =
+    history.length;
+
+  const totalSpent =
+    history.reduce(
+      (
+        sum,
+        item
+      ) =>
+        sum +
+        Number(
+          item.final_price || 0
+        ),
+      0
+    );
+
+  const lastVisit =
+    history[0]
+      ?.appointment_date ||
+    "-";
+
+ const additionalTotal =
+  additionalSales.reduce(
+    (
+      sum,
+      sale
+    ) =>
+
+      sum +
+
+      Number(
+        sale.sold_price || 0
+      ),
+
+    0
+  );
+
+const totalGeneral =
+
+  totalSpent +
+  additionalTotal;
+
+const avgTicket =
+
+  visits > 0
+
+    ? (
+        totalGeneral /
+        visits
+      ).toFixed(2)
+
+    : "0";
+
+setClientStats({
+
+  visits,
+
+  totalSpent,
+
+  additionalTotal,
+
+  totalGeneral,
+
+  avgTicket,
+
+  lastVisit,
+
+});
+
+};
   // ELIMINAR
   const deleteClient = async (
     id: number
@@ -426,6 +621,15 @@ export default function ClientsPage() {
           + Nuevo Cliente
 
         </button>
+
+        <button
+  onClick={exportToExcel}
+  className="bg-green-600 text-white px-6 py-4 rounded-2xl"
+>
+
+  Exportar Excel
+
+</button>
 
       </div>
 
@@ -547,13 +751,24 @@ export default function ClientsPage() {
       client
     );
 
-    await loadClientHistory(
-      client.id
-    );
+  const history =
+  (await loadClientHistory(
+    client.id
+  )) || [];
 
-    setShowViewModal(
-      true
-    );
+const sales =
+  (await loadClientAdditionalSales(
+    client.id
+  )) || [];
+
+calculateClientStats(
+  history,
+  sales
+);
+
+setShowViewModal(
+  true
+);
 
   }}
                     className="bg-[#243847] text-white px-4 py-2 rounded-xl"
@@ -888,6 +1103,120 @@ export default function ClientsPage() {
 
               <div className="md:col-span-2 mt-8">
 
+                {clientStats && (
+
+<div className="md:col-span-2 mb-8">
+
+<h3 className="text-2xl font-bold text-[#243847] mb-4">
+
+Resumen Comercial
+
+</h3>
+
+<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+<div className="bg-blue-50 p-4 rounded-2xl">
+
+<p className="text-sm text-gray-500">
+
+Visitas
+
+</p>
+
+<p className="text-2xl font-bold">
+
+{clientStats.visits}
+
+</p>
+
+</div>
+
+<div className="bg-green-50 p-4 rounded-2xl">
+
+<p className="text-sm text-gray-500">
+
+Total Gastado
+
+</p>
+
+<p className="text-2xl font-bold">
+
+S/{clientStats.totalSpent}
+
+</p>
+
+</div>
+
+<div className="bg-orange-50 p-4 rounded-2xl">
+
+  <p className="text-sm text-gray-500">
+
+    Adicionales
+
+  </p>
+
+  <p className="text-2xl font-bold">
+
+    S/{clientStats.additionalTotal}
+
+  </p>
+
+</div>
+
+<div className="bg-emerald-50 p-4 rounded-2xl">
+
+  <p className="text-sm text-gray-500">
+
+    Total General
+
+  </p>
+
+  <p className="text-2xl font-bold">
+
+    S/{clientStats.totalGeneral}
+
+  </p>
+
+</div>
+
+<div className="bg-yellow-50 p-4 rounded-2xl">
+
+<p className="text-sm text-gray-500">
+
+Ticket Promedio
+
+</p>
+
+<p className="text-2xl font-bold">
+
+S/{clientStats.avgTicket}
+
+</p>
+
+</div>
+
+<div className="bg-purple-50 p-4 rounded-2xl">
+
+<p className="text-sm text-gray-500">
+
+Última Visita
+
+</p>
+
+<p className="text-lg font-bold">
+
+{clientStats.lastVisit}
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+)}
+
   <h3 className="text-2xl font-bold text-[#243847] mb-4">
 
     Historial de Servicios
@@ -996,6 +1325,126 @@ export default function ClientsPage() {
     </table>
 
   </div>
+
+  <div className="mt-8">
+
+  <h3 className="text-2xl font-bold text-[#243847] mb-4">
+
+    Ventas Adicionales
+
+  </h3>
+
+  <div className="border rounded-2xl overflow-hidden">
+
+    <table className="w-full">
+
+      <thead className="bg-[#243847] text-white">
+
+        <tr>
+
+          <th className="p-3 text-left">
+            Fecha
+          </th>
+
+          <th className="p-3 text-left">
+            Servicio
+          </th>
+
+          <th className="p-3 text-left">
+            Trabajadora
+          </th>
+
+          <th className="p-3 text-left">
+            Venta
+          </th>
+
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+        {clientAdditionalSales.map(
+          (
+            sale,
+            index
+          ) => (
+
+            <tr
+              key={index}
+              className="border-t"
+            >
+
+              <td className="p-3">
+
+                {
+                  sale
+                    ?.appointments
+                    ?.appointment_date
+                }
+
+              </td>
+
+              <td className="p-3">
+
+                {
+                  sale
+                    ?.services
+                    ?.name
+                }
+
+              </td>
+
+              <td className="p-3">
+
+                {
+                  sale
+                    ?.workers
+                    ?.name
+                }
+
+              </td>
+
+              <td className="p-3 font-semibold">
+
+                S/
+                {
+                  Number(
+                    sale.sold_price || 0
+                  ).toFixed(2)
+                }
+
+              </td>
+
+            </tr>
+
+          )
+        )}
+
+        {clientAdditionalSales.length === 0 && (
+
+          <tr>
+
+            <td
+              colSpan={4}
+              className="p-4 text-center text-gray-500"
+            >
+
+              No tiene ventas adicionales
+
+            </td>
+
+          </tr>
+
+        )}
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</div>
 
 </div>
 

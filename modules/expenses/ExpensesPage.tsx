@@ -355,52 +355,35 @@ export default function ExpensesPage() {
     }, [expenses]);
 
   const monthTotal =
-    useMemo(() => {
+  useMemo(() => {
 
-      const currentMonth =
-        new Date()
-          .getMonth();
+    const currentMonth =
+      new Date()
+        .toISOString()
+        .slice(0, 7);
 
-      const currentYear =
-        new Date()
-          .getFullYear();
+    return expenses
 
-      return expenses
+      .filter(
+        (expense) =>
 
-        .filter(
-          (expense) => {
+          expense.expense_date?.startsWith(
+            currentMonth
+          )
+      )
 
-            const date =
-              new Date(
-                expense.expense_date
-              );
+      .reduce(
+        (sum, expense) =>
 
-            return (
+          sum +
+          Number(
+            expense.amount
+          ),
 
-              date.getMonth() ===
-                currentMonth &&
+        0
+      );
 
-              date.getFullYear() ===
-                currentYear
-
-            );
-
-          }
-        )
-
-        .reduce(
-          (sum, expense) =>
-
-            sum +
-            Number(
-              expense.amount
-            ),
-
-          0
-        );
-
-    }, [expenses]);
-
+  }, [expenses]);
   const filteredExpenses =
     [...expenses]
 

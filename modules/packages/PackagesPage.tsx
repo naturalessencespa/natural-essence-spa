@@ -1,107 +1,159 @@
-"use client";
+  "use client";
 
-import { useEffect, useMemo, useState } from "react";
+  import { useEffect, useMemo, useState } from "react";
 
-import Select from "react-select";
+  import Select from "react-select";
 
-import {
-  Pencil,
-  Trash2
-} from "lucide-react";
+  import {
+    Pencil,
+    Trash2
+  } from "lucide-react";
 
-import { supabase } from "@/lib/supabase";
+  import { supabase } from "@/lib/supabase";
 
-export default function PackagesPage() {
+  export default function PackagesPage() {
 
-  const [packages, setPackages] =
-    useState<any[]>([]);
+    const [packages, setPackages] =
+      useState<any[]>([]);
 
-  const [clients, setClients] =
-    useState<any[]>([]);
+    const [clients, setClients] =
+      useState<any[]>([]);
 
-  const [services, setServices] =
-    useState<any[]>([]);
+    const [services, setServices] =
+      useState<any[]>([]);
 
-  const [laserZones, setLaserZones] =
-    useState<any[]>([]);
+    const [laserZones, setLaserZones] =
+      useState<any[]>([]);
 
-  const [showModal, setShowModal] =
-    useState(false);
+    const [showModal, setShowModal] =
+      useState(false);
 
-  const [editingId,
-    setEditingId] =
-    useState<number | null>(
-      null
-    );
+    const [editingId,
+      setEditingId] =
+      useState<number | null>(
+        null
+      );
 
-  const [clientId, setClientId] =
-    useState("");
+    const [clientId, setClientId] =
+      useState("");
 
-  const [serviceId, setServiceId] =
-    useState("");
+    const [serviceId, setServiceId] =
+      useState("");
 
-  const [startDate,
-    setStartDate] =
-    useState("");
+    const [startDate,
+      setStartDate] =
+      useState("");
 
-  const [startTime,
-    setStartTime] =
-    useState("");
+    const [startTime,
+      setStartTime] =
+      useState("");
 
-  const [selectedZones,
-    setSelectedZones] =
-    useState<any[]>([]);
+    const [selectedZones,
+      setSelectedZones] =
+      useState<any[]>([]);
 
-  const [totalSessions,
-    setTotalSessions] =
-    useState(1);
+    const [totalSessions,
+      setTotalSessions] =
+      useState(1);
 
-  const [unitPrice,
-    setUnitPrice] =
+    const [unitPrice,
+      setUnitPrice] =
+      useState(0);
+
+    const [discountPercentage,
+      setDiscountPercentage] =
+      useState(0);
+
+    const [notes, setNotes] =
+      useState("");
+
+      const [savedSubtotal,
+    setSavedSubtotal] =
     useState(0);
 
-  const [discountPercentage,
-    setDiscountPercentage] =
+  const [savedTotalPrice,
+    setSavedTotalPrice] =
     useState(0);
 
-  const [notes, setNotes] =
-    useState("");
+    // BUSCADOR
+    const [searchClient,
+      setSearchClient] =
+      useState("");
 
-  // BUSCADOR
-  const [searchClient,
-    setSearchClient] =
-    useState("");
+    // ORDEN
+    const [sortBy,
+      setSortBy] =
+      useState("date_desc");
 
-  // ORDEN
-  const [sortBy,
-    setSortBy] =
-    useState("date_desc");
+    // MODAL ZONAS
+    const [showZonesModal,
+      setShowZonesModal] =
+      useState(false);
 
-  // MODAL ZONAS
-  const [showZonesModal,
-    setShowZonesModal] =
-    useState(false);
+    const [zonesDetail,
+      setZonesDetail] =
+      useState<any[]>([]);
 
-  const [zonesDetail,
-    setZonesDetail] =
+    // MODAL SESIONES
+    const [showSessionsModal,
+      setShowSessionsModal] =
+      useState(false);
+
+    const [sessionsDetail,
+      setSessionsDetail] =
+      useState<any[]>([]);
+
+    const [upcomingSessions,
+    setUpcomingSessions] =
     useState<any[]>([]);
 
-  // MODAL SESIONES
-  const [showSessionsModal,
-    setShowSessionsModal] =
-    useState(false);
+    const [selectedPackage, setSelectedPackage] =
+    useState<any>(null);
 
-  const [sessionsDetail,
-    setSessionsDetail] =
-    useState<any[]>([]);
+  const [
+    showScheduleSessionModal,
+    setShowScheduleSessionModal
+  ] = useState(false);
 
-  const [upcomingSessions,
-  setUpcomingSessions] =
-  useState<any[]>([]);
+  const [
+    selectedSession,
+    setSelectedSession
+  ] = useState<any>(null);
 
-  // SUBTOTAL
+  const [
+    scheduleDate,
+    setScheduleDate
+  ] = useState("");
+
+  const [
+    scheduleTime,
+    setScheduleTime
+  ] = useState("");
+
+  const [
+    additionalSessions,
+    setAdditionalSessions
+  ] = useState(1);
+
+  const [
+    additionalSessionPrice,
+    setAdditionalSessionPrice
+  ] = useState(0);
+
+  const [
+    showAddSessionsModal,
+    setShowAddSessionsModal
+  ] = useState(false);
+
+    // SUBTOTAL
   const subtotal =
     useMemo(() => {
+
+      if (editingId) {
+
+        return savedSubtotal;
+
+      }
 
       return (
         unitPrice *
@@ -111,64 +163,72 @@ export default function PackagesPage() {
     }, [
       unitPrice,
       totalSessions,
+      editingId,
+      savedSubtotal
     ]);
 
-  // DESCUENTO AUTOMÁTICO
-  const automaticDiscount =
-    useMemo(() => {
+    // DESCUENTO AUTOMÁTICO
+    const automaticDiscount =
+      useMemo(() => {
 
-      if (
-        totalSessions === 3
-      ) {
+        if (
+          totalSessions === 3
+        ) {
 
-        return 10;
-      }
+          return 10;
+        }
 
-      if (
-        totalSessions === 6
-      ) {
+        if (
+          totalSessions === 6
+        ) {
 
-        return 15;
-      }
+          return 15;
+        }
 
-      return 0;
+        return 0;
 
-    }, [
-      totalSessions,
-    ]);
+      }, [
+        totalSessions,
+      ]);
 
-  // PRECIO PAQUETE
-  const packagePrice =
-    useMemo(() => {
+    // PRECIO PAQUETE
+    const packagePrice =
+      useMemo(() => {
 
-      if (
-        totalSessions === 3
-      ) {
+        if (
+          totalSessions === 3
+        ) {
 
-        return (
-          subtotal * 0.90
-        );
-      }
+          return (
+            subtotal * 0.90
+          );
+        }
 
-      if (
-        totalSessions === 6
-      ) {
+        if (
+          totalSessions === 6
+        ) {
 
-        return (
-          subtotal * 0.85
-        );
-      }
+          return (
+            subtotal * 0.85
+          );
+        }
 
-      return subtotal;
+        return subtotal;
 
-    }, [
-      subtotal,
-      totalSessions,
-    ]);
+      }, [
+        subtotal,
+        totalSessions,
+      ]);
 
-  // TOTAL FINAL
+    // TOTAL FINAL
   const totalPrice =
     useMemo(() => {
+
+      if (editingId) {
+
+        return savedTotalPrice;
+
+      }
 
       const extraDiscount =
         packagePrice *
@@ -185,362 +245,954 @@ export default function PackagesPage() {
     }, [
       packagePrice,
       discountPercentage,
+      editingId,
+      savedTotalPrice
     ]);
 
-  // OBTENER PAQUETES
-  const fetchPackages =
-    async () => {
+    // OBTENER PAQUETES
+    const fetchPackages =
+      async () => {
 
-      const { data, error } =
-        await supabase
-
-          .from(
-            "client_packages"
-          )
-
-          .select(`
-            *,
-            clients(full_name),
-            services(name)
-          `)
-
-          .eq(
-            "active",
-            true
-          );
-
-      if (error) {
-
-        console.log(error);
-
-        return;
-      }
-
-      setPackages(data || []);
-    };
-
-  // OBTENER DATOS
-  const fetchData =
-    async () => {
-
-      const {
-        data: clientsData,
-      } = await supabase
-
-        .from("clients")
-
-        .select("*")
-
-        .eq(
-          "active",
-          true
-        );
-
-      const {
-        data: servicesData,
-      } = await supabase
-
-        .from("services")
-
-        .select("*")
-
-        .eq(
-          "allow_packages",
-          true
-        );
-
-      const {
-        data: zonesData,
-      } = await supabase
-
-        .from("laser_zones")
-
-        .select("*")
-
-        .eq(
-          "active",
-          true
-        );
-
-      setClients(
-        clientsData || []
-      );
-
-      setServices(
-        servicesData || []
-      );
-
-      setLaserZones(
-        zonesData || []
-      );
-    };
-
-  // GUARDAR
-  const savePackage =
-    async () => {
-
-      if (
-        !clientId ||
-        !serviceId ||
-        !startDate ||
-        !startTime
-      ) {
-
-        alert(
-          "Completa cliente, servicio y fecha"
-        );
-
-        return;
-      }
-
-      // EDITAR
-      if (editingId) {
-
-        const { error } =
+        const { data, error } =
           await supabase
 
             .from(
               "client_packages"
             )
 
-            .update({
-
-              client_id:
-                parseInt(
-                  clientId
-                ),
-
-              service_id:
-                parseInt(
-                  serviceId
-                ),
-
-              start_date:
-                startDate,
-            
-              start_time:
-                startTime,
-
-              total_sessions:
-                totalSessions,
-
-              unit_price:
-                unitPrice,
-
-              subtotal,
-
-              discount_percentage:
-                discountPercentage,
-
-              total_price:
-                totalPrice,
-
-              notes,
-
-            })
+            .select(`
+              *,
+              clients(full_name),
+              services(name)
+            `)
 
             .eq(
-              "id",
-              editingId
+              "active",
+              true
             );
 
         if (error) {
 
           console.log(error);
 
+          return;
+        }
+
+        setPackages(data || []);
+      };
+
+    // OBTENER DATOS
+    const fetchData =
+      async () => {
+
+        const {
+          data: clientsData,
+        } = await supabase
+
+          .from("clients")
+
+          .select("*")
+
+          .eq(
+            "active",
+            true
+          );
+
+        const {
+          data: servicesData,
+        } = await supabase
+
+          .from("services")
+
+          .select("*")
+
+          .eq(
+            "allow_packages",
+            true
+          );
+
+        const {
+          data: zonesData,
+        } = await supabase
+
+          .from("laser_zones")
+
+          .select("*")
+
+          .eq(
+            "active",
+            true
+          );
+
+        setClients(
+          clientsData || []
+        );
+
+        setServices(
+          servicesData || []
+        );
+
+        setLaserZones(
+          zonesData || []
+        );
+      };
+
+    // GUARDAR
+    const savePackage =
+      async () => {
+
+        if (
+          !clientId ||
+          !serviceId ||
+          !startDate ||
+          !startTime
+        ) {
+
           alert(
-            "Error al actualizar"
+            "Completa cliente, servicio y fecha"
           );
 
           return;
         }
 
-        // BORRAR ZONAS
-        await supabase
+        // EDITAR
+        if (editingId) {
 
-          .from(
-            "client_package_zones"
-          )
+          const { error } =
+            await supabase
 
-          .delete()
+              .from(
+                "client_packages"
+              )
 
-          .eq(
-            "package_id",
-            editingId
-          );
+              .update({
 
-        // REINSERTAR
-        if (
-          selectedZones.length > 0
-        ) {
+                client_id:
+                  parseInt(
+                    clientId
+                  ),
 
-          const zonesToInsert =
-            selectedZones.map(
-              (zone) => ({
+                service_id:
+                  parseInt(
+                    serviceId
+                  ),
 
-                package_id:
-                  editingId,
+                start_date:
+                  startDate,
+              
+                start_time:
+                  startTime,
 
-                laser_zone_id:
-                  zone.value,
+                total_sessions:
+                  totalSessions,
+
+                unit_price:
+                  unitPrice,
+
+                subtotal,
+
+                discount_percentage:
+                  discountPercentage,
+
+                total_price:
+                  totalPrice,
+
+                notes,
 
               })
+
+              .eq(
+                "id",
+                editingId
+              );
+
+          if (error) {
+
+            console.log(error);
+
+            alert(
+              "Error al actualizar"
             );
 
+            return;
+          }
+
+          // BORRAR ZONAS
           await supabase
 
             .from(
               "client_package_zones"
             )
 
-            .insert(
-              zonesToInsert
+            .delete()
+
+            .eq(
+              "package_id",
+              editingId
             );
+
+          // REINSERTAR
+          if (
+            selectedZones.length > 0
+          ) {
+
+            const zonesToInsert =
+              selectedZones.map(
+                (zone) => ({
+
+                  package_id:
+                    editingId,
+
+                  laser_zone_id:
+                    zone.value,
+
+                })
+              );
+
+            await supabase
+
+              .from(
+                "client_package_zones"
+              )
+
+              .insert(
+                zonesToInsert
+              );
+          }
+
+          alert(
+            "Paquete actualizado"
+          );
+
+        } else {
+
+          // CREAR
+          const {
+            data,
+            error,
+          } = await supabase
+
+            .from(
+              "client_packages"
+            )
+
+            .insert([
+              {
+
+                client_id:
+                  parseInt(
+                    clientId
+                  ),
+
+                service_id:
+                  parseInt(
+                    serviceId
+                  ),
+
+                start_date:
+                  startDate,
+
+                start_time:
+                  startTime,
+
+                total_sessions:
+                  totalSessions,
+
+                quantity: 1,
+
+                unit_price:
+                  unitPrice,
+
+                subtotal,
+
+                discount_percentage:
+                  discountPercentage,
+
+                total_price:
+                  totalPrice,
+
+                notes,
+
+                active: true,
+
+              },
+            ])
+
+            .select()
+
+            .single();
+
+          if (error) {
+
+            console.log(error);
+
+            alert(
+              "Error al guardar"
+            );
+
+            return;
+          }
+
+          // GUARDAR ZONAS
+          if (
+            selectedZones.length > 0
+          ) {
+
+            const zonesToInsert =
+              selectedZones.map(
+                (zone) => ({
+
+                  package_id:
+                    data.id,
+
+                  laser_zone_id:
+                    zone.value,
+
+                })
+              );
+
+            await supabase
+
+              .from(
+                "client_package_zones"
+              )
+
+              .insert(
+                zonesToInsert
+              );
+          }
+
+        
+
+          // GENERAR SESIONES
+          const sessionsToInsert = [];
+
+          for (
+            let i = 0;
+            i < totalSessions;
+            i++
+          ) {
+
+            const sessionDate =
+              new Date(startDate);
+
+            sessionDate.setMonth(
+              sessionDate.getMonth()
+              + i
+            );
+
+            sessionsToInsert.push({
+
+              package_id:
+                data.id,
+
+              session_number:
+                i + 1,
+
+              scheduled_date:
+                sessionDate
+                  .toISOString()
+                  .split("T")[0],
+              
+              scheduled_time:
+                  startTime,
+
+              completed:
+                false,
+
+            });
+          }
+
+          await supabase
+
+            .from(
+              "package_sessions"
+            )
+
+            .insert(
+              sessionsToInsert
+            );
+
+            // CREAR CITA AUTOMATICA
+  console.log(
+    "SELECTED ZONES",
+    selectedZones
+  );
+
+  const zonesText =
+    selectedZones.length > 0
+
+      ? selectedZones
+          .map((zone) =>
+    zone.label.split(" - ")[0]
+  )
+          .join(", ")
+
+      : "SIN ZONAS";
+
+  // CREAR CITA AUTOMATICA
+
+  const {
+    data: appointmentData,
+    error: appointmentError,
+  } = await supabase
+
+    .from("appointments")
+
+    .insert([
+      {
+        client_id: parseInt(clientId),
+        service_id: parseInt(serviceId),
+
+        worker_id: 1,
+        branch_id: 1,
+
+        appointment_date: startDate,
+        start_time: startTime,
+        end_time: startTime,
+
+        status: "Pendiente",
+
+        final_price: totalPrice,
+
+        notes: zonesText,
+      },
+    ])
+
+    .select()
+
+    .single();
+
+  if (appointmentError) {
+
+    console.log(
+      appointmentError
+    );
+
+    return;
+  }
+
+  console.log(
+    "PACKAGE ID:",
+    data?.id
+  );
+
+  console.log(
+    "APPOINTMENT ID:",
+    appointmentData?.id
+  );
+
+  const { error: updateError } =
+    await supabase
+
+      .from("client_packages")
+
+      .update({
+
+        appointment_id:
+          appointmentData?.id,
+
+      })
+
+      .eq(
+        "id",
+        data?.id
+      );
+
+      await supabase
+
+    .from("package_sessions")
+
+    .update({
+
+      appointment_id:
+        appointmentData.id
+
+    })
+
+    .eq(
+      "package_id",
+      data.id
+    )
+
+    .eq(
+      "session_number",
+      1
+    );
+
+  console.log(
+    "UPDATE ERROR:",
+    updateError
+  );
+          alert(
+            "Paquete creado"
+          );
         }
 
-        alert(
-          "Paquete actualizado"
+        // LIMPIAR
+        setShowModal(false);
+
+        setEditingId(null);
+
+        setClientId("");
+
+        setServiceId("");
+
+        setStartDate("");
+
+        setStartTime("");
+
+        setSelectedZones([]);
+
+        setTotalSessions(1);
+
+        setUnitPrice(0);
+
+        setDiscountPercentage(0);
+
+        setNotes("");
+
+        fetchPackages();
+      };
+
+    // ELIMINAR
+  const deletePackage =
+    async (id: number) => {
+
+      const confirmDelete =
+        confirm(
+          "¿Eliminar paquete?"
         );
 
-      } else {
+      if (!confirmDelete)
+        return;
 
-        // CREAR
-        const {
-          data,
-          error,
-        } = await supabase
+      const { data: pkg } =
+        await supabase
 
           .from(
             "client_packages"
           )
 
-          .insert([
-            {
+          .select("*")
 
-              client_id:
-                parseInt(
-                  clientId
-                ),
-
-              service_id:
-                parseInt(
-                  serviceId
-                ),
-
-              start_date:
-                startDate,
-
-              start_time:
-                startTime,
-
-              total_sessions:
-                totalSessions,
-
-              quantity: 1,
-
-              unit_price:
-                unitPrice,
-
-              subtotal,
-
-              discount_percentage:
-                discountPercentage,
-
-              total_price:
-                totalPrice,
-
-              notes,
-
-              active: true,
-
-            },
-          ])
-
-          .select()
+          .eq(
+            "id",
+            id
+          )
 
           .single();
 
-        if (error) {
+      if (!pkg)
+        return;
 
-          console.log(error);
+      if (
+        pkg.appointment_id
+      ) {
 
-          alert(
-            "Error al guardar"
+    const {
+    error: deleteAppointmentError
+  } = await supabase
+
+    .from(
+      "appointments"
+    )
+
+    .delete()
+
+    .eq(
+      "id",
+      pkg.appointment_id
+    );
+
+    const { data: verifyAppointment } =
+    await supabase
+
+      .from("appointments")
+
+      .select("id")
+
+      .eq(
+        "id",
+        pkg.appointment_id
+      );
+
+  console.log(
+    "VERIFY AFTER DELETE:",
+    verifyAppointment
+  );
+
+  console.log(
+    "DELETE APPOINTMENT:",
+    pkg.appointment_id
+  );
+
+  console.log(
+    "DELETE ERROR:",
+    deleteAppointmentError
+  );
+
+      }
+
+      await supabase
+
+        .from(
+          "package_sessions"
+        )
+
+        .delete()
+
+        .eq(
+          "package_id",
+          id
+        );
+
+      await supabase
+
+        .from(
+          "client_package_zones"
+        )
+
+        .delete()
+
+        .eq(
+          "package_id",
+          id
+        );
+
+      await supabase
+
+        .from(
+          "client_packages"
+        )
+
+        .delete()
+
+        .eq(
+          "id",
+          id
+        );
+
+      fetchPackages();
+
+      alert(
+        "Paquete eliminado"
+      );
+
+    };
+    
+    // ACTUALIZAR SESION
+  // ACTUALIZAR SESION
+  const updateSession =
+    async (
+      session: any
+    ) => {
+
+      const attendedDate =
+        prompt(
+          "Fecha atendida (YYYY-MM-DD)",
+          session.scheduled_date
+        );
+
+      if (!attendedDate)
+        return;
+
+      // ACTUALIZAR SESION ACTUAL
+      const { error } =
+        await supabase
+
+          .from(
+            "package_sessions"
+          )
+
+          .update({
+
+            completed: true,
+
+            attended_date:
+              attendedDate,
+
+            completed_at:
+              new Date()
+                .toISOString(),
+
+            scheduled_date:
+              attendedDate,
+
+          })
+
+          .eq(
+            "id",
+            session.id
           );
 
-          return;
-        }
+      if (error) {
 
-        // GUARDAR ZONAS
-        if (
-          selectedZones.length > 0
+        console.log(error);
+
+        alert(
+          "Error actualizando sesión"
+        );
+
+        return;
+      }
+
+      // OBTENER FUTURAS
+      const { data: futureSessions } =
+        await supabase
+
+          .from(
+            "package_sessions"
+          )
+
+          .select("*")
+
+          .eq(
+            "package_id",
+            session.package_id
+          )
+
+          .gt(
+            "session_number",
+            session.session_number
+          )
+
+          .order(
+            "session_number"
+          );
+
+      if (futureSessions) {
+
+        for (
+          let i = 0;
+          i < futureSessions.length;
+          i++
         ) {
 
-          const zonesToInsert =
-            selectedZones.map(
-              (zone) => ({
+          const future =
+            futureSessions[i];
 
-                package_id:
-                  data.id,
-
-                laser_zone_id:
-                  zone.value,
-
-              })
+          const newDate =
+            new Date(
+              attendedDate
             );
+
+          newDate.setMonth(
+            newDate.getMonth()
+            + (i + 1)
+          );
 
           await supabase
 
             .from(
-              "client_package_zones"
+              "package_sessions"
             )
 
-            .insert(
-              zonesToInsert
+            .update({
+
+              scheduled_date:
+                newDate
+                  .toISOString()
+                  .split("T")[0],
+
+            })
+
+            .eq(
+              "id",
+              future.id
             );
         }
+      }
 
-      
+      // RECARGAR SESIONES
+      const { data } =
+        await supabase
 
-        // GENERAR SESIONES
-        const sessionsToInsert = [];
+          .from(
+            "package_sessions"
+          )
 
-        for (
-          let i = 0;
-          i < totalSessions;
-          i++
-        ) {
+          .select("*")
 
-          const sessionDate =
-            new Date(startDate);
+          .eq(
+            "package_id",
+            session.package_id
+          )
 
-          sessionDate.setMonth(
-            sessionDate.getMonth()
-            + i
+          .order(
+            "session_number"
           );
 
-          sessionsToInsert.push({
+      if (data) {
 
-            package_id:
-              data.id,
+        setSessionsDetail(
+          data
+        );
+      }
+    };
 
-            session_number:
-              i + 1,
+    // PROXIMAS CITAS
+  const fetchUpcomingSessions =
+    async () => {
 
-            scheduled_date:
-              sessionDate
-                .toISOString()
-                .split("T")[0],
-            
-            scheduled_time:
-                startTime,
+      const today =
+        new Date()
+          .toISOString()
+          .split("T")[0];
 
-            completed:
-              false,
+      const nextWeek =
+          new Date();
 
-          });
+          nextWeek.setDate(
+          nextWeek.getDate() + 7
+          );
+
+          const nextWeekDate =
+          nextWeek
+              .toISOString()
+              .split("T")[0];
+
+      const { data, error } =
+        await supabase
+
+          .from(
+            "package_sessions"
+          )
+
+          .select(`
+            *,
+            client_packages(
+              clients(full_name)
+            )
+          `)
+
+          .eq(
+            "completed",
+            false
+          )
+
+          .gte(
+            "scheduled_date",
+            today
+          )
+
+          .lte(
+          "scheduled_date",
+          nextWeekDate
+          )
+
+          .order(
+            "scheduled_date",
+            {
+              ascending: true
+            }
+          )
+
+          .limit(10);
+
+      if (!error && data) {
+
+        setUpcomingSessions(
+          data
+        );
+      }
+    };
+
+    useEffect(() => {
+
+      fetchPackages();
+
+      fetchData();
+
+      fetchUpcomingSessions();
+
+    }, []);
+
+    const addSessionsToPackage =
+      async () => {
+
+        if (!selectedPackage) {
+
+          return;
+
         }
 
+        const { data: sessions } =
+          await supabase
+
+            .from(
+              "package_sessions"
+            )
+
+            .select("*")
+
+            .eq(
+              "package_id",
+              selectedPackage.id
+            )
+
+            .order(
+              "session_number",
+              {
+                ascending: false
+              }
+            )
+
+            .limit(1);
+
+        if (
+          !sessions ||
+          sessions.length === 0
+        ) {
+
+          return;
+
+        }
+
+      const lastSession =
+        sessions[0];
+
+      const sessionsToInsert = [];
+
+      for (
+        let i = 1;
+        i <= additionalSessions;
+        i++
+      ) {
+
+        const nextDate =
+          new Date(
+            lastSession.scheduled_date
+          );
+
+        nextDate.setMonth(
+          nextDate.getMonth() + i
+        );
+
+        sessionsToInsert.push({
+
+          package_id:
+            selectedPackage.id,
+
+          session_number:
+            lastSession.session_number + i,
+
+          scheduled_date:
+            nextDate
+              .toISOString()
+              .split("T")[0],
+
+          scheduled_time:
+            lastSession.scheduled_time,
+
+          completed:
+            false,
+
+        });
+
+      }
+
+      const { error } =
         await supabase
 
           .from(
@@ -551,354 +1203,184 @@ export default function PackagesPage() {
             sessionsToInsert
           );
 
-          // CREAR CITA AUTOMATICA
-console.log(
-  "SELECTED ZONES",
-  selectedZones
-);
+      if (error) {
 
-const zonesText =
-  selectedZones.length > 0
+        console.log(error);
 
-    ? selectedZones
-        .map((zone) =>
-  zone.label.split(" - ")[0]
-)
-        .join(", ")
+        alert(
+          "Error agregando sesiones"
+        );
 
-    : "SIN ZONAS";
+        return;
 
-// CREAR CITA AUTOMATICA
+      }
 
-const {
-  data: appointmentData,
-  error: appointmentError,
-} = await supabase
+    const basePrice =
+  Number(selectedPackage.unit_price);
 
-  .from("appointments")
+let newAmount =
+  basePrice *
+  additionalSessions;
 
-  .insert([
-    {
-      client_id: parseInt(clientId),
-      service_id: parseInt(serviceId),
+if (additionalSessions === 3) {
 
-      worker_id: 1,
-      branch_id: 1,
+  newAmount =
+    newAmount * 0.90;
 
-      appointment_date: startDate,
-      start_time: startTime,
-      end_time: startTime,
-
-      status: "Pendiente",
-
-      final_price: totalPrice,
-
-      notes: zonesText,
-    },
-  ])
-
-  .select()
-
-  .single();
-
-if (appointmentError) {
-
-  console.log(
-    appointmentError
-  );
-
-  return;
 }
 
-console.log(
-  "PACKAGE ID:",
-  data?.id
-);
+if (additionalSessions === 6) {
 
-console.log(
-  "APPOINTMENT ID:",
-  appointmentData?.id
-);
+  newAmount =
+    newAmount * 0.85;
 
-const { error: updateError } =
-  await supabase
+}
 
-    .from("client_packages")
+await supabase
+  .from("client_packages")
+  .update({
 
-    .update({
+    total_sessions:
+      selectedPackage.total_sessions +
+      additionalSessions,
 
-      appointment_id:
-        appointmentData?.id,
+    total_price:
+      Number(selectedPackage.total_price) +
+      newAmount
 
-    })
+  })
 
     .eq(
       "id",
-      data?.id
+      selectedPackage.id
     );
 
-console.log(
-  "UPDATE ERROR:",
-  updateError
-);
+      alert(
+        "Sesiones agregadas"
+      );
+
+      setShowAddSessionsModal(
+        false
+      );
+
+      fetchPackages();
+
+    };
+
+    const updateSessionField =
+    async (
+      sessionId: number,
+      field: string,
+      value: string
+    ) => {
+
+      const { error } =
+        await supabase
+
+          .from(
+            "package_sessions"
+          )
+
+          .update({
+            [field]: value,
+          })
+
+          .eq(
+            "id",
+            sessionId
+          );
+
+      if (error) {
+
+        console.log(error);
+
         alert(
-          "Paquete creado"
+          "Error al guardar"
         );
+
+        return;
       }
-
-      // LIMPIAR
-      setShowModal(false);
-
-      setEditingId(null);
-
-      setClientId("");
-
-      setServiceId("");
-
-      setStartDate("");
-
-      setStartTime("");
-
-      setSelectedZones([]);
-
-      setTotalSessions(1);
-
-      setUnitPrice(0);
-
-      setDiscountPercentage(0);
-
-      setNotes("");
 
       fetchPackages();
     };
 
-  // ELIMINAR
-const deletePackage =
-  async (id: number) => {
+    const scheduleSession =
+    async () => {
 
-    const confirmDelete =
-      confirm(
-        "¿Eliminar paquete?"
-      );
-
-    if (!confirmDelete)
-      return;
-
-    const { data: pkg } =
-      await supabase
-
-        .from(
-          "client_packages"
-        )
-
-        .select("*")
-
-        .eq(
-          "id",
-          id
-        )
-
-        .single();
-
-    if (!pkg)
-      return;
-
-    if (
-      pkg.appointment_id
-    ) {
-
-   const {
-  error: deleteAppointmentError
-} = await supabase
-
-  .from(
-    "appointments"
-  )
-
-  .delete()
-
-  .eq(
-    "id",
-    pkg.appointment_id
-  );
-
-  const { data: verifyAppointment } =
-  await supabase
-
-    .from("appointments")
-
-    .select("id")
-
-    .eq(
-      "id",
-      pkg.appointment_id
-    );
-
-console.log(
-  "VERIFY AFTER DELETE:",
-  verifyAppointment
-);
-
-console.log(
-  "DELETE APPOINTMENT:",
-  pkg.appointment_id
-);
-
-console.log(
-  "DELETE ERROR:",
-  deleteAppointmentError
-);
-
-    }
-
-    await supabase
-
-      .from(
-        "package_sessions"
-      )
-
-      .delete()
-
-      .eq(
-        "package_id",
-        id
-      );
-
-    await supabase
-
-      .from(
-        "client_package_zones"
-      )
-
-      .delete()
-
-      .eq(
-        "package_id",
-        id
-      );
-
-    await supabase
-
-      .from(
-        "client_packages"
-      )
-
-      .delete()
-
-      .eq(
-        "id",
-        id
-      );
-
-    fetchPackages();
-
-    alert(
-      "Paquete eliminado"
-    );
-
-  };
-  
-  // ACTUALIZAR SESION
-// ACTUALIZAR SESION
-const updateSession =
-  async (
-    session: any
-  ) => {
-
-    const attendedDate =
-      prompt(
-        "Fecha atendida (YYYY-MM-DD)",
-        session.scheduled_date
-      );
-
-    if (!attendedDate)
-      return;
-
-    // ACTUALIZAR SESION ACTUAL
-    const { error } =
-      await supabase
-
-        .from(
-          "package_sessions"
-        )
-
-        .update({
-
-          completed: true,
-
-          attended_date:
-            attendedDate,
-
-          completed_at:
-            new Date()
-              .toISOString(),
-
-          scheduled_date:
-            attendedDate,
-
-        })
-
-        .eq(
-          "id",
-          session.id
-        );
-
-    if (error) {
-
-      console.log(error);
-
-      alert(
-        "Error actualizando sesión"
-      );
-
-      return;
-    }
-
-    // OBTENER FUTURAS
-    const { data: futureSessions } =
-      await supabase
-
-        .from(
-          "package_sessions"
-        )
-
-        .select("*")
-
-        .eq(
-          "package_id",
-          session.package_id
-        )
-
-        .gt(
-          "session_number",
-          session.session_number
-        )
-
-        .order(
-          "session_number"
-        );
-
-    if (futureSessions) {
-
-      for (
-        let i = 0;
-        i < futureSessions.length;
-        i++
+      if (
+        !selectedSession ||
+        !selectedPackage
       ) {
 
-        const future =
-          futureSessions[i];
+        return;
 
-        const newDate =
-          new Date(
-            attendedDate
-          );
+      }
 
-        newDate.setMonth(
-          newDate.getMonth()
-          + (i + 1)
+      const {
+        data: appointment,
+        error: appointmentError
+      } =
+        await supabase
+
+          .from("appointments")
+
+          .insert([
+            {
+
+              client_id:
+                selectedPackage.client_id,
+
+              service_id:
+                selectedPackage.service_id,
+
+              worker_id: 1,
+
+              branch_id: 1,
+
+              appointment_date:
+                scheduleDate,
+
+              start_time:
+                scheduleTime,
+
+              end_time:
+                scheduleTime,
+
+              status:
+                "Pendiente",
+
+              final_price: 0,
+
+              notes:
+                "Sesión de paquete"
+
+            }
+          ])
+
+          .select()
+
+          .single();
+
+      if (
+        appointmentError
+      ) {
+
+        console.log(
+          appointmentError
         );
 
+        alert(
+          "Error creando reserva"
+        );
+
+        return;
+
+      }
+
+      const {
+        error:
+          sessionError
+      } =
         await supabase
 
           .from(
@@ -907,585 +1389,372 @@ const updateSession =
 
           .update({
 
+            appointment_id:
+              appointment.id,
+
             scheduled_date:
-              newDate
-                .toISOString()
-                .split("T")[0],
+              scheduleDate,
+
+            scheduled_time:
+              scheduleTime
 
           })
 
           .eq(
             "id",
-            future.id
+            selectedSession.id
           );
+
+      if (
+        sessionError
+      ) {
+
+        console.log(
+          sessionError
+        );
+
+        alert(
+          "Error actualizando sesión"
+        );
+
+        return;
+
       }
-    }
-
-    // RECARGAR SESIONES
-    const { data } =
-      await supabase
-
-        .from(
-          "package_sessions"
-        )
-
-        .select("*")
-
-        .eq(
-          "package_id",
-          session.package_id
-        )
-
-        .order(
-          "session_number"
-        );
-
-    if (data) {
-
-      setSessionsDetail(
-        data
-      );
-    }
-  };
-
-  // PROXIMAS CITAS
-const fetchUpcomingSessions =
-  async () => {
-
-    const today =
-      new Date()
-        .toISOString()
-        .split("T")[0];
-
-    const nextWeek =
-        new Date();
-
-        nextWeek.setDate(
-        nextWeek.getDate() + 7
-        );
-
-        const nextWeekDate =
-        nextWeek
-            .toISOString()
-            .split("T")[0];
-
-    const { data, error } =
-      await supabase
-
-        .from(
-          "package_sessions"
-        )
-
-        .select(`
-          *,
-          client_packages(
-            clients(full_name)
-          )
-        `)
-
-        .eq(
-          "completed",
-          false
-        )
-
-        .gte(
-          "scheduled_date",
-          today
-        )
-
-        .lte(
-        "scheduled_date",
-        nextWeekDate
-        )
-
-        .order(
-          "scheduled_date",
-          {
-            ascending: true
-          }
-        )
-
-        .limit(10);
-
-    if (!error && data) {
-
-      setUpcomingSessions(
-        data
-      );
-    }
-  };
-
-  useEffect(() => {
-
-    fetchPackages();
-
-    fetchData();
-
-    fetchUpcomingSessions();
-
-  }, []);
-
-  const updateSessionField =
-  async (
-    sessionId: number,
-    field: string,
-    value: string
-  ) => {
-
-    const { error } =
-      await supabase
-
-        .from(
-          "package_sessions"
-        )
-
-        .update({
-          [field]: value,
-        })
-
-        .eq(
-          "id",
-          sessionId
-        );
-
-    if (error) {
-
-      console.log(error);
 
       alert(
-        "Error al guardar"
+        "Reserva creada"
       );
 
-      return;
-    }
+      setShowScheduleSessionModal(
+        false
+      );
 
-    fetchPackages();
-  };
+      const { data } =
+        await supabase
 
-  return (
+          .from(
+            "package_sessions"
+          )
 
-    <div>
+          .select("*")
 
-      {/* HEADER */}
-      <div className="flex items-center justify-between mb-8">
+          .eq(
+            "package_id",
+            selectedPackage.id
+          )
 
-        <div>
+          .order(
+            "session_number"
+          );
 
-          <h2 className="text-5xl font-bold text-[#243847]">
+      setSessionsDetail(
+        data || []
+      );
 
-            Paquetes 🎯
+    };
 
-          </h2>
+    const sessionOptions = [1, 3, 6];
 
-          <p className="text-gray-600 mt-2">
+if (
+  totalSessions &&
+  !sessionOptions.includes(totalSessions)
+) {
+  sessionOptions.push(totalSessions);
+}
+  
+    return (
 
-            Gestión de paquetes
+      <div>
 
-          </p>
-
-        </div>
-
-        <button
-          onClick={() =>
-            setShowModal(true)
-          }
-          className="bg-[#243847] text-white px-6 py-4 rounded-2xl"
-        >
-
-          + Nuevo paquete
-
-        </button>
-
-      </div>
-
-      {/* FILTROS */}
-      <div className="flex gap-4 mb-6">
-
-        <input
-          type="text"
-          placeholder="Buscar cliente..."
-          value={searchClient}
-          onChange={(e) =>
-            setSearchClient(
-              e.target.value
-            )
-          }
-          className="border p-4 rounded-2xl w-[350px]"
-        />
-
-        <select
-          value={sortBy}
-          onChange={(e) =>
-            setSortBy(
-              e.target.value
-            )
-          }
-          className="border p-4 rounded-2xl"
-        >
-
-          <option value="date_desc">
-            Fecha reciente
-          </option>
-
-          <option value="date_asc">
-            Fecha antigua
-          </option>
-
-          <option value="client_asc">
-            Cliente A-Z
-          </option>
-
-        </select>
-
-      </div>
-
-      {/* PROXIMAS CITAS */}
-<div className="bg-white rounded-3xl shadow-xl p-6 mb-8">
-
-  <h3 className="text-2xl font-bold text-[#243847] mb-5">
-
-    📅 Próximas sesiones pendientes
-
-  </h3>
-
-  <div className="space-y-4">
-
-    {upcomingSessions.map(
-      (session: any) => (
-
-        <div
-          key={session.id}
-          className="border rounded-2xl p-4 flex items-center justify-between"
-        >
+        {/* HEADER */}
+        <div className="flex items-center justify-between mb-8">
 
           <div>
 
-            <p className="font-bold text-[#243847]">
+            <h2 className="text-5xl font-bold text-[#243847]">
 
-              {
-                session
-                  ?.client_packages
-                  ?.clients
-                  ?.full_name
-              }
+              Paquetes 🎯
 
-            </p>
+            </h2>
 
-            <p className="text-gray-500">
+            <p className="text-gray-600 mt-2">
 
-              Sesión #
-              {
-                session.session_number
-              }
+              Gestión de paquetes
 
             </p>
 
           </div>
 
-          <div className="text-right">
+          <button
+        onClick={() => {
 
-            <p className="font-bold">
+  setEditingId(null);
 
-              {
-                session.scheduled_date
-              }
+  setClientId("");
+  setServiceId("");
 
-            </p>
+  setStartDate("");
+  setStartTime("");
 
-            <p className="text-orange-500 text-sm">
+  setSelectedZones([]);
 
-              Pendiente
+  setTotalSessions(1);
 
-            </p>
+  setUnitPrice(0);
 
-          </div>
+  setDiscountPercentage(0);
+
+  setNotes("");
+
+  setSavedSubtotal(0);
+  setSavedTotalPrice(0);
+
+  setShowModal(true);
+
+}}
+            className="bg-[#243847] text-white px-6 py-4 rounded-2xl"
+          >
+
+            + Nuevo paquete
+
+          </button>
 
         </div>
 
-      )
-    )}
+        {/* FILTROS */}
+        <div className="flex gap-4 mb-6">
+
+          <input
+            type="text"
+            placeholder="Buscar cliente..."
+            value={searchClient}
+            onChange={(e) =>
+              setSearchClient(
+                e.target.value
+              )
+            }
+            className="border p-4 rounded-2xl w-[350px]"
+          />
+
+          <select
+            value={sortBy}
+            onChange={(e) =>
+              setSortBy(
+                e.target.value
+              )
+            }
+            className="border p-4 rounded-2xl"
+          >
+
+            <option value="date_desc">
+              Fecha reciente
+            </option>
+
+            <option value="date_asc">
+              Fecha antigua
+            </option>
+
+            <option value="client_asc">
+              Cliente A-Z
+            </option>
+
+          </select>
+
+        </div>
+
+        {/* PROXIMAS CITAS */}
+  <div className="bg-white rounded-3xl shadow-xl p-6 mb-8">
+
+    <h3 className="text-2xl font-bold text-[#243847] mb-5">
+
+      📅 Próximas sesiones pendientes
+
+    </h3>
+
+    <div className="space-y-4">
+
+      {upcomingSessions.map(
+        (session: any) => (
+
+          <div
+            key={session.id}
+            className="border rounded-2xl p-4 flex items-center justify-between"
+          >
+
+            <div>
+
+              <p className="font-bold text-[#243847]">
+
+                {
+                  session
+                    ?.client_packages
+                    ?.clients
+                    ?.full_name
+                }
+
+              </p>
+
+              <p className="text-gray-500">
+
+                Sesión #
+                {
+                  session.session_number
+                }
+
+              </p>
+
+            </div>
+
+            <div className="text-right">
+
+              <p className="font-bold">
+
+                {
+                  session.scheduled_date
+                }
+
+              </p>
+
+              <p className="text-orange-500 text-sm">
+
+                Pendiente
+
+              </p>
+
+            </div>
+
+          </div>
+
+        )
+      )}
+
+    </div>
 
   </div>
 
-</div>
+        {/* TABLA */}
+        <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
 
-      {/* TABLA */}
-      <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+          <table className="w-full min-w-[1000px]">
 
-        <table className="w-full min-w-[1000px]">
+            <thead className="bg-[#243847] text-white">
 
-          <thead className="bg-[#243847] text-white">
+              <tr>
 
-            <tr>
+                <th className="text-left p-5">
+                  Cliente
+                </th>
 
-              <th className="text-left p-5">
-                Cliente
-              </th>
+                <th className="text-left p-5">
+                  Servicio
+                </th>
 
-              <th className="text-left p-5">
-                Servicio
-              </th>
+                <th className="text-left p-5">
+                  Zonas
+                </th>
 
-              <th className="text-left p-5">
-                Zonas
-              </th>
+                <th className="text-left p-5">
+                  Primera atención
+                </th>
 
-              <th className="text-left p-5">
-                Primera atención
-              </th>
+                <th className="text-left p-5">
+                  Sesiones
+                </th>
 
-              <th className="text-left p-5">
-                Sesiones
-              </th>
+                <th className="text-left p-5">
+                  Programación
+                </th>
 
-              <th className="text-left p-5">
-                Programación
-              </th>
+                <th className="text-left p-5">
+                  Total
+                </th>
 
-              <th className="text-left p-5">
-                Total
-              </th>
+                <th className="text-left p-5">
+                  Acciones
+                </th>
 
-              <th className="text-left p-5">
-                Acciones
-              </th>
+              </tr>
 
-            </tr>
+            </thead>
 
-          </thead>
+            <tbody>
 
-          <tbody>
+              {[...packages]
 
-            {[...packages]
+                .filter((pkg) =>
 
-              .filter((pkg) =>
+                  pkg.clients
+                    ?.full_name
+                    ?.toLowerCase()
 
-                pkg.clients
-                  ?.full_name
-                  ?.toLowerCase()
+                    .includes(
+                      searchClient.toLowerCase()
+                    )
+                )
 
-                  .includes(
-                    searchClient.toLowerCase()
-                  )
-              )
+                .sort((a, b) => {
 
-              .sort((a, b) => {
+                  if (
+                    sortBy === "client_asc"
+                  ) {
 
-                if (
-                  sortBy === "client_asc"
-                ) {
+                    return a.clients?.full_name.localeCompare(
+                      b.clients?.full_name
+                    );
+                  }
 
-                  return a.clients?.full_name.localeCompare(
-                    b.clients?.full_name
-                  );
-                }
+                  if (
+                    sortBy === "date_asc"
+                  ) {
 
-                if (
-                  sortBy === "date_asc"
-                ) {
+                    return new Date(
+                      a.start_date
+                    ).getTime()
+
+                      -
+
+                      new Date(
+                        b.start_date
+                      ).getTime();
+                  }
 
                   return new Date(
-                    a.start_date
+                    b.start_date
                   ).getTime()
 
                     -
 
                     new Date(
-                      b.start_date
+                      a.start_date
                     ).getTime();
-                }
+                })
 
-                return new Date(
-                  b.start_date
-                ).getTime()
+                .map((pkg) => (
 
-                  -
+                  <tr
+                    key={pkg.id}
+                    className="border-b"
+                  >
 
-                  new Date(
-                    a.start_date
-                  ).getTime();
-              })
+                    <td className="p-5">
+                      {
+                        pkg.clients
+                          ?.full_name
+                      }
+                    </td>
 
-              .map((pkg) => (
+                    <td className="p-5">
+                      {
+                        pkg.services
+                          ?.name
+                      }
+                    </td>
 
-                <tr
-                  key={pkg.id}
-                  className="border-b"
-                >
-
-                  <td className="p-5">
-                    {
-                      pkg.clients
-                        ?.full_name
-                    }
-                  </td>
-
-                  <td className="p-5">
-                    {
-                      pkg.services
-                        ?.name
-                    }
-                  </td>
-
-                  {/* ZONAS */}
-                  <td className="p-5">
-
-                    <button
-                      onClick={async () => {
-
-                        const { data } =
-                          await supabase
-
-                            .from(
-                              "client_package_zones"
-                            )
-
-                            .select(`
-                              laser_zones(
-                                name,
-                                price
-                              )
-                            `)
-
-                            .eq(
-                              "package_id",
-                              pkg.id
-                            );
-
-                        if (data) {
-
-                          setZonesDetail(
-                            data
-                          );
-
-                          setShowZonesModal(
-                            true
-                          );
-                        }
-                      }}
-                      className="bg-[#243847] text-white px-4 py-2 rounded-xl text-sm"
-                    >
-
-                      Ver zonas
-
-                    </button>
-
-                  </td>
-
-                  <td className="p-5">
-                    {pkg.start_date}
-                  </td>
-
-                  <td className="p-5">
-                    {pkg.total_sessions}
-                  </td>
-
-                  {/* PROGRAMACION */}
-                  <td className="p-5">
-
-                    <button
-                      onClick={async () => {
-
-                        const { data } =
-                          await supabase
-
-                            .from(
-                              "package_sessions"
-                            )
-
-                            .select("*")
-
-                            .eq(
-                              "package_id",
-                              pkg.id
-                            )
-
-                            .order(
-                              "session_number"
-                            );
-
-                        if (data) {
-
-                          setSessionsDetail(
-                            data
-                          );
-                          setShowModal(false);
-
-                          setShowSessionsModal(
-                            true
-                          );
-                        }
-                      }}
-                      className="bg-[#243847] text-white px-4 py-2 rounded-xl text-sm"
-                    >
-
-                      Ver sesiones
-
-                    </button>
-
-                  </td>
-
-                  <td className="p-5 font-bold">
-
-                    S/
-                    {
-                      Number(
-                        pkg.total_price
-                      ).toFixed(2)
-                    }
-
-                  </td>
-
-                  <td className="p-5">
-
-                    <div className="flex gap-3">
+                    {/* ZONAS */}
+                    <td className="p-5">
 
                       <button
                         onClick={async () => {
-
-                          setEditingId(
-                            pkg.id
-                          );
-
-                          setClientId(
-                            String(
-                              pkg.client_id
-                            )
-                          );
-
-                          setServiceId(
-                            String(
-                              pkg.service_id
-                            )
-                          );
-
-                          setStartDate(
-                            pkg.start_date || ""
-                          );
-
-                          setStartTime(
-                            pkg.start_time || ""
-                            );
-
-                          setTotalSessions(
-                            pkg.total_sessions
-                          );
-
-                          setUnitPrice(
-                            Number(
-                              pkg.unit_price
-                            )
-                          );
-
-                          setDiscountPercentage(
-                            Number(
-                              pkg.discount_percentage
-                            )
-                          );
-
-                          setNotes(
-                            pkg.notes || ""
-                          );
 
                           const { data } =
                             await supabase
@@ -1495,9 +1764,7 @@ const fetchUpcomingSessions =
                               )
 
                               .select(`
-                                laser_zone_id,
                                 laser_zones(
-                                  id,
                                   name,
                                   price
                                 )
@@ -1510,691 +1777,1116 @@ const fetchUpcomingSessions =
 
                           if (data) {
 
-                            const formatted =
-                              data.map(
-                                (item: any) => ({
+                            setZonesDetail(
+                              data
+                            );
 
-                                  value:
-                                    item
-                                      .laser_zones
-                                      .id,
-
-                                  label:
-                                    `${item.laser_zones.name} - S/ ${item.laser_zones.price}`,
-
-                                  price:
-                                    item
-                                      .laser_zones
-                                      .price,
-
-                                })
-                              );
-
-                            setSelectedZones(
-                              formatted
+                            setShowZonesModal(
+                              true
                             );
                           }
-
-                          setShowModal(true);
                         }}
-                        className="bg-blue-100 p-3 rounded-xl hover:scale-105 transition"
+                        className="bg-[#243847] text-white px-4 py-2 rounded-xl text-sm"
                       >
 
-                        <Pencil size={18} />
+                        Ver zonas
 
                       </button>
+
+                    </td>
+
+                    <td className="p-5">
+                      {pkg.start_date}
+                    </td>
+
+                    <td className="p-5">
+                      {pkg.total_sessions}
+                    </td>
+
+                    {/* PROGRAMACION */}
+                    <td className="p-5">
 
                       <button
-                        onClick={() =>
-                          deletePackage(
-                            pkg.id
-                          )
-                        }
-                        className="bg-red-100 p-3 rounded-xl hover:scale-105 transition"
+                        onClick={async () => {
+
+                          const { data } =
+                            await supabase
+
+                              .from(
+                                "package_sessions"
+                              )
+
+                              .select("*")
+
+                              .eq(
+                                "package_id",
+                                pkg.id
+                              )
+
+                              .order(
+                                "session_number"
+                              );
+
+                        if (data) {
+
+                            setSelectedPackage(pkg);
+
+                            setSessionsDetail(
+                              data
+                            );
+
+                            setShowModal(false);
+
+                            setShowSessionsModal(
+                              true
+                            );
+                          }
+                        }}
+                        className="bg-[#243847] text-white px-4 py-2 rounded-xl text-sm"
                       >
 
-                        <Trash2 size={18} />
+                        Ver sesiones
 
                       </button>
 
-                    </div>
+                    </td>
 
-                  </td>
-
-                </tr>
-
-              ))}
-
-          </tbody>
-
-        </table>
-
-      </div>
-
-      {/* MODAL PRINCIPAL */}
-      {showModal && (
-
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-6">
-
-          <div className="bg-white rounded-3xl w-full max-w-[700px] max-h-[90vh] overflow-hidden flex flex-col">
-
-            <div className="bg-[#243847] text-white px-8 py-6">
-
-              <h3 className="text-3xl font-bold">
-
-                {editingId
-                  ? "Editar paquete"
-                  : "Nuevo paquete"}
-
-              </h3>
-
-            </div>
-
-            <div className="p-8 overflow-y-auto space-y-6">
-
-              <div>
-
-                <label className="block mb-2 font-medium text-gray-700">
-                  Cliente
-                </label>
-
-                <select
-                  value={clientId}
-                  onChange={(e) =>
-                    setClientId(
-                      e.target.value
-                    )
-                  }
-                  className="w-full border p-4 rounded-2xl"
-                >
-
-                  <option value="">
-                    Seleccione cliente
-                  </option>
-
-                  {clients.map(
-                    (client) => (
-
-                      <option
-                        key={client.id}
-                        value={client.id}
-                      >
-
-                        {
-                          client.full_name
-                        }
-
-                      </option>
-
-                    )
-                  )}
-
-                </select>
-
-              </div>
-
-              <div>
-
-                <label className="block mb-2 font-medium text-gray-700">
-                  Servicio
-                </label>
-
-                <select
-                  value={serviceId}
-                  onChange={(e) =>
-                    setServiceId(
-                      e.target.value
-                    )
-                  }
-                  className="w-full border p-4 rounded-2xl"
-                >
-
-                  <option value="">
-                    Seleccione servicio
-                  </option>
-
-                  {services.map(
-                    (service) => (
-
-                      <option
-                        key={service.id}
-                        value={service.id}
-                      >
-
-                        {
-                          service.name
-                        }
-
-                      </option>
-
-                    )
-                  )}
-
-                </select>
-
-              </div>
-
-              <div>
-
-                <label className="block mb-2 font-medium text-gray-700">
-                  Primera atención
-                </label>
-
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) =>
-                    setStartDate(
-                      e.target.value
-                    )
-                  }
-                  className="w-full border p-4 rounded-2xl"
-                />
-
-              </div>
-
-              <div className="mt-4">
-
-                <label className="block mb-2 font-medium text-gray-700">
-                    Hora
-                </label>
-
-                <input
-                    type="time"
-                    value={startTime}
-                    onChange={(e) =>
-                    setStartTime(
-                        e.target.value
-                    )
-                    }
-                    className="w-full border p-4 rounded-2xl"
-                />
-
-                </div>
-
-              <div>
-
-                <label className="block mb-2 font-medium text-gray-700">
-                  Zonas láser
-                </label>
-
-                <Select
-                  isMulti
-                  options={laserZones.map(
-                    (zone) => ({
-                      value: zone.id,
-                      label: `${zone.name} - S/ ${zone.price}`,
-                      price: zone.price,
-                    })
-                  )}
-                  value={selectedZones}
-                  onChange={(selected: any) => {
-
-                    setSelectedZones(
-                      selected || []
-                    );
-
-                    const total =
-                      (
-                        selected || []
-                      ).reduce(
-                        (
-                          sum: number,
-                          item: any
-                        ) =>
-
-                          sum +
-                          Number(
-                            item.price || 0
-                          ),
-
-                        0
-                      );
-
-                    setUnitPrice(
-                      total
-                    );
-                  }}
-                  placeholder="Seleccionar zonas..."
-                />
-
-              </div>
-
-              <div>
-
-                <label className="block mb-2 font-medium text-gray-700">
-                  Número de sesiones
-                </label>
-
-                <select
-                  value={totalSessions}
-                  onChange={(e) =>
-                    setTotalSessions(
-                      Number(
-                        e.target.value
-                      )
-                    )
-                  }
-                  className="w-full border p-4 rounded-2xl"
-                >
-
-                  <option value={1}>
-                    1 sesión
-                  </option>
-
-                  <option value={3}>
-                    3 sesiones
-                  </option>
-
-                  <option value={6}>
-                    6 sesiones
-                  </option>
-
-                </select>
-
-              </div>
-
-              <div>
-
-                <label className="block mb-2 font-medium text-gray-700">
-                  Descuento adicional %
-                </label>
-
-                <input
-                  type="number"
-                  value={discountPercentage}
-                  onChange={(e) =>
-                    setDiscountPercentage(
-                      Number(
-                        e.target.value
-                      )
-                    )
-                  }
-                  className="w-full border p-4 rounded-2xl"
-                />
-
-              </div>
-
-              <div className="bg-[#243847]/5 border-2 border-[#243847] rounded-3xl p-6 space-y-3">
-
-                <div className="flex justify-between">
-
-                  <span>
-                    Subtotal
-                  </span>
-
-                  <span className="font-semibold">
-                    S/ {subtotal.toFixed(2)}
-                  </span>
-
-                </div>
-
-                <div className="flex justify-between">
-
-                  <span>
-                    Descuento automático
-                  </span>
-
-                  <span className="font-semibold text-green-600">
-                    - {automaticDiscount}%
-                  </span>
-
-                </div>
-
-                <div className="flex justify-between">
-
-                  <span>
-                    Precio paquete
-                  </span>
-
-                  <span className="font-semibold">
-                    S/ {packagePrice.toFixed(2)}
-                  </span>
-
-                </div>
-
-                <div className="flex justify-between">
-
-                  <span>
-                    Descuento adicional
-                  </span>
-
-                  <span className="font-semibold text-red-500">
-                    - {discountPercentage}%
-                  </span>
-
-                </div>
-
-                <div className="border-t pt-4 flex justify-between items-center">
-
-                  <span className="text-xl font-bold text-[#243847]">
-                    TOTAL FINAL
-                  </span>
-
-                  <span className="text-3xl font-bold text-[#243847]">
-                    S/ {totalPrice.toFixed(2)}
-                  </span>
-
-                </div>
-
-              </div>
-
-              <div>
-
-                <textarea
-                  placeholder="Observaciones"
-                  value={notes}
-                  onChange={(e) =>
-                    setNotes(
-                      e.target.value
-                    )
-                  }
-                  className="w-full border p-4 rounded-2xl h-24"
-                />
-
-              </div>
-
-            </div>
-
-            <div className="flex justify-end gap-4 p-8 border-t">
-
-              <button
-                onClick={() =>
-                  setShowModal(false)
-                }
-                className="bg-gray-200 px-6 py-3 rounded-2xl"
-              >
-
-                Cancelar
-
-              </button>
-
-              <button
-                onClick={savePackage}
-                className="bg-[#243847] text-white px-6 py-3 rounded-2xl"
-              >
-
-                {editingId
-                  ? "Actualizar paquete"
-                  : "Guardar paquete"}
-
-              </button>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      )}
-
-      {/* MODAL ZONAS */}
-      {showZonesModal && (
-
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60] p-6">
-
-          <div className="bg-white rounded-3xl w-full max-w-[500px] overflow-hidden">
-
-            <div className="bg-[#243847] text-white px-6 py-5 flex items-center justify-between">
-
-              <h3 className="text-2xl font-bold">
-                Zonas del paquete
-              </h3>
-
-              <button
-                onClick={() =>
-                  setShowZonesModal(
-                    false
-                  )
-                }
-                className="text-white text-xl"
-              >
-
-                ✕
-
-              </button>
-
-            </div>
-
-            <div className="p-6 space-y-4">
-
-              {zonesDetail.map(
-                (
-                  item: any,
-                  index: number
-                ) => (
-
-                  <div
-                    key={index}
-                    className="border rounded-2xl p-4 flex justify-between"
-                  >
-
-                    <span className="font-medium">
-
-                      {
-                        item
-                          .laser_zones
-                          ?.name
-                      }
-
-                    </span>
-
-                    <span className="font-bold">
+                    <td className="p-5 font-bold">
 
                       S/
                       {
-                        item
-                          .laser_zones
-                          ?.price
+                        Number(
+                          pkg.total_price
+                        ).toFixed(2)
                       }
 
+                    </td>
+
+                    <td className="p-5">
+
+                      <div className="flex gap-3">
+
+                        <button
+  onClick={() => {
+
+    setSelectedPackage(pkg);
+
+    setAdditionalSessions(1);
+
+    setAdditionalSessionPrice(
+      Number(pkg.total_price) /
+      Number(pkg.total_sessions)
+    );
+
+    setShowAddSessionsModal(true);
+
+  }}
+    className="bg-green-100 p-3 rounded-xl hover:scale-105 transition"
+  >
+
+    ➕
+
+  </button>
+
+                        <button
+                          onClick={async () => {
+
+                            setEditingId(
+                              pkg.id
+                            );
+
+                            setClientId(
+                              String(
+                                pkg.client_id
+                              )
+                            );
+
+                            setServiceId(
+                              String(
+                                pkg.service_id
+                              )
+                            );
+
+                            setStartDate(
+                              pkg.start_date || ""
+                            );
+
+                            setStartTime(
+  pkg.start_time || ""
+);
+
+setTotalSessions(
+  Number(pkg.total_sessions)
+);
+  
+   
+
+                            setUnitPrice(
+                              Number(
+                                pkg.unit_price
+                              )
+                            );
+
+                            setSavedSubtotal(
+                              Number(pkg.subtotal || 0)
+                            );
+
+                            setSavedTotalPrice(
+                              Number(pkg.total_price || 0)
+                            );
+
+                            setDiscountPercentage(
+                              Number(
+                                pkg.discount_percentage
+                              )
+                            );
+
+                            setNotes(
+                              pkg.notes || ""
+                            );
+
+                            const { data } =
+                              await supabase
+
+                                .from(
+                                  "client_package_zones"
+                                )
+
+                                .select(`
+                                  laser_zone_id,
+                                  laser_zones(
+                                    id,
+                                    name,
+                                    price
+                                  )
+                                `)
+
+                                .eq(
+                                  "package_id",
+                                  pkg.id
+                                );
+
+                            if (data) {
+
+                              const formatted =
+                                data.map(
+                                  (item: any) => ({
+
+                                    value:
+                                      item
+                                        .laser_zones
+                                        .id,
+
+                                    label:
+                                      `${item.laser_zones.name} - S/ ${item.laser_zones.price}`,
+
+                                    price:
+                                      item
+                                        .laser_zones
+                                        .price,
+
+                                  })
+                                );
+
+                              setSelectedZones(
+                                formatted
+                              );
+                            }
+
+                            setShowModal(true);
+                          }}
+                          className="bg-blue-100 p-3 rounded-xl hover:scale-105 transition"
+                        >
+
+                          <Pencil size={18} />
+
+                        </button>
+
+                        <button
+                          onClick={() =>
+                            deletePackage(
+                              pkg.id
+                            )
+                          }
+                          className="bg-red-100 p-3 rounded-xl hover:scale-105 transition"
+                        >
+
+                          <Trash2 size={18} />
+
+                        </button>
+
+                      </div>
+
+                    </td>
+
+                  </tr>
+
+                ))}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+        {/* MODAL PRINCIPAL */}
+        {showModal && (
+
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-6">
+
+            <div className="bg-white rounded-3xl w-full max-w-[700px] max-h-[90vh] overflow-hidden flex flex-col">
+
+              <div className="bg-[#243847] text-white px-8 py-6">
+
+                <h3 className="text-3xl font-bold">
+
+                  {editingId
+                    ? "Editar paquete"
+                    : "Nuevo paquete"}
+
+                </h3>
+
+              </div>
+
+              <div className="p-8 overflow-y-auto space-y-6">
+
+                <div>
+
+                  <label className="block mb-2 font-medium text-gray-700">
+                    Cliente
+                  </label>
+
+                  <select
+                    value={clientId}
+                    onChange={(e) =>
+                      setClientId(
+                        e.target.value
+                      )
+                    }
+                    className="w-full border p-4 rounded-2xl"
+                  >
+
+                    <option value="">
+                      Seleccione cliente
+                    </option>
+
+                    {clients.map(
+                      (client) => (
+
+                        <option
+                          key={client.id}
+                          value={client.id}
+                        >
+
+                          {
+                            client.full_name
+                          }
+
+                        </option>
+
+                      )
+                    )}
+
+                  </select>
+
+                </div>
+
+                <div>
+
+                  <label className="block mb-2 font-medium text-gray-700">
+                    Servicio
+                  </label>
+
+                  <select
+                    value={serviceId}
+                    onChange={(e) =>
+                      setServiceId(
+                        e.target.value
+                      )
+                    }
+                    className="w-full border p-4 rounded-2xl"
+                  >
+
+                    <option value="">
+                      Seleccione servicio
+                    </option>
+
+                    {services.map(
+                      (service) => (
+
+                        <option
+                          key={service.id}
+                          value={service.id}
+                        >
+
+                          {
+                            service.name
+                          }
+
+                        </option>
+
+                      )
+                    )}
+
+                  </select>
+
+                </div>
+
+                <div>
+
+                  <label className="block mb-2 font-medium text-gray-700">
+                    Primera atención
+                  </label>
+
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) =>
+                      setStartDate(
+                        e.target.value
+                      )
+                    }
+                    className="w-full border p-4 rounded-2xl"
+                  />
+
+                </div>
+
+                <div className="mt-4">
+
+                  <label className="block mb-2 font-medium text-gray-700">
+                      Hora
+                  </label>
+
+                  <input
+                      type="time"
+                      value={startTime}
+                      onChange={(e) =>
+                      setStartTime(
+                          e.target.value
+                      )
+                      }
+                      className="w-full border p-4 rounded-2xl"
+                  />
+
+                  </div>
+
+                <div>
+
+                  <label className="block mb-2 font-medium text-gray-700">
+                    Zonas láser
+                  </label>
+
+                  <Select
+                    isMulti
+                    options={laserZones.map(
+                      (zone) => ({
+                        value: zone.id,
+                        label: `${zone.name} - S/ ${zone.price}`,
+                        price: zone.price,
+                      })
+                    )}
+                    value={selectedZones}
+                    onChange={(selected: any) => {
+
+                      setSelectedZones(
+                        selected || []
+                      );
+
+                      const total =
+                        (
+                          selected || []
+                        ).reduce(
+                          (
+                            sum: number,
+                            item: any
+                          ) =>
+
+                            sum +
+                            Number(
+                              item.price || 0
+                            ),
+
+                          0
+                        );
+
+                      setUnitPrice(
+                        total
+                      );
+                    }}
+                    placeholder="Seleccionar zonas..."
+                  />
+
+                </div>
+
+                <div>
+
+                  <label className="block mb-2 font-medium text-gray-700">
+                    Número de sesiones
+                  </label>
+
+  <select
+  value={totalSessions}
+  onChange={(e) =>
+    setTotalSessions(
+      Number(e.target.value)
+    )
+  }
+  className="w-full border p-4 rounded-2xl"
+>
+  {sessionOptions.map(
+    (sessions) => (
+      <option
+        key={sessions}
+        value={sessions}
+      >
+        {sessions} sesiones
+      </option>
+    )
+  )}
+</select>
+
+                </div>
+
+                <div>
+
+                  <label className="block mb-2 font-medium text-gray-700">
+                    Descuento adicional %
+                  </label>
+
+                  <input
+                    type="number"
+                    value={discountPercentage}
+                    onChange={(e) =>
+                      setDiscountPercentage(
+                        Number(
+                          e.target.value
+                        )
+                      )
+                    }
+                    className="w-full border p-4 rounded-2xl"
+                  />
+
+                </div>
+
+                <div className="bg-[#243847]/5 border-2 border-[#243847] rounded-3xl p-6 space-y-3">
+
+                  <div className="flex justify-between">
+
+                    <span>
+                      Subtotal
+                    </span>
+
+                    <span className="font-semibold">
+                      S/ {subtotal.toFixed(2)}
                     </span>
 
                   </div>
 
-                )
-              )}
+                  <div className="flex justify-between">
 
-            </div>
+                    <span>
+                      Descuento automático
+                    </span>
 
-          </div>
+                    <span className="font-semibold text-green-600">
+                      - {automaticDiscount}%
+                    </span>
 
-        </div>
+                  </div>
 
-      )}
+                  <div className="flex justify-between">
 
-      {/* MODAL SESIONES */}
-      {showSessionsModal && (
+                    <span>
+                      Precio paquete
+                    </span>
 
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[70] p-6">
+                    <span className="font-semibold">
+                      S/ {packagePrice.toFixed(2)}
+                    </span>
 
-          <div className="bg-white rounded-3xl w-full max-w-[1100px] overflow-y-auto max-h-[90vh]">
+                  </div>
 
-            <div className="bg-[#243847] text-white px-6 py-5 flex items-center justify-between">
+                  <div className="flex justify-between">
 
-              <h3 className="text-2xl font-bold">
+                    <span>
+                      Descuento adicional
+                    </span>
 
-                Sesiones programadas
+                    <span className="font-semibold text-red-500">
+                      - {discountPercentage}%
+                    </span>
 
-              </h3>
+                  </div>
 
-              <button
-                onClick={() =>
-                  setShowSessionsModal(
-                    false
-                  )
-                }
-                className="text-white text-xl"
-              >
+                  <div className="border-t pt-4 flex justify-between items-center">
 
-                ✕
+                    <span className="text-xl font-bold text-[#243847]">
+                      TOTAL FINAL
+                    </span>
 
-              </button>
+                    <span className="text-3xl font-bold text-[#243847]">
+                      S/ {totalPrice.toFixed(2)}
+                    </span>
 
-            </div>
+                  </div>
 
-            <div className="p-6 overflow-x-auto">
+                </div>
 
-             <table className="w-full min-w-[1000px]">
+                <div>
 
-                <thead>
+                  <textarea
+                    placeholder="Observaciones"
+                    value={notes}
+                    onChange={(e) =>
+                      setNotes(
+                        e.target.value
+                      )
+                    }
+                    className="w-full border p-4 rounded-2xl h-24"
+                  />
 
-                  <tr className="border-b">
+                </div>
 
-                    <th className="text-left p-3">
-                      #
-                    </th>
+              </div>
 
-                    <th className="text-left p-3">
-                      Fecha
-                    </th>
+              <div className="flex justify-end gap-4 p-8 border-t">
 
-                    <th className="text-left p-3">
-                      Estado
-                    </th>
+                <button
+                 onClick={() => {
 
-                    <th className="text-left p-3">
-                      Seguimiento
-                    </th>
+  setShowModal(false);
 
-                  </tr>
+  setEditingId(null);
 
-                </thead>
+  setClientId("");
+  setServiceId("");
 
-                <tbody>
+  setStartDate("");
+  setStartTime("");
 
-                  {sessionsDetail.map(
-                    (session: any) => (
+  setSelectedZones([]);
 
-                      <tr
-                        key={session.id}
-                        className="border-b align-top"
-                      >
+  setTotalSessions(1);
 
-                        <td className="p-3">
+  setUnitPrice(0);
 
-                          {
-                            session.session_number
-                          }
+  setDiscountPercentage(0);
 
-                        </td>
+  setNotes("");
 
-                        <td className="p-3">
+  setSavedSubtotal(0);
+  setSavedTotalPrice(0);
 
-                          {
-                            session.scheduled_date
-                            }
+}}
+                  className="bg-gray-200 px-6 py-3 rounded-2xl"
+                >
 
-                            <br />
-
-                            <span className="text-sm text-gray-500">
-
-                            {
-                                session.scheduled_time
-                            }
-
-                            </span>
-
-                        </td>
-
-                       <td className="p-3">
-
-  <button
-
-    onClick={() =>
-
-      updateSession(
-        session
-      )
-
-    }
-
-    className={`px-4 py-2 rounded-xl text-white text-sm
-
-      ${session.completed
-        ? "bg-green-600"
-        : "bg-orange-500"}
-
-    `}
-  >
-
-                    {session.completed
-                    ? "✅ Atendida"
-                    : "⏳ Pendiente"}
+                  Cancelar
 
                 </button>
 
-                </td>
-                        <td className="p-3 min-w-[350px]">
+                <button
+                  onClick={savePackage}
+                  className="bg-[#243847] text-white px-6 py-3 rounded-2xl"
+                >
 
-  <div className="space-y-3">
+                  {editingId
+                    ? "Actualizar paquete"
+                    : "Guardar paquete"}
 
-    <input
-      type="text"
-      placeholder="Parámetro / Intensidad"
-      defaultValue={
-        session.session_parameter || ""
-      }
-      onChange={(e) =>
-        updateSessionField(
-          session.id,
-          "session_parameter",
-          e.target.value
-        )
-      }
-      className="w-full border border-gray-200 bg-[#f8fafc] p-3 rounded-xl"
-    />
+                </button>
 
-    <textarea
-      placeholder="Avance"
-      defaultValue={
-        session.session_progress || ""
-      }
-      onChange={(e) =>
-        updateSessionField(
-          session.id,
-          "session_progress",
-          e.target.value
-        )
-      }
-      className="w-full border border-gray-200 bg-[#f8fafc] p-3 rounded-xl"
-    />
-
-    <textarea
-      placeholder="Observaciones"
-      defaultValue={
-        session.session_notes || ""
-      }
-      onChange={(e) =>
-        updateSessionField(
-          session.id,
-          "session_notes",
-          e.target.value
-        )
-      }
-      className="w-full border border-gray-200 bg-[#f8fafc] p-3 rounded-xl"
-    />
-
-  </div>
-
-</td>
-                      </tr>
-
-                    )
-                  )}
-
-                </tbody>
-
-              </table>
+              </div>
 
             </div>
 
           </div>
 
-        </div>
+        )}
 
-      )}
+        {/* MODAL ZONAS */}
+        {showZonesModal && (
+
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60] p-6">
+
+            <div className="bg-white rounded-3xl w-full max-w-[500px] overflow-hidden">
+
+              <div className="bg-[#243847] text-white px-6 py-5 flex items-center justify-between">
+
+                <h3 className="text-2xl font-bold">
+                  Zonas del paquete
+                </h3>
+
+                <button
+                  onClick={() =>
+                    setShowZonesModal(
+                      false
+                    )
+                  }
+                  className="text-white text-xl"
+                >
+
+                  ✕
+
+                </button>
+
+              </div>
+
+              <div className="p-6 space-y-4">
+
+                {zonesDetail.map(
+                  (
+                    item: any,
+                    index: number
+                  ) => (
+
+                    <div
+                      key={index}
+                      className="border rounded-2xl p-4 flex justify-between"
+                    >
+
+                      <span className="font-medium">
+
+                        {
+                          item
+                            .laser_zones
+                            ?.name
+                        }
+
+                      </span>
+
+                      <span className="font-bold">
+
+                        S/
+                        {
+                          item
+                            .laser_zones
+                            ?.price
+                        }
+
+                      </span>
+
+                    </div>
+
+                  )
+                )}
+
+              </div>
+
+            </div>
+
+          </div>
+
+        )}
+
+        {/* MODAL SESIONES */}
+        {showSessionsModal && (
+
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[70] p-6">
+
+            <div className="bg-white rounded-3xl w-full max-w-[1100px] overflow-y-auto max-h-[90vh]">
+
+              <div className="bg-[#243847] text-white px-6 py-5 flex items-center justify-between">
+
+                <h3 className="text-2xl font-bold">
+
+                  Sesiones programadas
+
+                </h3>
+
+                <button
+                  onClick={() =>
+                    setShowSessionsModal(
+                      false
+                    )
+                  }
+                  className="text-white text-xl"
+                >
+
+                  ✕
+
+                </button>
+
+              </div>
+
+              <div className="p-6 overflow-x-auto">
+
+              <table className="w-full min-w-[1000px]">
+
+                  <thead>
+
+                    <tr className="border-b">
+
+                      <th className="text-left p-3">
+                        #
+                      </th>
+
+                      <th className="text-left p-3">
+                        Fecha
+                      </th>
+
+                      <th className="text-left p-3">
+                        Estado
+                      </th>
+
+                      <th className="text-left p-3">
+                        Seguimiento
+                      </th>
+
+                      <th className="text-left p-3">
+                        Acciones
+                      </th>
+
+                    </tr>
+
+                  </thead>
+
+                  <tbody>
+
+                    {sessionsDetail.map(
+                      (session: any) => (
+
+                        <tr
+                          key={session.id}
+                          className="border-b align-top"
+                        >
+
+                          <td className="p-3">
+
+                            {
+                              session.session_number
+                            }
+
+                          </td>
+
+                          <td className="p-3">
+
+                            {
+                              session.scheduled_date
+                              }
+
+                              <br />
+
+                              <span className="text-sm text-gray-500">
+
+                              {
+                                  session.scheduled_time
+                              }
+
+                              </span>
+
+                          </td>
+
+                        <td className="p-3">
+
+    <button
+
+      onClick={() =>
+
+        updateSession(
+          session
+        )
+
+      }
+
+      className={`px-4 py-2 rounded-xl text-white text-sm
+
+        ${session.completed
+          ? "bg-green-600"
+          : "bg-orange-500"}
+
+      `}
+    >
+
+                      {session.completed
+                      ? "✅ Atendida"
+                      : "⏳ Pendiente"}
+
+                  </button>
+
+                  </td>
+                          <td className="p-3 min-w-[350px]">
+
+    <div className="space-y-3">
+
+      <input
+        type="text"
+        placeholder="Parámetro / Intensidad"
+        defaultValue={
+          session.session_parameter || ""
+        }
+        onChange={(e) =>
+          updateSessionField(
+            session.id,
+            "session_parameter",
+            e.target.value
+          )
+        }
+        className="w-full border border-gray-200 bg-[#f8fafc] p-3 rounded-xl"
+      />
+
+      <textarea
+        placeholder="Avance"
+        defaultValue={
+          session.session_progress || ""
+        }
+        onChange={(e) =>
+          updateSessionField(
+            session.id,
+            "session_progress",
+            e.target.value
+          )
+        }
+        className="w-full border border-gray-200 bg-[#f8fafc] p-3 rounded-xl"
+      />
+
+      <textarea
+        placeholder="Observaciones"
+        defaultValue={
+          session.session_notes || ""
+        }
+        onChange={(e) =>
+          updateSessionField(
+            session.id,
+            "session_notes",
+            e.target.value
+          )
+        }
+        className="w-full border border-gray-200 bg-[#f8fafc] p-3 rounded-xl"
+      />
 
     </div>
-  );
-}
+
+  </td>
+
+  <td className="p-3">
+
+    {!session.completed &&
+    !session.appointment_id && (
+
+      <button
+
+        onClick={() => {
+
+          setSelectedSession(
+            session
+          );
+
+          setScheduleDate(
+            session.scheduled_date
+          );
+
+          setScheduleTime(
+            session.scheduled_time || ""
+          );
+
+          setShowScheduleSessionModal(
+            true
+          );
+
+        }}
+
+        className="bg-blue-600 text-white px-4 py-2 rounded-xl"
+
+      >
+
+        Programar
+
+      </button>
+
+    )}
+
+    {session.appointment_id && (
+
+      <span className="text-green-600 font-semibold">
+
+        📅 Reservada
+
+      </span>
+
+    )}
+
+  </td>
+                        </tr>
+
+                      )
+                    )}
+
+                  </tbody>
+
+                </table>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        )}
+
+        {showScheduleSessionModal && (
+
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[80]">
+
+      <div className="bg-white p-8 rounded-3xl w-[500px] shadow-2xl">
+
+        <h3 className="text-2xl font-bold text-[#243847] mb-6">
+
+          Programar sesión
+
+        </h3>
+
+        <div className="space-y-4">
+
+          <input
+            type="date"
+            value={scheduleDate}
+            onChange={(e) =>
+              setScheduleDate(
+                e.target.value
+              )
+            }
+            className="w-full border p-4 rounded-2xl"
+          />
+
+          <input
+            type="time"
+            value={scheduleTime}
+            onChange={(e) =>
+              setScheduleTime(
+                e.target.value
+              )
+            }
+            className="w-full border p-4 rounded-2xl"
+          />
+
+        </div>
+
+        <div className="flex gap-4 mt-8">
+
+          <button
+
+            onClick={() =>
+              setShowScheduleSessionModal(
+                false
+              )
+            }
+
+            className="bg-gray-200 px-5 py-3 rounded-2xl"
+
+          >
+
+            Cancelar
+
+          </button>
+
+          <button
+
+            onClick={scheduleSession}
+
+            className="bg-[#243847] text-white px-5 py-3 rounded-2xl"
+
+          >
+
+            Crear reserva
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  )}
+
+  {showAddSessionsModal && (
+
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[90]">
+
+      <div className="bg-white p-8 rounded-3xl w-[450px] shadow-2xl">
+
+        <h3 className="text-2xl font-bold text-[#243847] mb-6">
+
+          Agregar sesiones
+
+        </h3>
+
+        <select
+  value={additionalSessions}
+  onChange={(e) =>
+    setAdditionalSessions(
+      Number(e.target.value)
+    )
+  }
+  className="w-full border p-4 rounded-2xl"
+>
+  <option value={1}>1 sesión</option>
+  <option value={3}>3 sesiones</option>
+  <option value={6}>6 sesiones</option>
+</select>
+<div className="bg-gray-100 p-4 rounded-2xl mt-4">
+
+  <p>
+    Precio por sesión:
+    <strong>
+      S/ {
+        Number(selectedPackage?.unit_price || 0)
+      }
+    </strong>
+  </p>
+
+  <p>
+    Descuento:
+    <strong>
+      {
+        additionalSessions === 3
+          ? " 10%"
+          : additionalSessions === 6
+          ? " 15%"
+          : " 0%"
+      }
+    </strong>
+  </p>
+
+</div>
+
+        <div className="flex gap-4 mt-8">
+
+          <button
+
+            onClick={() =>
+              setShowAddSessionsModal(false)
+            }
+
+            className="bg-gray-200 px-5 py-3 rounded-2xl"
+
+          >
+
+            Cancelar
+
+          </button>
+
+          <button
+
+            onClick={addSessionsToPackage}
+
+            className="bg-green-600 text-white px-5 py-3 rounded-2xl"
+
+          >
+
+            Agregar
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  )}
+
+      </div>
+    );
+  }
