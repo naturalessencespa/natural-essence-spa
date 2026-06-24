@@ -40,6 +40,12 @@
     const [serviceId, setServiceId] =
       useState("");
 
+    const [workerId, setWorkerId] =
+      useState("");
+
+    const [workers, setWorkers] =
+      useState<any[]>([]);
+
     const [startDate,
       setStartDate] =
       useState("");
@@ -47,6 +53,11 @@
     const [startTime,
       setStartTime] =
       useState("");
+
+        const [
+  sessionFrequency,
+  setSessionFrequency
+] = useState(30);
 
     const [selectedZones,
       setSelectedZones] =
@@ -59,6 +70,11 @@
     const [unitPrice,
       setUnitPrice] =
       useState(0);
+
+      const [
+  manualPackagePrice,
+  setManualPackagePrice
+] = useState(0);
 
     const [discountPercentage,
       setDiscountPercentage] =
@@ -145,6 +161,17 @@
     setShowAddSessionsModal
   ] = useState(false);
 
+  const selectedService =
+  services.find(
+    (service) =>
+      service.id ===
+      Number(serviceId)
+  );
+
+const isLaser =
+  selectedService?.name ===
+  "Depilación Láser";
+
     // SUBTOTAL
   const subtotal =
     useMemo(() => {
@@ -161,94 +188,126 @@
       );
 
     }, [
+
+      
       unitPrice,
       totalSessions,
       editingId,
       savedSubtotal
     ]);
 
+    useEffect(() => {
+
+  if (
+    !isLaser
+  ) {
+
+    setManualPackagePrice(
+      subtotal
+    );
+
+  }
+
+}, [
+  subtotal,
+  isLaser
+]);
+
     // DESCUENTO AUTOMÁTICO
-    const automaticDiscount =
-      useMemo(() => {
+ const automaticDiscount =
+  useMemo(() => {
 
-        if (
-          totalSessions === 3
-        ) {
+    if (!isLaser) {
+      return 0;
+    }
 
-          return 10;
-        }
+    if (
+      totalSessions === 3
+    ) {
+      return 10;
+    }
 
-        if (
-          totalSessions === 6
-        ) {
+    if (
+      totalSessions === 6
+    ) {
+      return 15;
+    }
 
-          return 15;
-        }
+    return 0;
 
-        return 0;
-
-      }, [
-        totalSessions,
-      ]);
+  }, [
+    totalSessions,
+    isLaser
+  ]);
 
     // PRECIO PAQUETE
-    const packagePrice =
-      useMemo(() => {
+  const packagePrice =
+  useMemo(() => {
 
-        if (
-          totalSessions === 3
-        ) {
+    if (!isLaser) {
+      return subtotal;
+    }
 
-          return (
-            subtotal * 0.90
-          );
-        }
+    if (
+      totalSessions === 3
+    ) {
+      return (
+        subtotal * 0.90
+      );
+    }
 
-        if (
-          totalSessions === 6
-        ) {
+    if (
+      totalSessions === 6
+    ) {
+      return (
+        subtotal * 0.85
+      );
+    }
 
-          return (
-            subtotal * 0.85
-          );
-        }
+    return subtotal;
 
-        return subtotal;
-
-      }, [
-        subtotal,
-        totalSessions,
-      ]);
+  }, [
+    subtotal,
+    totalSessions,
+    isLaser
+  ]);
 
     // TOTAL FINAL
   const totalPrice =
-    useMemo(() => {
+  useMemo(() => {
 
-      if (editingId) {
+    if (editingId) {
 
-        return savedTotalPrice;
+      return savedTotalPrice;
 
-      }
+    }
 
-      const extraDiscount =
-        packagePrice *
-        (
-          discountPercentage /
-          100
-        );
+    if (!isLaser) {
 
-      return (
-        packagePrice -
-        extraDiscount
+      return manualPackagePrice;
+
+    }
+
+    const extraDiscount =
+      packagePrice *
+      (
+        discountPercentage /
+        100
       );
 
-    }, [
-      packagePrice,
-      discountPercentage,
-      editingId,
-      savedTotalPrice
-    ]);
+    return (
+      packagePrice -
+      extraDiscount
+    );
 
+  }, [
+    packagePrice,
+    discountPercentage,
+    editingId,
+    savedTotalPrice,
+    isLaser,
+    manualPackagePrice
+  ]);
     // OBTENER PAQUETES
     const fetchPackages =
       async () => {
@@ -324,6 +383,19 @@
             true
           );
 
+          const {
+              data: workersData,
+            } = await supabase
+
+              .from("workers")
+
+              .select("*")
+
+              .eq(
+                "active",
+                true
+              );
+
         setClients(
           clientsData || []
         );
@@ -334,6 +406,10 @@
 
         setLaserZones(
           zonesData || []
+        );
+
+        setWorkers(
+          workersData || []
         );
       };
 
@@ -385,6 +461,9 @@
 
                 total_sessions:
                   totalSessions,
+
+                session_frequency:
+                  sessionFrequency,
 
                 unit_price:
                   unitPrice,
@@ -489,6 +568,9 @@
                     serviceId
                   ),
 
+                worker_id:
+                  parseInt(workerId),
+
                 start_date:
                   startDate,
 
@@ -497,6 +579,9 @@
 
                 total_sessions:
                   totalSessions,
+                
+                session_frequency:
+                  sessionFrequency,
 
                 quantity: 1,
 
@@ -574,12 +659,12 @@
           ) {
 
             const sessionDate =
-              new Date(startDate);
+  new Date(startDate);
 
-            sessionDate.setMonth(
-              sessionDate.getMonth()
-              + i
-            );
+sessionDate.setDate(
+  sessionDate.getDate() +
+  (i * sessionFrequency)
+);
 
             sessionsToInsert.push({
 
@@ -643,8 +728,8 @@
       {
         client_id: parseInt(clientId),
         service_id: parseInt(serviceId),
+        worker_id: parseInt(workerId),
 
-        worker_id: 1,
         branch_id: 1,
 
         appointment_date: startDate,
@@ -746,6 +831,8 @@
 
         setTotalSessions(1);
 
+        setSessionFrequency(30);
+
         setUnitPrice(0);
 
         setDiscountPercentage(0);
@@ -833,6 +920,50 @@
   );
 
       }
+
+      const { data: packageSessions } =
+  await supabase
+
+    .from("package_sessions")
+
+    .select("appointment_id")
+
+    .eq(
+      "package_id",
+      id
+    );
+
+if (packageSessions) {
+
+  const appointmentIds =
+    packageSessions
+
+      .filter(
+        (s) => s.appointment_id
+      )
+
+      .map(
+        (s) => s.appointment_id
+      );
+
+  if (
+    appointmentIds.length > 0
+  ) {
+
+    await supabase
+
+      .from("appointments")
+
+      .delete()
+
+      .in(
+        "id",
+        appointmentIds
+      );
+
+  }
+
+}
 
       await supabase
 
@@ -938,72 +1069,94 @@
       }
 
       // OBTENER FUTURAS
-      const { data: futureSessions } =
-        await supabase
+const { data: futureSessions } =
+  await supabase
 
-          .from(
-            "package_sessions"
-          )
+    .from(
+      "package_sessions"
+    )
 
-          .select("*")
+    .select("*")
 
-          .eq(
-            "package_id",
-            session.package_id
-          )
+    .eq(
+      "package_id",
+      session.package_id
+    )
 
-          .gt(
-            "session_number",
-            session.session_number
-          )
+    .gt(
+      "session_number",
+      session.session_number
+    )
 
-          .order(
-            "session_number"
-          );
+    .order(
+      "session_number"
+    );
 
-      if (futureSessions) {
+if (futureSessions) {
 
-        for (
-          let i = 0;
-          i < futureSessions.length;
-          i++
-        ) {
+  const { data: packageData } =
+    await supabase
 
-          const future =
-            futureSessions[i];
+      .from(
+        "client_packages"
+      )
 
-          const newDate =
-            new Date(
-              attendedDate
-            );
+      .select(
+        "session_frequency"
+      )
 
-          newDate.setMonth(
-            newDate.getMonth()
-            + (i + 1)
-          );
+      .eq(
+        "id",
+        session.package_id
+      )
 
-          await supabase
+      .single();
 
-            .from(
-              "package_sessions"
-            )
+  const frequency =
+    Number(
+      packageData?.session_frequency || 30
+    );
 
-            .update({
+  for (
+    let i = 0;
+    i < futureSessions.length;
+    i++
+  ) {
 
-              scheduled_date:
-                newDate
-                  .toISOString()
-                  .split("T")[0],
+    const future =
+      futureSessions[i];
 
-            })
+    const newDate =
+      new Date(
+        attendedDate
+      );
 
-            .eq(
-              "id",
-              future.id
-            );
-        }
-      }
+    newDate.setDate(
+      newDate.getDate() +
+      (frequency * (i + 1))
+    );
 
+    await supabase
+
+      .from(
+        "package_sessions"
+      )
+
+      .update({
+
+        scheduled_date:
+          newDate
+            .toISOString()
+            .split("T")[0],
+
+      })
+
+      .eq(
+        "id",
+        future.id
+      );
+  }
+}
       // RECARGAR SESIONES
       const { data } =
         await supabase
@@ -1161,13 +1314,18 @@
       ) {
 
         const nextDate =
-          new Date(
-            lastSession.scheduled_date
-          );
+  new Date(
+    lastSession.scheduled_date
+  );
 
-        nextDate.setMonth(
-          nextDate.getMonth() + i
-        );
+nextDate.setDate(
+  nextDate.getDate() +
+  (
+    Number(
+      selectedPackage?.session_frequency || 30
+    ) * i
+  )
+);
 
         sessionsToInsert.push({
 
@@ -1333,8 +1491,8 @@ await supabase
               service_id:
                 selectedPackage.service_id,
 
-              worker_id: 1,
-
+              worker_id: selectedPackage.worker_id,
+              
               branch_id: 1,
 
               appointment_date:
@@ -1453,7 +1611,9 @@ await supabase
 
     };
 
-    const sessionOptions = [1, 3, 6];
+ const sessionOptions = isLaser
+  ? [1, 3, 6]
+  : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
 if (
   totalSessions &&
@@ -1499,6 +1659,8 @@ if (
   setSelectedZones([]);
 
   setTotalSessions(1);
+
+  setSessionFrequency(30);
 
   setUnitPrice(0);
 
@@ -1918,7 +2080,12 @@ if (
 setTotalSessions(
   Number(pkg.total_sessions)
 );
-  
+
+setSessionFrequency(
+  Number(
+    pkg.session_frequency || 30
+  )
+);
    
 
                             setUnitPrice(
@@ -2099,11 +2266,36 @@ setTotalSessions(
 
                   <select
                     value={serviceId}
-                    onChange={(e) =>
-                      setServiceId(
-                        e.target.value
-                      )
-                    }
+                    onChange={(e) => {
+
+  setServiceId(
+    e.target.value
+  );
+
+  const service =
+    services.find(
+      (s) =>
+        s.id ===
+        Number(
+          e.target.value
+        )
+    );
+
+  if (
+    service &&
+    service.name !==
+      "Depilación Láser"
+  ) {
+
+    setUnitPrice(
+      Number(
+        service.price || 0
+      )
+    );
+
+  }
+
+}}
                     className="w-full border p-4 rounded-2xl"
                   >
 
@@ -2133,6 +2325,43 @@ setTotalSessions(
                 </div>
 
                 <div>
+
+                  <div>
+
+  <label className="block mb-2 font-medium text-gray-700">
+    Trabajadora
+  </label>
+
+  <select
+    value={workerId}
+    onChange={(e) =>
+      setWorkerId(
+        e.target.value
+      )
+    }
+    className="w-full border p-4 rounded-2xl"
+  >
+
+    <option value="">
+      Seleccione trabajadora
+    </option>
+
+    {workers.map((worker) => (
+
+      <option
+        key={worker.id}
+        value={worker.id}
+      >
+
+        {worker.name}
+
+      </option>
+
+    ))}
+
+  </select>
+
+</div>
 
                   <label className="block mb-2 font-medium text-gray-700">
                     Primera atención
@@ -2170,53 +2399,58 @@ setTotalSessions(
 
                   </div>
 
-                <div>
+               {isLaser && (
 
-                  <label className="block mb-2 font-medium text-gray-700">
-                    Zonas láser
-                  </label>
+<div>
 
-                  <Select
-                    isMulti
-                    options={laserZones.map(
-                      (zone) => ({
-                        value: zone.id,
-                        label: `${zone.name} - S/ ${zone.price}`,
-                        price: zone.price,
-                      })
-                    )}
-                    value={selectedZones}
-                    onChange={(selected: any) => {
+  <label className="block mb-2 font-medium text-gray-700">
+    Zonas láser
+  </label>
 
-                      setSelectedZones(
-                        selected || []
-                      );
+  <Select
+    isMulti
+    options={laserZones.map(
+      (zone) => ({
+        value: zone.id,
+        label: `${zone.name} - S/ ${zone.price}`,
+        price: zone.price,
+      })
+    )}
+    value={selectedZones}
+    onChange={(selected: any) => {
 
-                      const total =
-                        (
-                          selected || []
-                        ).reduce(
-                          (
-                            sum: number,
-                            item: any
-                          ) =>
+      setSelectedZones(
+        selected || []
+      );
 
-                            sum +
-                            Number(
-                              item.price || 0
-                            ),
+      const total =
+        (
+          selected || []
+        ).reduce(
+          (
+            sum: number,
+            item: any
+          ) =>
 
-                          0
-                        );
+            sum +
+            Number(
+              item.price || 0
+            ),
 
-                      setUnitPrice(
-                        total
-                      );
-                    }}
-                    placeholder="Seleccionar zonas..."
-                  />
+          0
+        );
 
-                </div>
+      setUnitPrice(
+        total
+      );
+    }}
+    placeholder="Seleccionar zonas..."
+  />
+
+</div>
+
+)}
+
 
                 <div>
 
@@ -2245,6 +2479,31 @@ setTotalSessions(
   )}
 </select>
 
+{!isLaser &&
+ totalSessions > 1 && (
+
+<div>
+
+  <label className="block mb-2 font-medium text-gray-700">
+    Frecuencia entre sesiones (días)
+  </label>
+
+  <input
+  type="number"
+  min={1}
+  value={sessionFrequency}
+  onChange={(e) =>
+    setSessionFrequency(
+      Number(e.target.value)
+    )
+  }
+  className="w-full border p-4 rounded-2xl"
+  placeholder="Ej: 15"
+/>
+</div>
+
+)}
+
                 </div>
 
                 <div>
@@ -2268,69 +2527,152 @@ setTotalSessions(
 
                 </div>
 
-                <div className="bg-[#243847]/5 border-2 border-[#243847] rounded-3xl p-6 space-y-3">
+                {!isLaser && (
 
-                  <div className="flex justify-between">
+                    <div>
 
-                    <span>
-                      Subtotal
-                    </span>
+                      <label className="block mb-2 font-medium text-gray-700">
+                        Precio final del paquete
+                      </label>
 
-                    <span className="font-semibold">
-                      S/ {subtotal.toFixed(2)}
-                    </span>
+                      <input
+                        type="number"
+                        value={manualPackagePrice}
+                        onChange={(e) =>
+                          setManualPackagePrice(
+                            Number(e.target.value)
+                          )
+                        }
+                        className="w-full border p-4 rounded-2xl"
+                      />
 
-                  </div>
+                    </div>
 
-                  <div className="flex justify-between">
+                  )}
 
-                    <span>
-                      Descuento automático
-                    </span>
+                {!isLaser ? (
 
-                    <span className="font-semibold text-green-600">
-                      - {automaticDiscount}%
-                    </span>
+  <div className="bg-[#243847]/5 border-2 border-[#243847] rounded-3xl p-6 space-y-3">
 
-                  </div>
+<div className="flex justify-between">
 
-                  <div className="flex justify-between">
+  <span>
+    Precio unitario
+  </span>
 
-                    <span>
-                      Precio paquete
-                    </span>
+  <span className="font-semibold">
+    S/ {unitPrice.toFixed(2)}
+  </span>
 
-                    <span className="font-semibold">
-                      S/ {packagePrice.toFixed(2)}
-                    </span>
+</div>
 
-                  </div>
+<div className="flex justify-between">
 
-                  <div className="flex justify-between">
+  <span>
+    Sesiones
+  </span>
 
-                    <span>
-                      Descuento adicional
-                    </span>
+  <span className="font-semibold">
+    {totalSessions}
+  </span>
 
-                    <span className="font-semibold text-red-500">
-                      - {discountPercentage}%
-                    </span>
+</div>
 
-                  </div>
+<div className="flex justify-between">
 
-                  <div className="border-t pt-4 flex justify-between items-center">
+  <span>
+    Precio paquete
+  </span>
 
-                    <span className="text-xl font-bold text-[#243847]">
-                      TOTAL FINAL
-                    </span>
+  <span className="font-semibold">
+    S/ {manualPackagePrice.toFixed(2)}
+  </span>
 
-                    <span className="text-3xl font-bold text-[#243847]">
-                      S/ {totalPrice.toFixed(2)}
-                    </span>
+</div>
 
-                  </div>
+<div className="border-t pt-4 flex justify-between items-center">
 
-                </div>
+  <span className="text-xl font-bold text-[#243847]">
+    TOTAL FINAL
+  </span>
+
+  <span className="text-3xl font-bold text-[#243847]">
+    S/ {totalPrice.toFixed(2)}
+  </span>
+
+</div>
+
+  </div>
+
+) : (
+
+  <div className="bg-[#243847]/5 border-2 border-[#243847] rounded-3xl p-6 space-y-3">
+
+
+<div className="flex justify-between">
+
+  <span>
+    Subtotal
+  </span>
+
+  <span className="font-semibold">
+    S/ {subtotal.toFixed(2)}
+  </span>
+
+</div>
+
+<div className="flex justify-between">
+
+  <span>
+    Descuento automático
+  </span>
+
+  <span className="font-semibold text-green-600">
+    - {automaticDiscount}%
+  </span>
+
+</div>
+
+<div className="flex justify-between">
+
+  <span>
+    Precio paquete
+  </span>
+
+  <span className="font-semibold">
+    S/ {packagePrice.toFixed(2)}
+  </span>
+
+</div>
+
+<div className="flex justify-between">
+
+  <span>
+    Descuento adicional
+  </span>
+
+  <span className="font-semibold text-red-500">
+    - {discountPercentage}%
+  </span>
+
+</div>
+
+<div className="border-t pt-4 flex justify-between items-center">
+
+  <span className="text-xl font-bold text-[#243847]">
+    TOTAL FINAL
+  </span>
+
+  <span className="text-3xl font-bold text-[#243847]">
+    S/ {totalPrice.toFixed(2)}
+  </span>
+
+</div>
+
+
+  </div>
+
+)}
 
                 <div>
 
@@ -2367,6 +2709,8 @@ setTotalSessions(
   setSelectedZones([]);
 
   setTotalSessions(1);
+
+  setSessionFrequency(30);
 
   setUnitPrice(0);
 
