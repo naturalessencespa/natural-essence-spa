@@ -2506,26 +2506,30 @@ setSessionFrequency(
 
                 </div>
 
-                <div>
+                {isLaser && (
 
-                  <label className="block mb-2 font-medium text-gray-700">
-                    Descuento adicional %
-                  </label>
+  <div>
 
-                  <input
-                    type="number"
-                    value={discountPercentage}
-                    onChange={(e) =>
-                      setDiscountPercentage(
-                        Number(
-                          e.target.value
-                        )
-                      )
-                    }
-                    className="w-full border p-4 rounded-2xl"
-                  />
+    <label className="block mb-2 font-medium text-gray-700">
+      Descuento adicional %
+    </label>
 
-                </div>
+    <input
+      type="number"
+      value={discountPercentage}
+      onChange={(e) =>
+        setDiscountPercentage(
+          Number(
+            e.target.value
+          )
+        )
+      }
+      className="w-full border p-4 rounded-2xl"
+    />
+
+  </div>
+
+)}
 
                 {!isLaser && (
 
