@@ -30,6 +30,11 @@ const [salesByWorker,
   setSalesByWorker] =
   useState<any[]>([]);
 
+  const [
+  workerEffectiveness,
+  setWorkerEffectiveness
+] = useState<any[]>([]);
+
 const [salesByService,
   setSalesByService] =
   useState<any[]>([]);
@@ -294,16 +299,23 @@ const serviceCounts: any = {};
 (data || []).forEach(
   (appointment) => {
 
-    const reservedServices =
+  const reservedServices =
 
-      appointment
+  appointment
+    .appointment_reserved_services
+    ?.length > 0
+
+    ? appointment
         .appointment_reserved_services
-        ?.length > 0
 
-        ? appointment
-            .appointment_reserved_services
-
-        : [];
+    : [
+        {
+          services: {
+            name: appointment.services?.name,
+            price: appointment.final_price
+          }
+        }
+      ];
 
     const totalListPrice =
 
@@ -549,16 +561,16 @@ const {
     "appointment_services"
   )
 
-  .select(`
-    sold_price,
-    services(name),
-    commission_amount,
-    workers(name),
-    appointments(
-      appointment_date,
-      clients(full_name)
-    )
-  `);
+ .select(`
+  appointment_id,
+  sold_price,
+  services(name),
+  commission_amount,
+  workers(name),
+  appointments(
+    appointment_date
+  )
+`);
 
 const filteredAdditionalSales =
 
@@ -646,6 +658,87 @@ setSalesByWorker(
 
 );
 
+const effectiveness: any = {};
+
+// Clientes atendidos
+(data || []).forEach((appointment) => {
+
+  const worker =
+    appointment.workers?.name ||
+    "Sin asignar";
+
+  if (!effectiveness[worker]) {
+
+   effectiveness[worker] = {
+  attended: 0,
+  appointments: new Set(),
+  sales: 0
+};
+  }
+
+  effectiveness[worker].attended++;
+
+});
+
+// Citas con venta adicional
+(filteredAdditionalSales || []).forEach((sale: any) => {
+
+  const worker =
+    sale?.workers?.name ||
+    "Sin asignar";
+
+  const appointmentId =
+    sale?.appointment_id;
+
+  if (!effectiveness[worker]) {
+
+    effectiveness[worker] = {
+      attended: 0,
+      appointments: new Set(),
+    sales: 0
+    };
+
+  }
+
+  if (appointmentId) {
+
+    effectiveness[worker]
+      .appointments
+      .add(appointmentId);
+
+      effectiveness[worker].sales +=
+  Number(sale.sold_price || 0);
+
+  }
+
+});
+
+setWorkerEffectiveness(
+
+  Object.entries(effectiveness).map(
+    ([worker, value]: any) => ({
+
+      worker,
+
+      attended:
+        value.attended,
+
+      additional:
+        value.appointments.size,
+
+        sales:
+  value.sales,
+
+      effectiveness:
+        value.attended > 0
+          ? Math.round(
+              (value.appointments.size * 100) /
+              value.attended
+            )
+          : 0
+
+    }))
+);
 setAdditionalSales(
   filteredAdditionalSales
 );
@@ -741,6 +834,35 @@ XLSX.utils.book_append_sheet(
   workbook,
   workersSheet,
   "Trabajadoras"
+);
+
+const servicesSheet =
+  XLSX.utils.json_to_sheet(
+
+    salesByService
+      .sort(
+        (a, b) =>
+          b.sales - a.sales
+      )
+      .map((item) => ({
+
+        Servicio:
+          item.service,
+
+        Cantidad:
+          item.count,
+
+        Ingresos:
+          Math.round(item.sales)
+
+      }))
+
+  );
+
+XLSX.utils.book_append_sheet(
+  workbook,
+  servicesSheet,
+  "Servicios Más Vendidos"
 );
 
 const additionalSalesSheet =
@@ -1147,6 +1269,102 @@ XLSX.utils.book_append_sheet(
   </table>
 
 </div>
+
+<div className="bg-white rounded-3xl shadow mt-8 p-6">
+
+  <h2 className="text-2xl font-bold text-[#243847] mb-4">
+    Efectividad en Ventas Adicionales
+  </h2>
+
+  <table className="w-full">
+
+    <thead>
+
+      <tr>
+
+        <th className="text-left p-3">
+          Trabajadora
+        </th>
+
+        <th className="text-left p-3">
+          Clientes Atendidos
+        </th>
+
+        <th className="text-left p-3">
+          Clientes con Venta
+        </th>
+
+        <th className="text-left p-3">
+        Venta Adicional
+      </th>
+
+
+
+        <th className="text-left p-3">
+          Efectividad
+        </th>
+
+      </tr>
+
+    </thead>
+
+    <tbody>
+
+      {workerEffectiveness
+        .sort(
+          (a, b) =>
+            b.effectiveness -
+            a.effectiveness
+        )
+        .map((item) => (
+
+          <tr
+            key={item.worker}
+            className="border-t"
+          >
+
+            <td className="p-3">
+              {item.worker?.split(" ")[0]}
+            </td>
+
+            <td className="p-3">
+              {item.attended}
+            </td>
+
+            <td className="p-3">
+              {item.additional}
+            </td>
+
+             <td className="p-3 font-semibold">
+    S/ {Number(item.sales).toFixed(2)}
+  </td>
+
+            <td className="p-3 font-bold">
+
+  <span
+    className={`px-3 py-1 rounded-full text-white font-semibold ${
+      item.effectiveness >= 80
+        ? "bg-green-600"
+        : item.effectiveness >= 50
+        ? "bg-yellow-500"
+        : "bg-red-600"
+    }`}
+  >
+    {item.effectiveness}%
+  </span>
+
+</td>
+
+          </tr>
+
+      ))}
+
+    </tbody>
+
+  </table>
+
+</div>
+
 <div className="bg-white rounded-3xl shadow mt-8 p-6">
 
   <h2 className="text-2xl font-bold text-[#243847] mb-4">

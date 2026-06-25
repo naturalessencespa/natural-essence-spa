@@ -161,6 +161,15 @@
     setShowAddSessionsModal
   ] = useState(false);
 
+  const [amountPaid, setAmountPaid] =
+  useState(0);
+
+  const [
+  sessionPayment,
+  setSessionPayment
+] = useState(0);
+
+
   const selectedService =
   services.find(
     (service) =>
@@ -274,6 +283,8 @@ const isLaser =
 
     // TOTAL FINAL
   const totalPrice =
+
+  
   useMemo(() => {
 
     if (editingId) {
@@ -287,6 +298,7 @@ const isLaser =
       return manualPackagePrice;
 
     }
+
 
     const extraDiscount =
       packagePrice *
@@ -308,6 +320,18 @@ const isLaser =
     isLaser,
     manualPackagePrice
   ]);
+
+  const balance =
+  Math.max(
+    totalPrice - amountPaid,
+    0
+  );
+
+  const packageBalance =
+  selectedPackage
+    ? Number(selectedPackage.balance || 0)
+    : 0;
+
     // OBTENER PAQUETES
     const fetchPackages =
       async () => {
@@ -476,6 +500,17 @@ const isLaser =
                 total_price:
                   totalPrice,
 
+                  amount_paid:
+                    amountPaid,
+
+                  balance:
+                    balance,
+
+                  payment_status:
+                    balance > 0
+                      ? "Pendiente"
+                      : "Pagado",
+
                 notes,
 
               })
@@ -596,6 +631,17 @@ const isLaser =
                 total_price:
                   totalPrice,
 
+                  amount_paid:
+                    amountPaid,
+
+                  balance:
+                    balance,
+
+                  payment_status:
+                    balance > 0
+                      ? "Pendiente"
+                      : "Pagado",
+
                 notes,
 
                 active: true,
@@ -617,6 +663,26 @@ const isLaser =
 
             return;
           }
+
+          if (amountPaid > 0) {
+
+  await supabase
+
+    .from("package_payments")
+
+    .insert({
+
+      package_id: data.id,
+
+      amount: amountPaid,
+
+      payment_date: startDate,
+
+      notes: "Pago inicial del paquete"
+
+    });
+
+}
 
           // GUARDAR ZONAS
           if (
@@ -738,7 +804,7 @@ sessionDate.setDate(
 
         status: "Pendiente",
 
-        final_price: totalPrice,
+        final_price: amountPaid,
 
         notes: zonesText,
       },
@@ -834,6 +900,8 @@ sessionDate.setDate(
         setSessionFrequency(30);
 
         setUnitPrice(0);
+
+        setAmountPaid(0);
 
         setDiscountPercentage(0);
 
@@ -1507,7 +1575,7 @@ await supabase
               status:
                 "Pendiente",
 
-              final_price: 0,
+              final_price: sessionPayment,
 
               notes:
                 "Sesión de paquete"
@@ -2102,6 +2170,10 @@ setSessionFrequency(
                               Number(pkg.total_price || 0)
                             );
 
+                            setAmountPaid(
+                              Number(pkg.amount_paid || 0)
+                            );
+
                             setDiscountPercentage(
                               Number(
                                 pkg.discount_percentage
@@ -2386,6 +2458,8 @@ setSessionFrequency(
                       Hora
                   </label>
 
+                  
+
                   <input
                       type="time"
                       value={startTime}
@@ -2594,6 +2668,7 @@ setSessionFrequency(
 
 </div>
 
+
 <div className="border-t pt-4 flex justify-between items-center">
 
   <span className="text-xl font-bold text-[#243847]">
@@ -2678,6 +2753,46 @@ setSessionFrequency(
 
 )}
 
+<div className="border rounded-2xl p-5 bg-gray-50">
+
+  <h4 className="text-lg font-bold text-[#243847] mb-4">
+    Pagos
+  </h4>
+
+  <label className="block mb-2 font-medium text-gray-700">
+    Pago recibido
+  </label>
+
+  <input
+    type="number"
+    min={0}
+    max={totalPrice}
+    value={amountPaid}
+    onChange={(e) =>
+      setAmountPaid(
+        Math.min(
+          Number(e.target.value) || 0,
+          totalPrice
+        )
+      )
+    }
+    className="w-full border p-3 rounded-xl"
+  />
+
+  <div className="flex justify-between mt-4">
+
+    <span className="font-medium">
+      Saldo por cobrar
+    </span>
+
+    <span className="font-bold text-red-600">
+      S/ {balance.toFixed(2)}
+    </span>
+
+  </div>
+
+</div>
+
                 <div>
 
                   <textarea
@@ -2717,6 +2832,8 @@ setSessionFrequency(
   setSessionFrequency(30);
 
   setUnitPrice(0);
+
+  setAmountPaid(0);
 
   setDiscountPercentage(0);
 
@@ -3108,7 +3225,45 @@ setSessionFrequency(
             className="w-full border p-4 rounded-2xl"
           />
 
+          <div className="mt-4">
+
+  <p className="font-semibold text-red-600">
+
+    Saldo por cobrar:
+    S/ {packageBalance.toFixed(2)}
+
+  </p>
+
+</div>
+
+<div className="mt-4">
+
+  <label className="block mb-2 font-medium">
+
+    Pago recibido hoy
+
+  </label>
+
+  <input
+    type="number"
+    min={0}
+    max={packageBalance}
+    value={sessionPayment}
+    onChange={(e) =>
+      setSessionPayment(
+        Math.min(
+          Number(e.target.value) || 0,
+          packageBalance
+        )
+      )
+    }
+    className="w-full border p-4 rounded-2xl"
+  />
+
+</div>
+
         </div>
+
 
         <div className="flex gap-4 mt-8">
 
