@@ -125,6 +125,11 @@ const [
   const [branches,
     setBranches] =
     useState<any[]>([]);
+
+  const [
+  isPackageAppointment,
+  setIsPackageAppointment
+] = useState(false);
   
 
   // OBTENER CITAS
@@ -276,6 +281,8 @@ borderColor:
 
             service_id:
               appointment.service_id,
+
+              package_id: appointment.package_id,
 
                 reserved_services:
     appointment
@@ -1504,6 +1511,10 @@ setFinalPrice("");
               info.event
                 .extendedProps;
 
+                setIsPackageAppointment(
+  !!appointment.package_id
+);
+
             setIsCompleted(
 
                 appointment.status ===
@@ -1944,6 +1955,11 @@ eventDidMount={(info) => {
 
             <div className="space-y-4">
 
+              {!isPackageAppointment && (
+
+                <>
+
+
               {/* CLIENTE */}
                   <div className="space-y-2">
 
@@ -2124,7 +2140,38 @@ eventDidMount={(info) => {
 
   </div>
 
+  
+
 </div>
+
+ </>
+  )}
+
+  {isPackageAppointment && (
+
+  <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+
+    <p className="text-sm text-gray-500">
+      Servicio del paquete
+    </p>
+
+    <p className="font-semibold text-lg">
+
+      {
+        services.find(
+          (s) =>
+            s.id === Number(serviceId)
+        )?.name
+      }
+
+    </p>
+
+  </div>
+
+)}
+
+
+
               {/* TRABAJADORA */}
               <select
                 value={workerId}
@@ -2175,7 +2222,7 @@ eventDidMount={(info) => {
                       ))}
 
                     </select>
-
+{!isPackageAppointment && (
                     <input
 
         type="number"
@@ -2193,6 +2240,8 @@ eventDidMount={(info) => {
         className="w-full border p-4 rounded-2xl"
 
       />
+
+      )}
 
           {isCompleted && (
 
@@ -2251,6 +2300,8 @@ eventDidMount={(info) => {
   </div>
 
 )}
+{!isPackageAppointment && (
+  <>
 
               {/* SEDE */}
               <select
@@ -2281,6 +2332,9 @@ eventDidMount={(info) => {
                 ))}
 
               </select>
+  </>
+
+)}
 
             </div>
 
@@ -2390,7 +2444,7 @@ eventDidMount={(info) => {
   </button>
 
 )}
-        {!isCompleted && (
+        {!isPackageAppointment && !isCompleted && (
               <button
                 onClick={
                   saveAppointment

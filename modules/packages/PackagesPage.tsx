@@ -477,6 +477,9 @@ const isLaser =
                     serviceId
                   ),
 
+                  worker_id:
+                parseInt(workerId),
+
                 start_date:
                   startDate,
               
@@ -530,6 +533,49 @@ const isLaser =
 
             return;
           }
+
+          const { data: currentPackage } =
+  await supabase
+
+    .from("client_packages")
+
+    .select("appointment_id")
+
+    .eq("id", editingId)
+
+    .single();
+
+if (currentPackage?.appointment_id) {
+
+  await supabase
+
+    .from("appointments")
+
+    .update({
+
+      client_id: parseInt(clientId),
+
+      service_id: parseInt(serviceId),
+
+      worker_id: parseInt(workerId),
+
+
+      appointment_date: startDate,
+
+      start_time: startTime,
+
+      final_price: amountPaid
+
+    })
+
+    .eq(
+      "id",
+      currentPackage.appointment_id
+    );
+
+}
+
+          
 
           // BORRAR ZONAS
           await supabase
@@ -795,6 +841,8 @@ sessionDate.setDate(
         client_id: parseInt(clientId),
         service_id: parseInt(serviceId),
         worker_id: parseInt(workerId),
+
+          package_id: data.id,
 
         branch_id: 1,
 
@@ -1560,6 +1608,8 @@ await supabase
                 selectedPackage.service_id,
 
               worker_id: selectedPackage.worker_id,
+
+              package_id: selectedPackage.id,
               
               branch_id: 1,
 
@@ -1602,6 +1652,84 @@ await supabase
         return;
 
       }
+
+      if (sessionPayment > 0) {
+
+  await supabase
+
+    .from("package_payments")
+
+    .insert({
+
+      package_id:
+        selectedPackage.id,
+
+      amount:
+        sessionPayment,
+
+      payment_date:
+        scheduleDate,
+
+      notes:
+        `Pago sesión ${selectedSession.session_number}`
+
+    });
+
+  const newAmountPaid =
+    Number(
+      selectedPackage.amount_paid || 0
+    ) + sessionPayment;
+
+  const newBalance =
+    Number(
+      selectedPackage.total_price
+    ) - newAmountPaid;
+
+  await supabase
+
+    .from("client_packages")
+
+    .update({
+
+      amount_paid:
+        newAmountPaid,
+
+      balance:
+        newBalance,
+
+      payment_status:
+        newBalance <= 0
+          ? "Pagado"
+          : "Pendiente"
+
+    })
+
+    .eq(
+      "id",
+      selectedPackage.id
+    );
+
+}
+
+const { data: updatedPackage } =
+  await supabase
+
+    .from("client_packages")
+
+    .select("*")
+
+    .eq(
+      "id",
+      selectedPackage.id
+    )
+
+    .single();
+
+if (updatedPackage) {
+
+  setSelectedPackage(updatedPackage);
+
+}
 
       const {
         error:
@@ -2134,6 +2262,12 @@ if (
                             setServiceId(
                               String(
                                 pkg.service_id
+                              )
+                            );
+
+                            setWorkerId(
+                              String(
+                                pkg.worker_id || ""
                               )
                             );
 
