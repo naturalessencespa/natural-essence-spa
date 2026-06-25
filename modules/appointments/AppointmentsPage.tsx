@@ -181,6 +181,17 @@ appointment_reserved_services(
 title:
 
   (
+    appointment.package_id
+
+      ? "🎁 "
+
+      : ""
+
+  )
+
+  +
+
+  (
     appointment.status ===
     "Atendida"
 
