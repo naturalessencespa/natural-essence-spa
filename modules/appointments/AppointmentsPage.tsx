@@ -1387,9 +1387,152 @@ const endTime =
 
       return;
     }
+const { data: appointment } =
+  await supabase
 
+    .from("appointments")
 
+    .select("package_id")
 
+    .eq("id", appointmentId)
+
+    .single();
+
+if (appointment?.package_id) {
+
+  await supabase
+
+  .from("package_sessions")
+
+  .update({
+
+    scheduled_date: newDate,
+
+    scheduled_time: newTime
+
+  })
+
+  .eq(
+    "appointment_id",
+    appointmentId
+  );
+
+  const { data: currentSession } =
+    await supabase
+
+      .from("package_sessions")
+
+      .select("*")
+
+      .eq(
+        "appointment_id",
+        appointmentId
+      )
+
+      .single();
+
+  if (currentSession) {
+
+    const { data: packageData } =
+      await supabase
+
+        .from("client_packages")
+
+        .select("session_frequency")
+
+        .eq(
+          "id",
+          appointment.package_id
+        )
+
+        .single();
+
+    const frequency =
+      packageData?.session_frequency || 30;
+
+    const { data: nextSessions } =
+      await supabase
+
+        .from("package_sessions")
+
+        .select("*")
+
+        .eq(
+          "package_id",
+          appointment.package_id
+        )
+
+        .gt(
+          "session_number",
+          currentSession.session_number
+        )
+
+        .order(
+          "session_number"
+        );
+
+    let baseDate =
+      new Date(newDate);
+
+    for (const session of nextSessions || []) {
+
+      baseDate.setDate(
+        baseDate.getDate() +
+        frequency
+      );
+
+      const nextDate =
+        baseDate
+          .toISOString()
+          .split("T")[0];
+
+      await supabase
+
+        .from("package_sessions")
+
+        .update({
+
+          scheduled_date:
+            nextDate,
+
+          scheduled_time:
+            newTime
+
+        })
+
+        .eq(
+          "id",
+          session.id
+        );
+
+      if (session.appointment_id) {
+
+        await supabase
+
+          .from("appointments")
+
+          .update({
+
+            appointment_date:
+              nextDate,
+
+            start_time:
+              newTime
+
+          })
+
+          .eq(
+            "id",
+            session.appointment_id
+          );
+
+      }
+
+    }
+
+  }
+
+}
 // Pendiente:
 // mover sesiones de paquetes
     alert(
