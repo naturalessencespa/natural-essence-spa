@@ -1476,6 +1476,10 @@ if (appointment?.package_id) {
 
     for (const session of nextSessions || []) {
 
+      if (session.completed) {
+        continue;
+      }
+
       baseDate.setDate(
         baseDate.getDate() +
         frequency

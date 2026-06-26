@@ -123,6 +123,12 @@
     setUpcomingSessions] =
     useState<any[]>([]);
 
+    const [
+  followUpClients,
+  setFollowUpClients
+] = useState<any[]>([]);
+
+
     const [selectedPackage, setSelectedPackage] =
     useState<any>(null);
 
@@ -1120,11 +1126,11 @@ if (packageSessions) {
           id
         );
 
-      fetchPackages();
+   await fetchPackages();
 
-      alert(
-        "Paquete eliminado"
-      );
+await fetchUpcomingSessions();
+
+alert("Paquete eliminado");
 
     };
     
@@ -1329,11 +1335,21 @@ if (futureSessions) {
           )
 
           .select(`
-            *,
-            client_packages(
-              clients(full_name)
-            )
-          `)
+  *,
+client_packages(
+  id,
+  total_sessions,
+  session_frequency,
+  clients(
+    full_name,
+    phone
+  ),
+  services(name),
+  client_package_zones(
+    laser_zones(name)
+  )
+)
+`)
 
           .eq(
             "completed",
@@ -1357,7 +1373,7 @@ if (futureSessions) {
             }
           )
 
-          .limit(10);
+          .limit(30);
 
       if (!error && data) {
 
@@ -1367,6 +1383,168 @@ if (futureSessions) {
       }
     };
 
+    const fetchFollowUpClients =
+async () => {
+
+  const { data, error } =
+    await supabase
+
+      .from("client_packages")
+
+    .select(`
+  *,
+  clients(
+    full_name,
+    phone
+  ),
+  services(name),
+  client_package_zones(
+    laser_zones(name)
+  ),
+        package_sessions(
+          completed,
+          attended_date
+        )
+      `)
+
+      .eq(
+        "active",
+        true
+      );
+
+  if (error) return;
+
+  const today =
+    new Date();
+
+  const result =
+    (data || []).filter(
+      (pkg: any) => {
+
+        const sessions =
+          pkg.package_sessions || [];
+
+        if (
+          sessions.length === 0
+        ) return false;
+
+        // Todas las sesiones atendidas
+        if (
+          !sessions.every(
+            (s:any)=>
+              s.completed
+          )
+        ) return false;
+
+        const last =
+          sessions
+            .filter(
+              (s:any)=>
+                s.attended_date
+            )
+            .sort(
+              (a:any,b:any)=>
+
+                new Date(
+                  b.attended_date
+                ).getTime()
+
+                -
+
+                new Date(
+                  a.attended_date
+                ).getTime()
+
+            )[0];
+
+        if (!last)
+          return false;
+
+        const lastVisit =
+  new Date(
+    last.attended_date
+  );
+
+const nextVisit =
+  new Date(lastVisit);
+
+nextVisit.setDate(
+  nextVisit.getDate() +
+  Number(
+    pkg.session_frequency || 30
+  )
+);
+
+const notifyDate =
+  new Date(nextVisit);
+
+notifyDate.setDate(
+  notifyDate.getDate() - 7
+);
+
+if (today >= notifyDate) {
+
+  pkg.last_visit =
+    lastVisit
+      .toISOString()
+      .split("T")[0];
+
+  pkg.next_visit =
+    nextVisit
+      .toISOString()
+      .split("T")[0];
+
+  const diff =
+    Math.ceil(
+      (
+        nextVisit.getTime() -
+        today.getTime()
+      ) /
+      (1000 * 60 * 60 * 24)
+    );
+
+ if (diff > 1) {
+
+  pkg.status_text =
+    `🟢 En ${diff} días`;
+
+} else if (diff === 1) {
+
+  pkg.status_text =
+    "🟡 Le corresponde mañana";
+
+} else if (diff === 0) {
+
+  pkg.status_text =
+    "🔵 Le corresponde hoy";
+
+} else if (diff === -1) {
+
+  pkg.status_text =
+    "🔴 Tiene 1 día de retraso";
+
+} else {
+
+  pkg.status_text =
+    `🔴 Tiene ${Math.abs(diff)} días de retraso`;
+
+}
+
+  return true;
+
+}
+
+return false;
+      }
+    );
+
+  setFollowUpClients(
+    result
+  );
+
+};
+
+   
     useEffect(() => {
 
       fetchPackages();
@@ -1374,6 +1552,8 @@ if (futureSessions) {
       fetchData();
 
       fetchUpcomingSessions();
+
+      fetchFollowUpClients();
 
     }, []);
 
@@ -1941,25 +2121,47 @@ if (
 
             <div>
 
-              <p className="font-bold text-[#243847]">
+             <p className="font-bold text-[#243847]">
 
-                {
-                  session
-                    ?.client_packages
-                    ?.clients
-                    ?.full_name
-                }
+  {session.client_packages?.clients?.full_name}
 
-              </p>
+  {session.client_packages?.clients?.phone && (
 
-              <p className="text-gray-500">
+    <span className="text-gray-500 font-normal ml-2">
 
-                Sesión #
-                {
-                  session.session_number
-                }
+      ({session.client_packages.clients.phone})
 
-              </p>
+    </span>
+
+  )}
+
+</p>
+
+<p className="text-gray-700">
+
+  {session.client_packages?.services?.name}
+
+</p>
+
+{session.client_packages?.client_package_zones?.length > 0 && (
+
+  <p className="text-sm text-gray-500">
+
+    {session.client_packages.client_package_zones
+      .map(
+        (z:any) => z.laser_zones?.name
+      )
+      .join(", ")}
+
+  </p>
+
+)}
+
+<p className="text-gray-500">
+
+  Sesión #{session.session_number}
+
+</p>
 
             </div>
 
@@ -1989,6 +2191,128 @@ if (
     </div>
 
   </div>
+
+  {/* CLIENTES PARA SEGUIMIENTO */}
+<div className="bg-white rounded-3xl shadow-xl p-6 mb-8">
+
+  <h3 className="text-2xl font-bold text-[#243847] mb-5">
+
+    🔄 Clientes para seguimiento
+
+  </h3>
+
+  <div className="space-y-4">
+
+    {followUpClients.length === 0 && (
+
+      <p className="text-gray-500">
+
+        No hay clientes para seguimiento.
+
+      </p>
+
+    )}
+
+    {followUpClients.map((pkg: any) => (
+
+      <div
+  key={pkg.id}
+  className="border rounded-2xl p-5 flex justify-between items-center hover:bg-gray-50 transition"
+>
+
+  <div>
+
+  <p className="font-bold text-lg text-[#243847]">
+
+  {pkg.clients?.full_name}
+
+  {pkg.clients?.phone && (
+    <span className="text-gray-500 font-normal ml-2">
+      ({pkg.clients.phone})
+    </span>
+  )}
+
+</p>
+
+    <p className="text-gray-600">
+
+      {pkg.services?.name}
+
+    </p>
+
+    {pkg.client_package_zones?.length > 0 && (
+
+  <p className="text-sm text-gray-500 mt-1">
+
+    {pkg.client_package_zones
+      .map(
+        (z: any) =>
+          z.laser_zones?.name
+      )
+      .join(", ")}
+
+  </p>
+
+)}
+
+    <div className="mt-3 space-y-1 text-sm">
+
+  <p>
+
+    <span className="text-gray-500">
+      Última sesión:
+    </span>
+
+   <span className="font-semibold ml-2">
+  {new Date(pkg.last_visit).toLocaleDateString("es-PE")}
+</span>
+  </p>
+
+  <p>
+
+    <span className="text-gray-500">
+      Próxima recomendada:
+    </span>
+
+   <span className="font-semibold ml-2">
+  {new Date(pkg.next_visit).toLocaleDateString("es-PE")}
+</span>
+
+  </p>
+
+  <p className="font-semibold">
+
+    {pkg.status_text}
+
+  </p>
+
+</div>
+
+  </div>
+
+  <div className="flex gap-3">
+
+    <button
+      className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700"
+    >
+      💬 WhatsApp
+    </button>
+
+    <button
+      className="bg-[#243847] text-white px-4 py-2 rounded-xl hover:opacity-90"
+    >
+      ➕ Nuevo paquete
+    </button>
+
+  </div>
+
+</div>
+
+    ))}
+
+  </div>
+
+</div>
 
         {/* TABLA */}
         <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
