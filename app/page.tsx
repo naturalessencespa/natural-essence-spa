@@ -31,6 +31,11 @@ export default function Home() {
 const [page, setPage] =
   useState("dashboard");
 
+const [
+  pendingLaserSale,
+  setPendingLaserSale
+] = useState<any>(null);
+
   return (
 
     <div className="flex min-h-screen bg-gray-100">
@@ -259,7 +264,12 @@ const [page, setPage] =
 
         {/* RESERVAS */}
         {page === "reservas" && (
-          <AppointmentsPage />
+          <AppointmentsPage
+  setPage={setPage}
+  setPendingLaserSale={
+    setPendingLaserSale
+  }
+/>
         )}
 
         {page === "dashboard" && (
@@ -295,7 +305,14 @@ const [page, setPage] =
 
          {/* PAQUETES */}
         {page === "paquetes" && (
-          <PackagesPage />
+          <PackagesPage
+  pendingLaserSale={
+    pendingLaserSale
+  }
+  setPendingLaserSale={
+    setPendingLaserSale
+  }
+/>
         )}
 
         {/* ZONA LÁSER */}

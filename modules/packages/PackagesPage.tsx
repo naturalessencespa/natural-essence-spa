@@ -1,6 +1,12 @@
   "use client";
 
-  import { useEffect, useMemo, useState } from "react";
+ import {
+  useEffect,
+  useMemo,
+  useState
+} from "react";
+
+import { useSearchParams } from "next/navigation";
 
   import Select from "react-select";
 
@@ -11,7 +17,18 @@
 
   import { supabase } from "@/lib/supabase";
 
-  export default function PackagesPage() {
+ type Props = {
+  pendingLaserSale: any;
+  setPendingLaserSale: (data: any) => void;
+};
+
+export default function PackagesPage({
+  pendingLaserSale,
+  setPendingLaserSale,
+}: Props) {
+
+    const searchParams =
+  useSearchParams();
 
     const [packages, setPackages] =
       useState<any[]>([]);
@@ -42,6 +59,21 @@
 
     const [workerId, setWorkerId] =
       useState("");
+
+    const [
+  commissionAppointmentId,
+  setCommissionAppointmentId
+] = useState<number | null>(null);
+
+const [
+  generateCommission,
+  setGenerateCommission
+] = useState(false);
+
+const [
+  commissionWorkerId,
+  setCommissionWorkerId
+] = useState<number | null>(null);
 
     const [workers, setWorkers] =
       useState<any[]>([]);
@@ -124,10 +156,24 @@
     useState<any[]>([]);
 
     const [
+  showUpcomingSessions,
+  setShowUpcomingSessions
+] = useState(true);
+
+    const [
   followUpClients,
   setFollowUpClients
 ] = useState<any[]>([]);
 
+const [
+  missedSessions,
+  setMissedSessions
+] = useState<any[]>([]);
+
+const [
+  showMissedSessions,
+  setShowMissedSessions
+] = useState(true);
 
     const [selectedPackage, setSelectedPackage] =
     useState<any>(null);
@@ -175,6 +221,35 @@
   setSessionPayment
 ] = useState(0);
 
+useEffect(() => {
+
+  const newPackage =
+    searchParams.get("new");
+
+  if (newPackage !== "1") {
+    return;
+  }
+
+  setClientId(
+    searchParams.get("client") || ""
+  );
+
+  setWorkerId(
+    searchParams.get("worker") || ""
+  );
+
+  setCommissionAppointmentId(
+    Number(
+      searchParams.get("appointment")
+    )
+  );
+
+  setGenerateCommission(true);
+
+  setShowModal(true);
+
+}, []);
+
 
   const selectedService =
   services.find(
@@ -211,22 +286,6 @@ const isLaser =
       savedSubtotal
     ]);
 
-    useEffect(() => {
-
-  if (
-    !isLaser
-  ) {
-
-    setManualPackagePrice(
-      subtotal
-    );
-
-  }
-
-}, [
-  subtotal,
-  isLaser
-]);
 
     // DESCUENTO AUTOMÁTICO
  const automaticDiscount =
@@ -287,6 +346,17 @@ const isLaser =
     isLaser
   ]);
 
+  useEffect(() => {
+
+  if (editingId) return;
+
+  setManualPackagePrice(packagePrice);
+
+}, [
+  packagePrice,
+  editingId
+]);
+
     // TOTAL FINAL
   const totalPrice =
 
@@ -299,24 +369,13 @@ const isLaser =
 
     }
 
-    if (!isLaser) {
+if (!isLaser) {
 
-      return manualPackagePrice;
+  return manualPackagePrice;
 
-    }
+}
 
-
-    const extraDiscount =
-      packagePrice *
-      (
-        discountPercentage /
-        100
-      );
-
-    return (
-      packagePrice -
-      extraDiscount
-    );
+return manualPackagePrice;
 
   }, [
     packagePrice,
@@ -698,6 +757,18 @@ if (currentPackage?.appointment_id) {
 
                 active: true,
 
+                internal_sale: generateCommission,
+
+internal_sale_worker_id:
+  generateCommission
+    ? commissionWorkerId
+    : null,
+
+internal_sale_appointment_id:
+  generateCommission
+    ? commissionAppointmentId
+    : null,
+
               },
             ])
 
@@ -716,26 +787,7 @@ if (currentPackage?.appointment_id) {
             return;
           }
 
-          if (amountPaid > 0) {
-
-  await supabase
-
-    .from("package_payments")
-
-    .insert({
-
-      package_id: data.id,
-
-      amount: amountPaid,
-
-      payment_date: startDate,
-
-      notes: "Pago inicial del paquete"
-
-    });
-
-}
-
+      
           // GUARDAR ZONAS
           if (
             selectedZones.length > 0
@@ -806,15 +858,86 @@ sessionDate.setDate(
             });
           }
 
-          await supabase
+         const {
+  data: insertedSessions,
+  error: sessionError
+} =
+await supabase
 
-            .from(
-              "package_sessions"
-            )
+  .from(
+    "package_sessions"
+  )
 
-            .insert(
-              sessionsToInsert
-            );
+  .insert(
+    sessionsToInsert
+  )
+
+  .select();
+
+     if (amountPaid > 0) {
+
+  const session1 =
+    sessionsToInsert[0];
+
+  await supabase
+
+    .from("package_payments")
+
+    .insert({
+
+      package_id: data.id,
+
+      package_session_id: 1,
+
+      amount: amountPaid,
+
+      payment_date: startDate,
+
+      notes: "Pago inicial del paquete"
+
+    });
+
+}
+
+
+if (sessionError) {
+
+  console.log(sessionError);
+
+  return;
+
+}
+
+if (
+  amountPaid > 0 &&
+  insertedSessions?.length
+) {
+
+  await supabase
+
+    .from(
+      "package_payments"
+    )
+
+    .update({
+
+      package_session_id:
+        insertedSessions[0].id
+
+    })
+
+    .eq(
+      "package_id",
+      data.id
+    )
+
+    .eq(
+      "package_session_id",
+      1
+    );
+
+}
+
 
             // CREAR CITA AUTOMATICA
   console.log(
@@ -847,7 +970,7 @@ sessionDate.setDate(
         client_id: parseInt(clientId),
         service_id: parseInt(serviceId),
         worker_id: parseInt(workerId),
-
+     
           package_id: data.id,
 
         branch_id: 1,
@@ -1544,19 +1667,103 @@ return false;
 
 };
 
+const fetchMissedSessions =
+async () => {
+
+  const today =
+    new Date()
+      .toISOString()
+      .split("T")[0];
+
+  const { data, error } =
+    await supabase
+
+      .from("package_sessions")
+
+      .select(`
+        *,
+        client_packages(
+          id,
+          clients(
+            full_name,
+            phone
+          ),
+          services(
+            name
+          )
+        )
+      `)
+
+      .eq(
+        "completed",
+        false
+      )
+
+      .lt(
+        "scheduled_date",
+        today
+      )
+
+      .order(
+        "scheduled_date",
+        {
+          ascending: true
+        }
+      );
+
+  if (error) {
+
+    console.log(error);
+
+    return;
+
+  }
+
+  setMissedSessions(
+    data || []
+  );
+
+};
    
-    useEffect(() => {
+useEffect(() => {
 
-      fetchPackages();
+  fetchPackages();
 
-      fetchData();
+  fetchData();
 
-      fetchUpcomingSessions();
+  fetchUpcomingSessions();
 
-      fetchFollowUpClients();
+  fetchFollowUpClients();
 
-    }, []);
+  fetchMissedSessions();
 
+}, []);
+
+useEffect(() => {
+
+  if (!pendingLaserSale) return;
+
+  setClientId(
+    String(pendingLaserSale.clientId)
+  );
+
+  setWorkerId(
+    String(pendingLaserSale.workerId)
+  );
+
+  setCommissionAppointmentId(
+    pendingLaserSale.appointmentId
+  );
+
+  setCommissionWorkerId(
+    pendingLaserSale.workerId
+  );
+
+  setGenerateCommission(true);
+
+  setShowModal(true);
+
+}, [pendingLaserSale]);
     const addSessionsToPackage =
       async () => {
 
@@ -1844,6 +2051,9 @@ await supabase
       package_id:
         selectedPackage.id,
 
+        package_session_id:
+    selectedSession.id,
+
       amount:
         sessionPayment,
 
@@ -2100,97 +2310,238 @@ if (
 
         </div>
 
-        {/* PROXIMAS CITAS */}
-  <div className="bg-white rounded-3xl shadow-xl p-6 mb-8">
+      {/* PROXIMAS CITAS */}
 
-    <h3 className="text-2xl font-bold text-[#243847] mb-5">
+<div className="bg-white rounded-3xl shadow-xl p-6 mb-8">
+
+  <div className="flex justify-between items-center mb-5">
+
+    <h3 className="text-2xl font-bold text-[#243847]">
 
       📅 Próximas sesiones pendientes
 
     </h3>
 
-    <div className="space-y-4">
+    <button
+      onClick={() =>
+        setShowUpcomingSessions(
+          !showUpcomingSessions
+        )
+      }
+      className="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-xl text-sm font-medium"
+    >
+      {showUpcomingSessions
+        ? "Ocultar ▲"
+        : "Mostrar ▼"}
+    </button>
 
-      {upcomingSessions.map(
-        (session: any) => (
+  </div>
 
-          <div
-            key={session.id}
-            className="border rounded-2xl p-4 flex items-center justify-between"
-          >
+  {showUpcomingSessions && (
 
-            <div>
+    upcomingSessions.length === 0 ? (
 
-             <p className="font-bold text-[#243847]">
+      <p className="text-gray-500">
 
-  {session.client_packages?.clients?.full_name}
+        No hay próximas sesiones.
 
-  {session.client_packages?.clients?.phone && (
+      </p>
 
-    <span className="text-gray-500 font-normal ml-2">
+    ) : (
 
-      ({session.client_packages.clients.phone})
+      <div className="space-y-4">
 
-    </span>
+        {upcomingSessions.map(
+          (session: any) => (
+
+            <div
+              key={session.id}
+              className="border rounded-2xl p-4 flex items-center justify-between"
+            >
+
+              <div>
+
+                <p className="font-bold text-[#243847]">
+
+                  {session.client_packages?.clients?.full_name}
+
+                  {session.client_packages?.clients?.phone && (
+
+                    <span className="text-gray-500 font-normal ml-2">
+
+                      ({session.client_packages.clients.phone})
+
+                    </span>
+
+                  )}
+
+                </p>
+
+                <p className="text-gray-700">
+
+                  {session.client_packages?.services?.name}
+
+                </p>
+
+                {session.client_packages?.client_package_zones?.length > 0 && (
+
+                  <p className="text-sm text-gray-500">
+
+                    {session.client_packages.client_package_zones
+                      .map(
+                        (z: any) =>
+                          z.laser_zones?.name
+                      )
+                      .join(", ")}
+
+                  </p>
+
+                )}
+
+                <p className="text-gray-500">
+
+                  Sesión #{session.session_number}
+
+                </p>
+
+              </div>
+
+              <div className="text-right">
+
+                <p className="font-bold">
+
+                  {session.scheduled_date}
+
+                </p>
+
+                <p className="text-orange-500 text-sm">
+
+                  Pendiente
+
+                </p>
+
+              </div>
+
+            </div>
+
+          )
+        )}
+
+      </div>
+
+    )
 
   )}
 
-</p>
+</div>
+{/* SESIONES VENCIDAS */}
 
-<p className="text-gray-700">
+<div className="bg-white rounded-3xl shadow-xl p-6 mb-8">
 
-  {session.client_packages?.services?.name}
+  <div className="flex justify-between items-center mb-5">
 
-</p>
+    <h3 className="text-2xl font-bold text-red-600">
+      ⚠️ Sesiones vencidas por reprogramar
+    </h3>
 
-{session.client_packages?.client_package_zones?.length > 0 && (
-
-  <p className="text-sm text-gray-500">
-
-    {session.client_packages.client_package_zones
-      .map(
-        (z:any) => z.laser_zones?.name
-      )
-      .join(", ")}
-
-  </p>
-
-)}
-
-<p className="text-gray-500">
-
-  Sesión #{session.session_number}
-
-</p>
-
-            </div>
-
-            <div className="text-right">
-
-              <p className="font-bold">
-
-                {
-                  session.scheduled_date
-                }
-
-              </p>
-
-              <p className="text-orange-500 text-sm">
-
-                Pendiente
-
-              </p>
-
-            </div>
-
-          </div>
-
+    <button
+      onClick={() =>
+        setShowMissedSessions(
+          !showMissedSessions
         )
-      )}
-
-    </div>
+      }
+      className="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-xl text-sm font-medium"
+    >
+      {showMissedSessions
+        ? "Ocultar ▲"
+        : "Mostrar ▼"}
+    </button>
 
   </div>
+
+  {showMissedSessions && (
+
+    missedSessions.length === 0 ? (
+
+      <p className="text-gray-500">
+        No hay sesiones vencidas.
+      </p>
+
+    ) : (
+
+      <div className="space-y-4">
+
+        {missedSessions.map((session: any) => {
+
+          const daysLate = Math.floor(
+            (new Date().getTime() -
+              new Date(session.scheduled_date).getTime()) /
+            (1000 * 60 * 60 * 24)
+          );
+
+          return (
+
+            <div
+              key={session.id}
+              className="border rounded-2xl p-5 flex justify-between items-center"
+            >
+
+              <div>
+
+                <p className="font-bold text-[#243847]">
+
+                  {session.client_packages?.clients?.full_name}
+
+                  {session.client_packages?.clients?.phone && (
+
+                    <span className="text-gray-500 font-normal ml-2">
+
+                      ({session.client_packages.clients.phone})
+
+                    </span>
+
+                  )}
+
+                </p>
+
+                <p className="text-gray-600">
+
+                  {session.client_packages?.services?.name}
+
+                </p>
+
+                <p className="text-sm text-red-600 mt-1">
+
+                  Debió asistir el {session.scheduled_date}
+
+                </p>
+
+              </div>
+
+              <div className="text-right">
+
+                <p className="font-bold text-red-600">
+
+                  {daysLate} días de atraso
+
+                </p>
+
+              </div>
+
+            </div>
+
+          );
+
+        })}
+
+      </div>
+
+    )
+
+  )}
+
+</div>
+
 
   {/* CLIENTES PARA SEGUIMIENTO */}
 <div className="bg-white rounded-3xl shadow-xl p-6 mb-8">
@@ -3038,30 +3389,7 @@ setSessionFrequency(
 
                 </div>
 
-                {isLaser && (
-
-  <div>
-
-    <label className="block mb-2 font-medium text-gray-700">
-      Descuento adicional %
-    </label>
-
-    <input
-      type="number"
-      value={discountPercentage}
-      onChange={(e) =>
-        setDiscountPercentage(
-          Number(
-            e.target.value
-          )
-        )
-      }
-      className="w-full border p-4 rounded-2xl"
-    />
-
-  </div>
-
-)}
+               
 
                 {!isLaser && (
 
@@ -3090,15 +3418,22 @@ setSessionFrequency(
 
   <div className="bg-[#243847]/5 border-2 border-[#243847] rounded-3xl p-6 space-y-3">
 
-<div className="flex justify-between">
+<div>
 
-  <span>
-    Precio unitario
-  </span>
+  <label className="block mb-2 font-medium text-gray-700">
+    Precio final del paquete
+  </label>
 
-  <span className="font-semibold">
-    S/ {unitPrice.toFixed(2)}
-  </span>
+  <input
+    type="number"
+    value={manualPackagePrice}
+    onChange={(e) =>
+      setManualPackagePrice(
+        Number(e.target.value)
+      )
+    }
+    className="w-full border p-4 rounded-2xl"
+  />
 
 </div>
 
@@ -3114,15 +3449,22 @@ setSessionFrequency(
 
 </div>
 
-<div className="flex justify-between">
+<div>
 
-  <span>
-    Precio paquete
-  </span>
+  <label className="block mb-2 font-medium text-gray-700">
+    Precio final del paquete
+  </label>
 
-  <span className="font-semibold">
-    S/ {manualPackagePrice.toFixed(2)}
-  </span>
+  <input
+    type="number"
+    value={manualPackagePrice}
+    onChange={(e) =>
+      setManualPackagePrice(
+        Number(e.target.value)
+      )
+    }
+    className="w-full border p-4 rounded-2xl"
+  />
 
 </div>
 
@@ -3148,9 +3490,7 @@ setSessionFrequency(
 
 <div className="flex justify-between">
 
-  <span>
-    Subtotal
-  </span>
+  <span>Subtotal</span>
 
   <span className="font-semibold">
     S/ {subtotal.toFixed(2)}
@@ -3160,9 +3500,7 @@ setSessionFrequency(
 
 <div className="flex justify-between">
 
-  <span>
-    Descuento automático
-  </span>
+  <span>Descuento automático</span>
 
   <span className="font-semibold text-green-600">
     - {automaticDiscount}%
@@ -3172,9 +3510,7 @@ setSessionFrequency(
 
 <div className="flex justify-between">
 
-  <span>
-    Precio paquete
-  </span>
+  <span>Precio paquete</span>
 
   <span className="font-semibold">
     S/ {packagePrice.toFixed(2)}
@@ -3182,15 +3518,22 @@ setSessionFrequency(
 
 </div>
 
-<div className="flex justify-between">
+<div>
 
-  <span>
-    Descuento adicional
-  </span>
+  <label className="block mb-2 font-medium text-gray-700">
+    Precio final
+  </label>
 
-  <span className="font-semibold text-red-500">
-    - {discountPercentage}%
-  </span>
+  <input
+    type="number"
+    value={manualPackagePrice}
+    onChange={(e)=>
+      setManualPackagePrice(
+        Number(e.target.value)
+      )
+    }
+    className="w-full border p-4 rounded-2xl"
+  />
 
 </div>
 
@@ -3206,7 +3549,6 @@ setSessionFrequency(
 
 </div>
 
-
   </div>
 
 )}
@@ -3218,7 +3560,7 @@ setSessionFrequency(
   </h4>
 
   <label className="block mb-2 font-medium text-gray-700">
-    Pago recibido
+    Pago recibido / por recibir
   </label>
 
   <input

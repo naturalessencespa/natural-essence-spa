@@ -15,7 +15,15 @@ import esLocale from "@fullcalendar/core/locales/es";
 import { supabase } from "@/lib/supabase";
 
 
-export default function AppointmentsPage() {
+type Props = {
+  setPage: (page: string) => void;
+  setPendingLaserSale: (data: any) => void;
+};
+
+export default function AppointmentsPage({
+  setPage,
+  setPendingLaserSale,
+}: Props) {
 
   const [events, setEvents] =
     useState<any[]>([]);
@@ -43,6 +51,16 @@ export default function AppointmentsPage() {
 const [
   completedAppointmentId,
   setCompletedAppointmentId
+] = useState<number | null>(null);
+
+const [
+  laserSaleAppointmentId,
+  setLaserSaleAppointmentId
+] = useState<number | null>(null);
+
+const [
+  laserSaleWorkerId,
+  setLaserSaleWorkerId
 ] = useState<number | null>(null);
 
 const [
@@ -1053,8 +1071,126 @@ if (
 
 }
 
-        setCompletedAppointmentId(
+const {
+  data: packageData
+} =
+await supabase
+
+  .from(
+    "client_packages"
+  )
+
+  .select(`
+    *,
+    services(
+      id,
+      name
+    )
+  `)
+
+  .eq(
+    "id",
+    packageSession?.package_id
+  )
+
+  .single();
+
+if (
+
+  packageSession &&
+
+  packageData?.internal_sale
+
+) {
+
+  const {
+  data: payment,
+  error: paymentError
+} =
+await supabase
+
+  .from(
+    "package_payments"
+  )
+
+  .select("*")
+
+  .eq(
+    "package_session_id",
+    packageSession.id
+  )
+
+  .single();
+
+if (paymentError) {
+
+  console.log(paymentError);
+
+}
+  if (
+
+    payment &&
+
+    Number(payment.amount) > 0
+
+  ) {
+
+    await supabase
+
+      .from(
+        "appointment_services"
+      )
+
+      .insert({
+
+        appointment_id:
+          packageData.internal_sale_appointment_id,
+
+        package_session_id:
+          packageSession.id,
+
+        service_id:
+          packageData.service_id,
+
+        worker_id:
+          packageData.internal_sale_worker_id,
+
+        original_price:
+          payment.amount,
+
+        sold_price:
+          payment.amount,
+
+        commission_percentage:
+          20,
+
+        commission_amount:
+          payment.amount * 0.20
+
+      });
+
+  }
+
+}
+setCompletedAppointmentId(
   appointmentId
+);
+
+const currentAppointment =
+  events.find(
+    (event) =>
+      event.id ===
+      appointmentId
+  );
+
+setLaserSaleAppointmentId(
+  appointmentId
+);
+
+setLaserSaleWorkerId(
+  currentAppointment
+    ?.extendedProps
+    ?.worker_id || null
 );
 
 setShowSalesModal(true);
@@ -2722,11 +2858,30 @@ eventDidMount={(info) => {
 
     <div className="bg-white p-8 rounded-3xl w-[500px] shadow-2xl">
 
-      <h3 className="text-2xl font-bold text-[#243847] mb-6">
+      <div className="flex justify-between items-center mb-10">
 
-        Ventas adicionales
+  <h2 className="text-4xl font-bold">
+    Ventas adicionales
+  </h2>
 
-      </h3>
+  <button
+    onClick={() => {
+
+      setShowSalesModal(false);
+
+      setSalesCart([]);
+
+      setAdditionalServiceId("");
+
+      setSoldPrice("");
+
+    }}
+    className="text-3xl text-gray-500 hover:text-red-600"
+  >
+    ✕
+  </button>
+
+</div>
 
       <div className="space-y-4">
 
@@ -2881,38 +3036,58 @@ eventDidMount={(info) => {
 )}
 
       </div>
+<div className="flex flex-wrap gap-4 mt-8">
 
-      <div className="flex gap-4 mt-8">
+  <button
 
-        <button
+  onClick={() => {
 
-          onClick={() =>
-            setShowSalesModal(false)
-          }
+    const appointment =
+      events.find(
+        (e) =>
+          e.id ===
+          completedAppointmentId
+      );
 
-          className="bg-gray-200 px-5 py-3 rounded-2xl"
+    if (!appointment) return;
 
-        >
+    setPendingLaserSale({
 
-          Cerrar
+      appointmentId:
+        completedAppointmentId,
 
-        </button>
+      clientId:
+        appointment.extendedProps.client_id,
 
-        <button
+      workerId:
+        appointment.extendedProps.worker_id,
 
-         onClick={
-           saveAdditionalService
-  }
+      internalSale: true
 
-          className="bg-[#243847] text-white px-5 py-3 rounded-2xl"
+    });
 
-        >
+    setShowSalesModal(false);
 
-          Guardar venta
+    setPage("paquetes");
 
-        </button>
+  }}
 
-      </div>
+  className="bg-purple-600 text-white px-5 py-3 rounded-2xl"
+
+>
+
+  Vender paquete
+
+</button>
+
+<button
+  onClick={saveAdditionalService}
+  className="w-full mt-4 bg-[#243847] text-white py-3 rounded-2xl font-semibold"
+>
+  Guardar ventas
+</button>
+
+</div>
 
     </div>
 
