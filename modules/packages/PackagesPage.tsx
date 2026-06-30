@@ -392,10 +392,20 @@ return manualPackagePrice;
     0
   );
 
-  const packageBalance =
-  selectedPackage
-    ? Number(selectedPackage.balance || 0)
-    : 0;
+  const packageBalance = useMemo(() => {
+
+  if (!selectedPackage) return 0;
+
+  const balance =
+    Number(selectedPackage.balance || 0);
+
+  if (balance > 0) {
+    return balance;
+  }
+
+  return Number(selectedPackage.unit_price || 0);
+
+}, [selectedPackage]);
 
     // OBTENER PAQUETES
     const fetchPackages =
@@ -1899,17 +1909,23 @@ if (additionalSessions === 6) {
 
 await supabase
   .from("client_packages")
-  .update({
+.update({
 
-    total_sessions:
-      selectedPackage.total_sessions +
-      additionalSessions,
+  total_sessions:
+    selectedPackage.total_sessions +
+    additionalSessions,
 
-    total_price:
-      Number(selectedPackage.total_price) +
-      newAmount
+  total_price:
+    Number(selectedPackage.total_price) +
+    newAmount,
 
-  })
+  balance:
+    Number(selectedPackage.balance || 0) +
+    newAmount,
+
+  payment_status: "Pendiente"
+
+})
 
     .eq(
       "id",

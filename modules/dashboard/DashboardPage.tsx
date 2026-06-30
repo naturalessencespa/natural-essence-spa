@@ -242,6 +242,8 @@ const data = todayAppointments.map(
     Trabajadora: appointment.workers?.name
   })
 );
+
+  
   const worksheet =
     XLSX.utils.json_to_sheet(data);
 
@@ -716,29 +718,50 @@ const effectiveness: any = {};
 setWorkerEffectiveness(
 
   Object.entries(effectiveness).map(
-    ([worker, value]: any) => ({
+    ([worker, value]: any) => {
 
-      worker,
-
-      attended:
-        value.attended,
-
-      additional:
-        value.appointments.size,
-
-        sales:
-  value.sales,
-
-      effectiveness:
+      const percentage =
         value.attended > 0
           ? Math.round(
               (value.appointments.size * 100) /
               value.attended
             )
-          : 0
+          : 0;
 
-    }))
+      const weightedEffectiveness =
+  Math.round(
+    (percentage * value.sales) / 100
+  );
+
+      const score =
+        (percentage / 100) *
+        value.sales;
+
+      return {
+
+        worker,
+
+        attended:
+          value.attended,
+
+        additional:
+          value.appointments.size,
+
+        sales:
+          value.sales,
+
+        effectiveness:
+          weightedEffectiveness,
+
+        score
+
+      };
+
+    }
+  )
+
 );
+
 setAdditionalSales(
   filteredAdditionalSales
 );
@@ -915,6 +938,15 @@ XLSX.utils.book_append_sheet(
   );
 
 };
+
+const maxEffectiveness =
+  workerEffectiveness.length > 0
+    ? Math.max(
+        ...workerEffectiveness.map(
+          (item) => item.effectiveness
+        )
+      )
+    : 1;
 
 
   return (
@@ -1343,14 +1375,16 @@ XLSX.utils.book_append_sheet(
 
   <span
     className={`px-3 py-1 rounded-full text-white font-semibold ${
-      item.effectiveness >= 80
-        ? "bg-green-600"
-        : item.effectiveness >= 50
-        ? "bg-yellow-500"
-        : "bg-red-600"
-    }`}
+  item.effectiveness >=
+  maxEffectiveness * 0.8
+    ? "bg-green-600"
+    : item.effectiveness >=
+      maxEffectiveness * 0.5
+    ? "bg-yellow-500"
+    : "bg-red-600"
+}`}
   >
-    {item.effectiveness}%
+    {item.effectiveness}
   </span>
 
 </td>
