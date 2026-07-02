@@ -17,6 +17,65 @@ export default function InternalSalesPage() {
   ] = useState<any[]>([]);
 
   const [
+  startDate,
+  setStartDate
+] = useState(
+  new Date(
+    Date.now() -
+    new Date().getTimezoneOffset() * 60000
+  )
+    .toISOString()
+    .split("T")[0]
+);
+
+const [
+  endDate,
+  setEndDate
+] = useState(
+  new Date(
+    Date.now() -
+    new Date().getTimezoneOffset() * 60000
+  )
+    .toISOString()
+    .split("T")[0]
+);
+
+const [
+  workerFilter,
+  setWorkerFilter
+] = useState("");
+
+const [
+  serviceFilter,
+  setServiceFilter
+] = useState("");
+
+const [
+  clientFilter,
+  setClientFilter
+] = useState("");
+
+const [
+  totalSold,
+  setTotalSold
+] = useState(0);
+
+const [
+  totalCommission,
+  setTotalCommission
+] = useState(0);
+
+const [
+  workers,
+  setWorkers
+] = useState<any[]>([]);
+
+const [
+  services,
+  setServices
+] = useState<any[]>([]);
+
+  const [
   editingSaleId,
   setEditingSaleId
 ] = useState<number | null>(null);
@@ -30,33 +89,31 @@ const [
     async () => {
 
       const {
-        data,
-        error
-      } =
-        await supabase
+  data,
+  error
+} =
+  await supabase
 
-          .from(
-            "appointment_services"
-          )
+    .from(
+      "appointment_services"
+    )
 
-          .select(`
-            *,
-            services(name),
-            workers(name),
-            appointments(
-              appointment_date,
-              clients(full_name)
-            )
-          `)
+    .select(`
+      *,
+      services(name),
+      workers(name),
+      appointments(
+        appointment_date,
+        clients(full_name)
+      )
+    `)
 
-          .order(
-            "created_at",
-            {
-              ascending:
-                false,
-            }
-          );
-
+    .order(
+      "created_at",
+      {
+        ascending: false,
+      }
+    );
       if (error) {
 
         console.log(error);
@@ -64,9 +121,90 @@ const [
         return;
       }
 
-      setSales(
-        data || []
+const filteredSales =
+
+  (data || []).filter(
+    (sale: any) => {
+
+      const worker =
+        sale.workers?.name || "";
+
+      const service =
+        sale.services?.name || "";
+
+      const client =
+        sale.appointments?.clients?.full_name || "";
+
+      const date =
+        sale.appointments?.appointment_date || "";
+
+      const matchDate =
+        date >= startDate &&
+        date <= endDate;
+
+      const matchWorker =
+        worker
+          .toLowerCase()
+          .includes(
+            workerFilter.toLowerCase()
+          );
+
+      const matchService =
+        service
+          .toLowerCase()
+          .includes(
+            serviceFilter.toLowerCase()
+          );
+
+      const matchClient =
+        client
+          .toLowerCase()
+          .includes(
+            clientFilter.toLowerCase()
+          );
+
+      return (
+        matchDate &&
+        matchWorker &&
+        matchService &&
+        matchClient
       );
+
+    }
+  );
+     setSales(
+  filteredSales
+);
+
+setTotalSold(
+
+  filteredSales.reduce(
+    (sum: number, sale: any) =>
+
+      sum +
+      Number(
+        sale.sold_price || 0
+      ),
+
+    0
+  )
+
+);
+
+setTotalCommission(
+
+  filteredSales.reduce(
+    (sum: number, sale: any) =>
+
+      sum +
+      Number(
+        sale.commission_amount || 0
+      ),
+
+    0
+  )
+
+);
     };
 
     const deleteSale =
@@ -171,11 +309,17 @@ const [
     fetchSales();
   };
 
-  useEffect(() => {
+useEffect(() => {
 
-    fetchSales();
+  fetchSales();
 
-  }, []);
+}, [
+  startDate,
+  endDate,
+  workerFilter,
+  serviceFilter,
+  clientFilter
+]);
 
   return (
 
@@ -196,6 +340,90 @@ const [
         </p>
 
       </div>
+
+      <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
+
+  <div className="grid grid-cols-6 gap-4">
+
+    <input
+      type="date"
+      value={startDate}
+      onChange={(e) =>
+        setStartDate(
+          e.target.value
+        )
+      }
+      className="border rounded-xl p-3"
+    />
+
+    <input
+      type="date"
+      value={endDate}
+      onChange={(e) =>
+        setEndDate(
+          e.target.value
+        )
+      }
+      className="border rounded-xl p-3"
+    />
+
+    <input
+      type="text"
+      placeholder="Trabajadora"
+      value={workerFilter}
+      onChange={(e) =>
+        setWorkerFilter(
+          e.target.value
+        )
+      }
+      className="border rounded-xl p-3"
+    />
+
+    <input
+      type="text"
+      placeholder="Servicio"
+      value={serviceFilter}
+      onChange={(e) =>
+        setServiceFilter(
+          e.target.value
+        )
+      }
+      className="border rounded-xl p-3"
+    />
+
+    <input
+      type="text"
+      placeholder="Cliente"
+      value={clientFilter}
+      onChange={(e) =>
+        setClientFilter(
+          e.target.value
+        )
+      }
+      className="border rounded-xl p-3"
+    />
+
+    <div className="flex flex-col justify-center">
+
+      <span className="font-semibold">
+
+        Total:
+        S/{totalSold.toFixed(2)}
+
+      </span>
+
+      <span className="text-green-600 font-semibold">
+
+        Comisión:
+        S/{totalCommission.toFixed(2)}
+
+      </span>
+
+    </div>
+
+  </div>
+
+</div>
 
       <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
 
