@@ -9,6 +9,8 @@ import {
   supabase,
 } from "@/lib/supabase";
 
+import * as XLSX from "xlsx";
+
 export default function InternalSalesPage() {
 
   const [
@@ -309,6 +311,51 @@ setTotalCommission(
     fetchSales();
   };
 
+  const exportToExcel = () => {
+
+  const data = sales.map(
+    (sale) => ({
+
+      Fecha:
+        sale.appointments?.appointment_date,
+
+      Cliente:
+        sale.appointments?.clients?.full_name,
+
+      Servicio:
+        sale.services?.name,
+
+      Trabajadora:
+        sale.workers?.name,
+
+      Precio:
+        sale.sold_price,
+
+      Comisión:
+        sale.commission_amount
+
+    })
+  );
+
+  const worksheet =
+    XLSX.utils.json_to_sheet(data);
+
+  const workbook =
+    XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    "Ventas Internas"
+  );
+
+  XLSX.writeFile(
+    workbook,
+    `Ventas_Internas_${startDate}_${endDate}.xlsx`
+  );
+
+};
+
 useEffect(() => {
 
   fetchSales();
@@ -338,6 +385,22 @@ useEffect(() => {
           Ventas adicionales realizadas por trabajadoras
 
         </p>
+
+        <div className="mt-5">
+
+  <button
+
+    onClick={exportToExcel}
+
+    className="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-xl font-semibold"
+
+  >
+
+    📊 Exportar Excel
+
+  </button>
+
+</div>
 
       </div>
 
