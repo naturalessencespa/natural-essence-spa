@@ -34,13 +34,16 @@ export default function ExpensesPage() {
       null
     );
 
-  const [expenseDate,
-    setExpenseDate] =
-    useState(
-      new Date()
-        .toISOString()
-        .split("T")[0]
-    );
+const [expenseDate,
+  setExpenseDate] =
+  useState(
+    new Date(
+      Date.now() -
+      new Date().getTimezoneOffset() * 60000
+    )
+      .toISOString()
+      .split("T")[0]
+  );
 
   const [category,
     setCategory] =
@@ -81,6 +84,28 @@ export default function ExpensesPage() {
   const [sortBy,
     setSortBy] =
     useState("date_desc");
+
+    const [startDate,
+  setStartDate] =
+  useState(
+    new Date(
+      Date.now() -
+      new Date().getTimezoneOffset() * 60000
+    )
+      .toISOString()
+      .split("T")[0]
+  );
+
+const [endDate,
+  setEndDate] =
+  useState(
+    new Date(
+      Date.now() -
+      new Date().getTimezoneOffset() * 60000
+    )
+      .toISOString()
+      .split("T")[0]
+  );
 
   const fetchExpenses =
     async () => {
@@ -220,11 +245,13 @@ export default function ExpensesPage() {
       setEditingId(null);
 
       setExpenseDate(
-        new Date()
-          .toISOString()
-          .split("T")[0]
-      );
-
+  new Date(
+    Date.now() -
+    new Date().getTimezoneOffset() * 60000
+  )
+    .toISOString()
+    .split("T")[0]
+);
       setCategory("");
 
       setDescription("");
@@ -328,10 +355,13 @@ export default function ExpensesPage() {
     };  const todayTotal =
     useMemo(() => {
 
-      const today =
-        new Date()
-          .toISOString()
-          .split("T")[0];
+     const today =
+  new Date(
+    Date.now() -
+    new Date().getTimezoneOffset() * 60000
+  )
+    .toISOString()
+    .split("T")[0];
 
       return expenses
 
@@ -357,10 +387,13 @@ export default function ExpensesPage() {
   const monthTotal =
   useMemo(() => {
 
-    const currentMonth =
-      new Date()
-        .toISOString()
-        .slice(0, 7);
+const currentMonth =
+  new Date(
+    Date.now() -
+    new Date().getTimezoneOffset() * 60000
+  )
+    .toISOString()
+    .slice(0, 7);
 
     return expenses
 
@@ -410,11 +443,19 @@ export default function ExpensesPage() {
             expense.category ===
               filterCategory;
 
+              const matchesDate =
+
+  expense.expense_date >= startDate &&
+
+  expense.expense_date <= endDate;
+
           return (
 
             matchesSearch &&
 
-            matchesCategory
+            matchesCategory &&
+
+            matchesDate
 
           );
 
@@ -484,6 +525,13 @@ export default function ExpensesPage() {
         );
 
       });
+
+      const filteredTotal =
+  filteredExpenses.reduce(
+    (sum, expense) =>
+      sum + Number(expense.amount),
+    0
+  );
 
   return (
 
@@ -750,6 +798,28 @@ export default function ExpensesPage() {
       <div className="flex gap-4 mb-6">
 
         <input
+  type="date"
+  value={startDate}
+  onChange={(e) =>
+    setStartDate(
+      e.target.value
+    )
+  }
+  className="border p-4 rounded-2xl"
+/>
+
+<input
+  type="date"
+  value={endDate}
+  onChange={(e) =>
+    setEndDate(
+      e.target.value
+    )
+  }
+  className="border p-4 rounded-2xl"
+/>
+
+        <input
           type="text"
           placeholder="Buscar..."
           value={search}
@@ -844,7 +914,17 @@ export default function ExpensesPage() {
           </option>
 
         </select>
+<div className="ml-auto bg-red-50 border border-red-200 rounded-2xl px-6 py-3">
 
+  <p className="text-sm text-gray-500">
+    Total filtrado
+  </p>
+
+  <p className="text-2xl font-bold text-red-600">
+    S/ {filteredTotal.toFixed(2)}
+  </p>
+
+</div>
       </div>      <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
 
         <table className="w-full">

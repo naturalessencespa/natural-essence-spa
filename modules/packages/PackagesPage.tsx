@@ -889,6 +889,7 @@ await supabase
   const session1 =
     sessionsToInsert[0];
 
+const { error: paymentError } =
   await supabase
 
     .from("package_payments")
@@ -906,6 +907,16 @@ await supabase
       notes: "Pago inicial del paquete"
 
     });
+
+if (paymentError) {
+
+  alert(
+    paymentError.message
+  );
+
+  return;
+
+}
 
 }
 

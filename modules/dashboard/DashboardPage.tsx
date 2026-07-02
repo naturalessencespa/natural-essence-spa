@@ -105,18 +105,21 @@ const loadAppointments =
         .from("appointments")
 
       .select(`
-        *,
-        clients(full_name, phone),
-        services(name),
-        workers(name),
-     appointment_reserved_services(
-        service_id,
-        services(
-          name,
-          price
-        )
-)
-      `)
+  *,
+  clients(full_name, phone),
+  services(name),
+  workers(name),
+  client_packages(
+    internal_sale
+  ),
+  appointment_reserved_services(
+    service_id,
+    services(
+      name,
+      price
+    )
+  )
+`)
 
         .gte(
           "appointment_date",
@@ -129,9 +132,9 @@ const loadAppointments =
         )
 
         .eq(
-          "status",
-          "Atendida"
-        )
+  "status",
+  "Atendida"
+)
 
         
 
@@ -151,13 +154,20 @@ const loadAppointments =
       return;
     }
 
-    setTodayAppointments(
-      data || []
-    );
+    const filteredAppointments =
 
+  (data || []).filter(
+    (appointment: any) =>
+
+      appointment.client_packages?.internal_sale !== true
+  );
+
+  setTodayAppointments(
+  filteredAppointments
+);
     const sales =
 
-  (data || []).reduce(
+   filteredAppointments.reduce(
     (sum, appointment) =>
 
       sum +
@@ -173,7 +183,7 @@ const uniqueClients = [
 
   ...new Set(
 
-    (data || []).map(
+   filteredAppointments.map(
       (appointment) =>
         appointment.clients?.full_name
     )
@@ -188,7 +198,7 @@ setClientsToday(
 
 const totalServices =
 
-  (data || []).reduce(
+  filteredAppointments.reduce(
     (sum, appointment) =>
 
       sum +
@@ -208,10 +218,10 @@ setServicesToday(
 
 setTicketAverage(
 
-  data?.length
+  filteredAppointments.length
 
     ? sales /
-      data.length
+      filteredAppointments.length
 
     : 0
 );
@@ -264,7 +274,7 @@ const data = todayAppointments.map(
 
 const dailySales: any = {};
 
-(data || []).forEach(
+filteredAppointments.forEach(
   (appointment) => {
 
     const date =
@@ -298,7 +308,7 @@ setSalesByDay(
 const serviceSales: any = {};
 const serviceCounts: any = {};
 
-(data || []).forEach(
+filteredAppointments.forEach(
   (appointment) => {
 
   const reservedServices =
@@ -426,7 +436,7 @@ setSalesByService(
 
 const clientsData: any = {};
 
-(data || []).forEach(
+filteredAppointments.forEach(
   (appointment) => {
 
     const client =
@@ -563,16 +573,19 @@ const {
     "appointment_services"
   )
 
- .select(`
-  appointment_id,
-  sold_price,
-  services(name),
-  commission_amount,
-  workers(name),
-  appointments(
-    appointment_date
-  )
-`);
+  .select(`
+    appointment_id,
+    sold_price,
+    services(name),
+    commission_amount,
+    workers(name),
+    appointments(
+      appointment_date,
+      clients(
+        full_name
+      )
+    )
+  `);
 
 const filteredAdditionalSales =
 
@@ -602,7 +615,7 @@ const filteredAdditionalSales =
 
 const workerSales: any = {};
 
-(data || []).forEach(
+filteredAppointments.forEach(
   (appointment) => {
 
     const worker =
@@ -663,7 +676,7 @@ setSalesByWorker(
 const effectiveness: any = {};
 
 // Clientes atendidos
-(data || []).forEach((appointment) => {
+filteredAppointments.forEach((appointment) => {
 
   const worker =
     appointment.workers?.name ||
@@ -720,42 +733,31 @@ setWorkerEffectiveness(
   Object.entries(effectiveness).map(
     ([worker, value]: any) => {
 
-      const percentage =
-        value.attended > 0
-          ? Math.round(
-              (value.appointments.size * 100) /
-              value.attended
-            )
-          : 0;
+ const effectiveness =
+  value.attended > 0
+    ? Math.round(
+        (value.appointments.size *
+          value.sales) /
+        value.attended
+      )
+    : 0;
 
-      const weightedEffectiveness =
-  Math.round(
-    (percentage * value.sales) / 100
-  );
+return {
 
-      const score =
-        (percentage / 100) *
-        value.sales;
+  worker,
 
-      return {
+  attended:
+    value.attended,
 
-        worker,
+  additional:
+    value.appointments.size,
 
-        attended:
-          value.attended,
+  sales:
+    value.sales,
 
-        additional:
-          value.appointments.size,
+  effectiveness
 
-        sales:
-          value.sales,
-
-        effectiveness:
-          weightedEffectiveness,
-
-        score
-
-      };
+};
 
     }
   )
@@ -899,11 +901,8 @@ const additionalSalesSheet =
             ?.appointments
             ?.appointment_date,
 
-        Cliente:
-          sale
-            ?.appointments
-            ?.clients
-            ?.full_name,
+       Cliente:
+  sale.appointments?.clients?.full_name || "",
 
         Servicio:
           sale

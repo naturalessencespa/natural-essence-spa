@@ -1127,13 +1127,34 @@ if (paymentError) {
   console.log(paymentError);
 
 }
-  if (
 
-    payment &&
+const {
+  data: existingSale
+} =
+await supabase
 
-    Number(payment.amount) > 0
+  .from(
+    "appointment_services"
+  )
 
-  ) {
+  .select("id")
+
+  .eq(
+    "package_session_id",
+    packageSession.id
+  )
+
+  .maybeSingle();
+
+if (
+
+  !existingSale &&
+
+  payment &&
+
+  Number(payment.amount) > 0
+
+) {
 
     await supabase
 
