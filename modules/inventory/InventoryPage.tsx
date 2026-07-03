@@ -803,6 +803,10 @@ useEffect(() => {
                 Presentación
               </th>
 
+              <th className="text-left p-5">
+                Fecha
+              </th>
+
                 <th className="text-left p-5">
                 Stock
               </th>
@@ -853,6 +857,10 @@ useEffect(() => {
                   {product.measure}
 
                 </td>
+
+                <td className="p-5">
+  {new Date(product.created_at).toLocaleDateString("es-PE")}
+</td>
 
                 <td className="p-5">
 

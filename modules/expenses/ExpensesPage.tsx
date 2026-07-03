@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase";
 
 type Expense = {
   id: number;
+  inventory_product_id: number | null;
   expense_date: string;
   category: string;
   description: string | null;
@@ -27,6 +28,10 @@ export default function ExpensesPage() {
   const [expenses,
     setExpenses] =
     useState<Expense[]>([]);
+
+    const [inventoryCategories,
+  setInventoryCategories] =
+  useState<any[]>([]);
 
   const [editingId,
     setEditingId] =
@@ -72,6 +77,10 @@ const [expenseDate,
   const [receiptNumber,
     setReceiptNumber] =
     useState("");
+
+      const [inventoryCategoryId,
+  setInventoryCategoryId] =
+  useState("");
 
   const [search,
     setSearch] =
@@ -138,9 +147,39 @@ const [endDate,
       );
     };
 
+    const fetchInventoryCategories =
+  async () => {
+
+    const {
+      data,
+      error
+    } = await supabase
+
+      .from(
+        "inventory_categories"
+      )
+
+      .select(
+        "id,name"
+      )
+
+      .order(
+        "name"
+      );
+
+    if (error) return;
+
+    setInventoryCategories(
+      data || []
+    );
+
+  };
+
   useEffect(() => {
 
     fetchExpenses();
+
+    fetchInventoryCategories();
 
   }, []);
 
@@ -188,6 +227,28 @@ const [endDate,
 
       };
 
+      let originalExpense: Expense | null = null;
+
+if (editingId) {
+
+  const { data } =
+    await supabase
+
+      .from("expenses")
+
+      .select("*")
+
+      .eq(
+        "id",
+        editingId
+      )
+
+      .single();
+
+  originalExpense = data;
+
+}
+
       if (editingId) {
 
         const { error } =
@@ -217,29 +278,380 @@ const [endDate,
           return;
         }
 
+
+// Era Insumos y sigue siendo Insumos
+if (
+
+  originalExpense?.category?.trim() === "Insumos" &&
+
+  category.trim() === "Insumos"
+
+) {
+
+  // Ya existe producto en inventario
+  if (originalExpense?.inventory_product_id) {
+
+    const { error: inventoryUpdateError } =
+      await supabase
+
+        .from(
+          "inventory_products"
+        )
+
+        .update({
+
+          name: description,
+
+          category_id: Number(
+            inventoryCategoryId
+          ),
+
+          measure:
+            quantity || "",
+
+          brand:
+            supplier || ""
+
+        })
+
+        .eq(
+          "id",
+          originalExpense.inventory_product_id
+        );
+
+    if (inventoryUpdateError) {
+
+      alert(
+        inventoryUpdateError.message
+      );
+
+      return;
+
+    }
+
+  }
+
+  // Es un gasto antiguo, todavía no tiene producto
+  else {
+
+    const {
+      data: inventoryProduct,
+      error: inventoryError
+    } = await supabase
+
+      .from(
+        "inventory_products"
+      )
+
+      .insert({
+
+        name:
+          description,
+
+        category_id:
+          Number(
+            inventoryCategoryId
+          ),
+
+        description:
+          "",
+
+        measure:
+          quantity || "",
+
+        stock_status:
+          "Lleno",
+
+        brand:
+          supplier || "",
+
+        active:
+          true,
+
+        notes:
+          "Creado automáticamente desde Gastos",
+
+        product_type:
+          "cabina",
+
+        stock:
+          1
+
+      })
+
+      .select()
+
+      .single();
+
+    if (inventoryError) {
+
+      alert(
+        inventoryError.message
+      );
+
+      return;
+
+    }
+
+    await supabase
+
+      .from(
+        "expenses"
+      )
+
+      .update({
+
+        inventory_product_id:
+          inventoryProduct.id
+
+      })
+
+      .eq(
+        "id",
+        editingId
+      );
+
+  }
+
+}
+
+// Era Insumos y ahora ya no
+if (
+
+  originalExpense?.category?.trim() === "Insumos" &&
+
+  category.trim() !== "Insumos"
+
+){
+
+  await supabase
+
+    .from(
+      "inventory_products"
+    )
+
+    .delete()
+
+    .eq(
+      "id",
+      originalExpense?.inventory_product_id
+    );
+
+  await supabase
+
+    .from(
+      "expenses"
+    )
+
+    .update({
+
+      inventory_product_id:
+        null
+
+    })
+
+    .eq(
+      "id",
+      editingId
+    );
+
+}
+
+// Antes no era Insumos y ahora sí
+if (
+
+  originalExpense?.category?.trim() !== "Insumos" &&
+
+  category.trim() === "Insumos"
+
+) {
+
+  const {
+    data: inventoryProduct
+  } = await supabase
+
+    .from(
+      "inventory_products"
+    )
+
+    .insert({
+
+      name:
+        description,
+
+      category_id:
+        Number(
+          inventoryCategoryId
+        ),
+
+      description:
+        "",
+
+      measure:
+        quantity || "",
+
+      stock_status:
+        "Lleno",
+
+      brand:
+        supplier || "",
+
+      active:
+        true,
+
+      notes:
+        "Creado automáticamente desde Gastos",
+
+      product_type:
+        "cabina",
+
+      stock:
+        1
+
+    })
+
+    .select()
+
+    .single();
+
+  await supabase
+
+    .from(
+      "expenses"
+    )
+
+    .update({
+
+      inventory_product_id:
+        inventoryProduct.id
+
+    })
+
+    .eq(
+      "id",
+      editingId
+    );
+
+}
+
       } else {
 
-        const { error } =
-          await supabase
+        const {
+            data: insertedExpense,
+            error
+          } = await supabase
 
             .from(
               "expenses"
             )
 
             .insert([
-              payload,
-            ]);
+              payload
+            ])
 
-        if (error) {
+            .select()
 
-          console.log(error);
+            .single();
 
-          alert(
-            "Error guardando"
-          );
+          if (error) {
 
-          return;
-        }
+            console.log(error);
+
+            alert(
+              "Error guardando"
+            );
+
+            return;
+          }
+
+          if (
+  category === "Insumos"
+) {
+
+  const {
+    data: inventoryProduct,
+    error: inventoryError
+  } = await supabase
+
+    .from(
+      "inventory_products"
+    )
+
+    .insert({
+
+      name:
+        description,
+
+      category_id:
+        Number(
+          inventoryCategoryId
+        ),
+
+      description:
+        "",
+
+      measure:
+        quantity || "",
+
+      stock_status:
+        "Lleno",
+
+      brand:
+        supplier || "",
+
+      active:
+        true,
+
+      notes:
+        "Creado automáticamente desde Gastos",
+
+      product_type:
+        "cabina",
+
+      stock:
+        1
+
+    })
+
+    .select()
+
+    .single();
+
+  if (
+    inventoryError
+  ) {
+
+    console.log(
+      inventoryError
+    );
+
+    alert(
+      "Error creando producto en inventario"
+    );
+
+    return;
+
+  }
+
+  await supabase
+
+    .from(
+      "expenses"
+    )
+
+    .update({
+
+      inventory_product_id:
+        inventoryProduct.id
+
+    })
+
+    .eq(
+      "id",
+      insertedExpense.id
+    );
+
+}
       }
 
       setEditingId(null);
@@ -269,41 +681,65 @@ const [endDate,
       fetchExpenses();
     };
 
-  const deleteExpense =
-    async (
-      id: number
-    ) => {
+ const deleteExpense =
+  async (
+    id: number
+  ) => {
 
-      const confirmDelete =
-        confirm(
-          "¿Eliminar gasto?"
-        );
+    const confirmDelete =
+      confirm(
+        "¿Eliminar gasto?"
+      );
 
-      if (
-        !confirmDelete
-      )
-        return;
+    if (!confirmDelete)
+      return;
+
+    const expense =
+      expenses.find(
+        (item) =>
+          item.id === id
+      );
+
+    if (
+      expense?.inventory_product_id
+    ) {
 
       await supabase
 
         .from(
-          "expenses"
+          "inventory_products"
         )
 
         .delete()
 
         .eq(
           "id",
-          id
+          expense.inventory_product_id
         );
 
-      fetchExpenses();
-    };
+    }
 
-  const editExpense =
-    (
-      expense: Expense
-    ) => {
+    await supabase
+
+      .from(
+        "expenses"
+      )
+
+      .delete()
+
+      .eq(
+        "id",
+        id
+      );
+
+    fetchExpenses();
+
+  };
+
+ const editExpense =
+async (
+  expense: Expense
+) => {
 
       setEditingId(
         expense.id
@@ -346,6 +782,40 @@ const [endDate,
       setReceiptNumber(
         expense.receipt_number || ""
       );
+
+      if (
+  expense.inventory_product_id
+) {
+
+  const {
+    data: inventoryProduct
+  } = await supabase
+
+    .from(
+      "inventory_products"
+    )
+
+    .select(
+      "category_id"
+    )
+
+    .eq(
+      "id",
+      expense.inventory_product_id
+    )
+
+    .single();
+
+  setInventoryCategoryId(
+    inventoryProduct?.category_id
+      ?.toString() || ""
+  );
+
+} else {
+
+  setInventoryCategoryId("");
+
+}
 
       window.scrollTo({
         top: 0,
@@ -683,6 +1153,39 @@ const currentMonth =
             </option>
 
           </select>
+
+          {category === "Insumos" && (
+
+  <select
+    value={inventoryCategoryId}
+    onChange={(e) =>
+      setInventoryCategoryId(
+        e.target.value
+      )
+    }
+    className="border p-4 rounded-2xl"
+  >
+
+    <option value="">
+      Categoría inventario
+    </option>
+
+    {inventoryCategories.map(
+      (item) => (
+
+        <option
+          key={item.id}
+          value={item.id}
+        >
+          {item.name}
+        </option>
+
+      )
+    )}
+
+  </select>
+
+)}
 
           <input
             type="text"
