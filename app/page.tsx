@@ -26,6 +26,8 @@ import LaserZonesPage from "@/modules/laser-zones/LaserZonesPage";
 
 import ExpensesPage from "@/modules/expenses/ExpensesPage";
 
+import PendingServicesPage from "@/modules/pending-services/PendingServicesPage";
+
 export default function Home() {
 
 const [page, setPage] =
@@ -242,6 +244,21 @@ const [
 
 <button
   onClick={() =>
+    setPage("servicios-pendientes")
+  }
+  className={`text-left p-4 rounded-2xl transition ${
+    page === "servicios-pendientes"
+      ? "bg-white text-[#243847]"
+      : "hover:bg-white/10"
+  }`}
+>
+
+  Servicios Pendientes
+
+</button>
+
+<button
+  onClick={() =>
     setPage("gastos")
   }
   className={`text-left p-4 rounded-2xl transition ${
@@ -330,6 +347,11 @@ const [
         {page ===
           "ventas-productos" && (
           <ProductSalesPage />
+        )}
+
+        {page ===
+          "servicios-pendientes" && (
+          <PendingServicesPage />
         )}
 
         {page === "gastos" && (

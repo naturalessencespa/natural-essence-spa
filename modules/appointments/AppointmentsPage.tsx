@@ -130,6 +130,41 @@ const [
   setIsCompleted
 ] = useState(false);
 
+const [
+  showAdvanceModal,
+  setShowAdvanceModal
+] = useState(false);
+
+const [
+  advanceAmount,
+  setAdvanceAmount
+] = useState("");
+
+const [
+  advanceNotes,
+  setAdvanceNotes
+] = useState("");
+
+const [
+  currentAdvance,
+  setCurrentAdvance
+] = useState(0);
+
+const [
+  remainingAdvance,
+  setRemainingAdvance
+] = useState(0);
+
+const [
+  isAdvanceCompleted,
+  setIsAdvanceCompleted
+] = useState(false);
+
+const [
+  appointmentTotal,
+  setAppointmentTotal
+] = useState(0);
+
   const [clients, setClients] =
     useState<any[]>([]);
 
@@ -148,6 +183,31 @@ const [
   isPackageAppointment,
   setIsPackageAppointment
 ] = useState(false);
+
+const [
+  showPaymentModal,
+  setShowPaymentModal
+] = useState(false);
+
+const [
+  paymentTotal,
+  setPaymentTotal
+] = useState(0);
+
+const [
+  paymentAdvance,
+  setPaymentAdvance
+] = useState(0);
+
+const [
+  paymentRemaining,
+  setPaymentRemaining
+] = useState(0);
+
+const [
+  completingAppointmentId,
+  setCompletingAppointmentId
+] = useState<number | null>(null);
   
 
   // OBTENER CITAS
@@ -991,7 +1051,253 @@ const cancelAppointment =
     appointmentId: number
   ) => {
 
-    const { error } =
+    const appointment =
+  events.find(
+    (event) =>
+      event.id ===
+      appointmentId
+  );
+
+const totalPrice =
+  Number(
+    appointment?.extendedProps
+      ?.final_price || 0
+  );
+
+const {
+  data: advances
+} =
+await supabase
+
+  .from(
+    "appointment_advances"
+  )
+
+  .select("amount")
+
+  .eq(
+    "appointment_id",
+    appointmentId
+  )
+
+  .eq(
+    "status",
+    "Activo"
+  );
+
+const totalAdvance =
+
+  (advances || []).reduce(
+
+    (sum, item) =>
+
+      sum +
+      Number(item.amount),
+
+    0
+
+  );
+
+const remaining =
+
+  totalPrice -
+  totalAdvance;
+
+ if (
+  totalAdvance > 0
+) {
+
+  setPaymentTotal(
+    totalPrice
+  );
+
+  setPaymentAdvance(
+    totalAdvance
+  );
+
+  setPaymentRemaining(
+    remaining
+  );
+
+  setCompletingAppointmentId(
+    appointmentId
+  );
+
+  setShowPaymentModal(
+    true
+  );
+
+  return;
+
+}
+
+await processAppointmentCompletion(
+    appointmentId
+);
+
+    
+  };  
+
+const saveAdvance =
+async () => {
+
+  if (
+    !editingAppointmentId
+  ) {
+
+    alert(
+      "No se encontró la reserva."
+    );
+
+    return;
+
+  }
+
+  if (
+    !advanceAmount
+  ) {
+
+    alert(
+      "Ingrese el monto del adelanto."
+    );
+
+    return;
+
+  }
+
+  const appointment =
+    events.find(
+      (event) =>
+        event.id ===
+        editingAppointmentId
+    );
+
+  if (!appointment) {
+
+    alert(
+      "Reserva no encontrada."
+    );
+
+    return;
+
+  }
+
+  const newAdvance =
+  Number(advanceAmount);
+
+if (newAdvance <= 0) {
+
+  alert(
+    "Ingrese un monto válido."
+  );
+
+  return;
+
+}
+
+if (newAdvance > remainingAdvance) {
+
+  alert(
+    `El adelanto no puede superar el saldo pendiente de S/${remainingAdvance}.`
+  );
+
+  return;
+
+}
+
+  const { error } =
+    await supabase
+
+      .from(
+        "appointment_advances"
+      )
+
+      .insert({
+
+        appointment_id:
+          editingAppointmentId,
+
+        client_id:
+          appointment
+            .extendedProps
+            .client_id,
+
+        amount:
+          Number(
+            advanceAmount
+          ),
+
+        notes:
+          advanceNotes,
+
+        status:
+          "Activo"
+
+      });
+
+if (error) {
+
+  console.log(error);
+
+  alert(error.message);
+
+  return;
+
+}
+
+  await supabase
+
+    .from(
+      "appointments"
+    )
+
+    .update({
+
+      has_advance:
+        true
+
+    })
+
+    .eq(
+      "id",
+      editingAppointmentId
+    );
+
+  alert(
+    "Adelanto registrado."
+  );
+
+  setAdvanceAmount("");
+
+  setAdvanceNotes("");
+
+  setCurrentAdvance(
+  currentAdvance + Number(advanceAmount)
+);
+
+setRemainingAdvance(
+  remainingAdvance - Number(advanceAmount)
+);
+
+if (
+  remainingAdvance - Number(advanceAmount) <= 0
+) {
+
+  setIsAdvanceCompleted(true);
+
+}
+
+  setShowAdvanceModal(false);
+
+  fetchAppointments();
+
+};
+
+const processAppointmentCompletion =
+async (
+  appointmentId: number
+) => {
+const { error } =
       await supabase
 
         .from(
@@ -1219,7 +1525,77 @@ setShowSalesModal(true);
 fetchAppointments();
 
 setShowModal(false);
-  };  
+
+};
+
+const finishAdvancePayment =
+async () => {
+
+  if (
+    !completingAppointmentId
+  ) return;
+
+  const { error } =
+    await supabase
+
+      .from(
+        "appointment_advances"
+      )
+
+      .update({
+
+        status:
+          "Consumido",
+
+        consumed_at:
+          new Date()
+            .toISOString()
+
+      })
+
+      .eq(
+        "appointment_id",
+        completingAppointmentId
+      )
+
+      .eq(
+        "status",
+        "Activo"
+      );
+
+  if (error) {
+
+    alert(error.message);
+
+    return;
+
+  }
+
+  await supabase
+
+    .from(
+      "appointments"
+    )
+
+    .update({
+
+      has_advance:
+        false
+
+    })
+
+    .eq(
+      "id",
+      completingAppointmentId
+    );
+
+  setShowPaymentModal(false);
+
+  await processAppointmentCompletion(
+    completingAppointmentId
+);
+
+};
 
 const addSaleToCart = () => {
 
@@ -2696,25 +3072,117 @@ eventDidMount={(info) => {
 {editingAppointmentId &&
  !isCompleted && (
 
-  <button
+  <>
 
-    onClick={() =>
+    <button
 
-      completeAppointment(
+  onClick={async () => {
+
+  if (!editingAppointmentId)
+    return;
+
+  const appointment =
+    events.find(
+      (event) =>
+        event.id ===
+        editingAppointmentId
+    );
+
+  if (!appointment)
+    return;
+
+  const total =
+    Number(
+      appointment
+        .extendedProps
+        .final_price || 0
+    );
+
+  setAppointmentTotal(total);
+
+  const {
+    data
+  } =
+    await supabase
+
+      .from(
+        "appointment_advances"
+      )
+
+      .select("amount")
+
+      .eq(
+        "appointment_id",
         editingAppointmentId
       )
 
-    }
+      .eq(
+        "status",
+        "Activo"
+      );
 
-    className="bg-green-600 text-white px-5 py-3 rounded-2xl"
+  const advanced =
 
-  >
+    (data || []).reduce(
+      (sum, item) =>
 
-    Marcar atendida
+        sum +
+        Number(item.amount),
 
-  </button>
+      0
+    );
+
+  setCurrentAdvance(
+    advanced
+  );
+
+  setRemainingAdvance(
+    total - advanced
+  );
+
+  setIsAdvanceCompleted(
+  total - advanced <= 0
+);
+
+  setAdvanceAmount("");
+
+  setAdvanceNotes("");
+
+  setShowAdvanceModal(true);
+
+}}
+
+      className="bg-blue-600 text-white px-5 py-3 rounded-2xl"
+
+    >
+
+      💰 Adelanto
+
+    </button>
+
+    <button
+
+      onClick={() =>
+
+        completeAppointment(
+          editingAppointmentId
+        )
+
+      }
+
+      className="bg-green-600 text-white px-5 py-3 rounded-2xl"
+
+    >
+
+      Marcar atendida
+
+    </button>
+
+  </>
 
 )}
+
+
 
 {isCompleted && (
 
@@ -3116,7 +3584,227 @@ eventDidMount={(info) => {
 
 )}
 
+{showAdvanceModal && (
+
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+    <div className="bg-white p-8 rounded-3xl w-[450px] shadow-2xl">
+
+      <h2 className="text-3xl font-bold text-[#243847] mb-6">
+
+        Registrar adelanto
+
+      </h2>
+
+      <div className="space-y-4">
+
+        <div className="bg-gray-50 rounded-2xl p-4 mb-5">
+
+  <div className="flex justify-between mb-2">
+    <span>Precio del servicio</span>
+    <strong>S/{appointmentTotal}</strong>
+  </div>
+
+  <div className="flex justify-between mb-2">
+    <span>Adelantado</span>
+    <strong className="text-green-600">
+      S/{currentAdvance}
+    </strong>
+  </div>
+
+  <div className="flex justify-between">
+    <span>Saldo pendiente</span>
+    <strong className="text-red-600">
+      S/{remainingAdvance}
+    </strong>
+  </div>
+
+</div>
+
+{!isAdvanceCompleted ? (
+
+  <>
+        <input
+
+          type="number"
+
+          placeholder="Monto del adelanto"
+
+          value={advanceAmount}
+
+          onChange={(e) =>
+            setAdvanceAmount(
+              e.target.value
+            )
+          }
+
+          className="w-full border p-4 rounded-2xl"
+
+        />
+
+        <textarea
+
+          placeholder="Observación (opcional)"
+
+          value={advanceNotes}
+
+          onChange={(e) =>
+            setAdvanceNotes(
+              e.target.value
+            )
+          }
+
+          className="w-full border p-4 rounded-2xl"
+
+        />
+
+       </>
+
+) : (
+
+  <div className="bg-green-50 border border-green-300 rounded-2xl p-5 text-center">
+
+    <p className="text-green-700 font-semibold text-lg">
+
+      ✅ Esta reserva ya fue pagada al 100%.
+
+    </p>
+
+  </div>
+
+)}
+
+</div>  
+
+      <div className="flex gap-4 mt-8">
+
+        <button
+
+          onClick={() =>
+            setShowAdvanceModal(false)
+          }
+
+          className="bg-gray-200 px-5 py-3 rounded-2xl"
+
+        >
+
+          Cancelar
+
+        </button>
+
+           {!isAdvanceCompleted && (
+
+  <button
+
+    onClick={saveAdvance}
+
+    className="bg-blue-600 text-white px-5 py-3 rounded-2xl"
+
+  >
+
+    Guardar
+
+  </button>
+
+)}
+
+      </div>
+
+    </div>
+
+  </div>
+
+)}
+
+{showPaymentModal && (
+
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+    <div className="bg-white rounded-3xl p-8 w-[500px] shadow-2xl">
+
+      <h2 className="text-3xl font-bold text-[#243847] mb-6">
+
+        Finalizar atención
+
+      </h2>
+
+      <div className="bg-gray-50 rounded-2xl p-5 space-y-3">
+
+        <div className="flex justify-between">
+
+          <span>Total del servicio</span>
+
+          <strong>
+
+            S/{paymentTotal}
+
+          </strong>
+
+        </div>
+
+        <div className="flex justify-between">
+
+          <span>Adelantado</span>
+
+          <strong className="text-green-600">
+
+            S/{paymentAdvance}
+
+          </strong>
+
+        </div>
+
+        <div className="flex justify-between">
+
+          <span>Saldo pendiente</span>
+
+          <strong className="text-red-600">
+
+            S/{paymentRemaining}
+
+          </strong>
+
+        </div>
+
+      </div>
+
+      <div className="flex justify-end gap-3 mt-8">
+
+        <button
+
+          onClick={() =>
+            setShowPaymentModal(false)
+          }
+
+          className="bg-gray-200 px-5 py-3 rounded-2xl"
+
+        >
+
+          Cancelar
+
+        </button>
+
+   <button
+
+   onClick={finishAdvancePayment}
+
+   className="bg-green-600 text-white px-5 py-3 rounded-2xl"
+
+>
+
+          Finalizar atención
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+)}
+
     </div>
 
   );
-}
+} 
