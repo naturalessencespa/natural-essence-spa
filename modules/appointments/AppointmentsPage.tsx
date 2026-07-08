@@ -79,9 +79,41 @@ const [
 ] = useState<any[]>([]);
 
 const [
+  pendingSalesCart,
+  setPendingSalesCart
+] = useState<any[]>([]);
+
+const [
+  pendingServiceId,
+  setPendingServiceId
+] = useState("");
+
+const [
+  pendingServicePrice,
+  setPendingServicePrice
+] = useState("");
+
+const [
+  pendingSoldTotal,
+  setPendingSoldTotal
+] = useState("");
+
+const [
+  pendingAdvance,
+  setPendingAdvance
+] = useState("");
+
+const [
+  pendingNotes,
+  setPendingNotes
+] = useState("");
+
+const [
   salesCart,
   setSalesCart
 ] = useState<any[]>([]);
+
+
 
   const [selectedDate,
     setSelectedDate] =
@@ -208,6 +240,16 @@ const [
   completingAppointmentId,
   setCompletingAppointmentId
 ] = useState<number | null>(null);
+
+const [
+  showPendingServiceModal,
+  setShowPendingServiceModal
+] = useState(false);
+
+const [
+  pendingServiceAppointment,
+  setPendingServiceAppointment
+] = useState<any>(null);
   
 
   // OBTENER CITAS
@@ -1655,6 +1697,50 @@ const addSaleToCart = () => {
 
 };
 
+const addPendingSaleToCart = () => {
+
+  if (
+    !pendingServiceId ||
+    !pendingServicePrice
+  ) {
+
+    alert("Complete los datos.");
+
+    return;
+
+  }
+
+  const service =
+    services.find(
+      (s) =>
+        s.id === Number(pendingServiceId)
+    );
+
+  if (!service) return;
+
+  setPendingSalesCart([
+
+    ...pendingSalesCart,
+
+    {
+
+      service_id: service.id,
+
+      service_name: service.name,
+
+      original_price: Number(service.price),
+
+      sold_price: Number(pendingServicePrice)
+
+    }
+
+  ]);
+
+  setPendingServiceId("");
+
+  setPendingServicePrice("");
+
+};
   const saveAdditionalService =
 
 async () => {
@@ -1748,11 +1834,218 @@ async () => {
   setShowSalesModal(false);
 
 };
+
+const savePendingSale = async () => {
+
+  if (pendingSalesCart.length === 0) {
+
+    alert("Agrega al menos un servicio.");
+
+    return;
+
+  }
+
+  if (!pendingSoldTotal) {
+
+    alert("Ingrese el precio vendido.");
+
+    return;
+
+  }
+
+  const { data, error } = await supabase
+
+    .from("pending_sales")
+
+    .insert({
+
+      client_id:
+        pendingServiceAppointment.extendedProps.client_id,
+
+      appointment_id:
+         pendingServiceAppointment.id,
+
+      sold_by_worker_id:
+        pendingServiceAppointment.extendedProps.worker_id,
+
+      original_total:
+
+        pendingSalesCart.reduce(
+
+          (t, s) =>
+
+            t + Number(s.original_price),
+
+          0
+
+        ),
+
+      sold_total:
+        Number(pendingSoldTotal),
+
+      advance:
+        Number(pendingAdvance || 0),
+
+      origin:
+        "Venta adicional",
+
+      notes:
+        pendingNotes
+
+    })
+
+    .select()
+
+    .single();
+
+  if (error) {
+
+    alert(error.message);
+
+    return;
+
+  }
+
+  const totalOriginal = pendingSalesCart.reduce(
+
+  (t, s) =>
+
+    t + Number(s.original_price),
+
+  0
+
+);
+
+const items = pendingSalesCart.map((item) => ({
+
+  pending_sale_id: data.id,
+
+  service_id: item.service_id,
+
+  service_name: item.service_name,
+
+  original_price: item.original_price,
+
+  sold_price:
+
+    Number(
+
+      (
+
+        Number(item.original_price) /
+
+        totalOriginal
+
+      ) *
+
+      Number(pendingSoldTotal)
+
+    ).toFixed(2)
+
+}));
+
+const { error: itemsError } =
+
+  await supabase
+
+    .from("pending_sale_items")
+
+    .insert(items);
+
+if (itemsError) {
+
+  alert(itemsError.message);
+
+  return;
+
+}
+
+  alert("Venta futura guardada correctamente.");
+
+setShowPendingServiceModal(false);
+
+setPendingSalesCart([]);
+
+setPendingSoldTotal("");
+
+setPendingAdvance("");
+
+setPendingNotes("");
+
+setPendingServiceId("");
+
+setPendingServicePrice("");
+
+};
   const revertAppointment =
 
 async (
   appointmentId: number
 ) => {
+
+  const {
+
+  data: pendingSales
+
+} = await supabase
+
+  .from("pending_sales")
+
+  .select("id")
+
+  .eq(
+    "appointment_id",
+    appointmentId
+  )
+
+  .eq(
+    "status",
+    "Pendiente"
+  );
+
+  if (
+
+  pendingSales &&
+  pendingSales.length > 0
+
+) {
+
+  const cancelar = window.confirm(
+
+`Esta atención tiene ${pendingSales.length} venta(s) futura(s).
+
+Aceptar = Cancelarlas
+
+Cancelar = Conservarlas`
+
+  );
+
+  if (cancelar) {
+
+    await supabase
+
+      .from("pending_sales")
+
+      .update({
+
+        status:
+          "Cancelado"
+
+      })
+
+      .eq(
+        "appointment_id",
+        appointmentId
+      )
+
+      .eq(
+        "status",
+        "Pendiente"
+      );
+
+  }
+
+}
 
   await supabase
 
@@ -3376,7 +3669,7 @@ eventDidMount={(info) => {
 
         <select
 
-          value={additionalServiceId}
+         value={additionalServiceId}
 
           onChange={(e) => {
 
@@ -3446,11 +3739,9 @@ eventDidMount={(info) => {
 
         />
 
-        <button
+       <button
 
-  onClick={
-    addSaleToCart
-  }
+  onClick={addSaleToCart}
 
   className="w-full bg-green-600 text-white p-4 rounded-2xl"
 
@@ -3459,6 +3750,7 @@ eventDidMount={(info) => {
   Agregar servicio
 
 </button>
+
 
 {salesCart.length > 0 && (
 
@@ -3566,6 +3858,41 @@ eventDidMount={(info) => {
 >
 
   Vender paquete
+
+</button>
+
+<button
+
+onClick={() => {
+
+  const appointment =
+    events.find(
+      (e) =>
+        e.id ===
+        completedAppointmentId
+    );
+
+  if (!appointment) return;
+
+  setPendingServiceAppointment(
+    appointment
+  );
+
+  setPendingServiceId("");
+setPendingServicePrice("");
+setPendingSalesCart([]);
+
+  setShowPendingServiceModal(
+    true
+  );
+
+}}
+
+  className="bg-orange-600 text-white px-5 py-3 rounded-2xl"
+
+>
+
+  Agendar otro día
 
 </button>
 
@@ -3795,6 +4122,311 @@ eventDidMount={(info) => {
           Finalizar atención
 
         </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+)}
+
+{showPendingServiceModal && (
+
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+    <div className="bg-white rounded-3xl p-8 w-[700px]">
+
+      <h2 className="text-3xl font-bold mb-6">
+
+        Agendar servicio para otro día
+
+      </h2>
+
+      <div className="space-y-4 mt-6">
+
+  <select
+
+value={pendingServiceId}
+
+onChange={(e) => {
+
+  setPendingServiceId(
+    e.target.value
+  );
+
+  const service =
+    services.find(
+      (s) =>
+        s.id === Number(e.target.value)
+    );
+
+  setPendingServicePrice(
+    service?.price?.toString() || ""
+  );
+
+}}
+
+    className="w-full border p-4 rounded-2xl"
+
+  >
+
+    <option value="">
+
+      Seleccionar servicio
+
+    </option>
+
+    {services.map((service) => (
+
+      <option
+
+        key={service.id}
+
+        value={service.id}
+
+      >
+
+        {service.name}
+
+      </option>
+
+    ))}
+
+  </select>
+
+  <input
+
+    type="number"
+
+    placeholder="Precio vendido"
+
+   value={pendingServicePrice}
+
+    onChange={(e) =>
+      setPendingServicePrice(e.target.value)
+    }
+
+    className="w-full border p-4 rounded-2xl"
+
+  />
+
+  <button
+
+  onClick={addPendingSaleToCart}
+
+    className="w-full bg-green-600 text-white p-4 rounded-2xl"
+
+  >
+
+    Agregar servicio
+
+  </button>
+
+</div>
+
+      <p className="text-gray-500">
+
+        {pendingSalesCart.length > 0 && (
+
+  <div className="space-y-2 mt-4">
+
+    {pendingSalesCart.map((sale, index) => (
+
+      <div
+        key={index}
+        className="flex justify-between items-center bg-gray-100 p-3 rounded-2xl"
+      >
+
+        <div>
+
+          <p className="font-medium">
+            {sale.service_name}
+          </p>
+
+          <p className="text-sm text-gray-500">
+            S/{sale.sold_price}
+          </p>
+
+        </div>
+
+        <button
+
+          onClick={() =>
+
+            setPendingSalesCart(
+
+              pendingSalesCart.filter(
+                (_, i) => i !== index
+              )
+
+            )
+
+          }
+
+          className="bg-red-500 text-white px-3 py-1 rounded-xl"
+
+        >
+
+          X
+
+        </button>
+
+      </div>
+
+    ))}
+
+  </div>
+
+)}
+
+<div className="bg-gray-50 rounded-2xl p-5 mt-5 space-y-3">
+
+  <div className="flex justify-between">
+
+    <span>Total catálogo</span>
+
+    <strong>
+
+      S/{
+
+        pendingSalesCart.reduce(
+
+          (total, item) =>
+
+            total + Number(item.original_price),
+
+          0
+
+        )
+
+      }
+
+    </strong>
+
+  </div>
+
+  <div>
+
+    <label className="block mb-2">
+
+      Precio vendido
+
+    </label>
+
+    <input
+
+      type="number"
+
+      value={pendingSoldTotal}
+
+      onChange={(e) =>
+
+        setPendingSoldTotal(
+
+          e.target.value
+
+        )
+
+      }
+
+      className="w-full border rounded-xl p-3"
+
+    />
+
+  </div>
+
+  <div>
+
+    <label className="block mb-2">
+
+      Adelanto
+
+    </label>
+
+    <input
+
+      type="number"
+
+      value={pendingAdvance}
+
+      onChange={(e) =>
+
+        setPendingAdvance(
+
+          e.target.value
+
+        )
+
+      }
+
+      className="w-full border rounded-xl p-3"
+
+    />
+
+  </div>
+
+  <div className="flex justify-between">
+
+    <span>Saldo</span>
+
+    <strong className="text-red-600">
+
+      S/{
+
+        Number(pendingSoldTotal || 0) -
+
+        Number(pendingAdvance || 0)
+
+      }
+
+    </strong>
+
+  </div>
+
+</div>
+
+        Cliente:
+        {" "}
+        {pendingServiceAppointment?.extendedProps?.client_name}
+
+      </p>
+
+      <p className="text-gray-500">
+
+        Trabajadora:
+        {" "}
+        {pendingServiceAppointment?.extendedProps?.worker_name}
+
+      </p>
+
+      <div className="flex justify-end gap-4 mt-8">
+
+        <button
+
+          onClick={() =>
+            setShowPendingServiceModal(false)
+          }
+
+          className="bg-gray-200 px-5 py-3 rounded-2xl"
+
+        >
+
+          Cancelar
+
+        </button>
+
+        <button
+
+  onClick={savePendingSale}
+
+  className="bg-green-600 text-white px-6 py-3 rounded-2xl"
+
+>
+
+  Guardar venta futura
+
+</button>
 
       </div>
 

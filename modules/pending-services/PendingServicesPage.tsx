@@ -1,160 +1,332 @@
 "use client";
-
-import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useEffect, useState } from "react";
+
 
 export default function PendingServicesPage() {
 
-  const [clients, setClients] = useState<any[]>([]);
-  const [services, setServices] = useState<any[]>([]);
+const [
+  pendingSales,
+  setPendingSales
+] = useState<any[]>([]);
 
-  const [clientId, setClientId] = useState("");
-  const [serviceId, setServiceId] = useState("");
+const [
+  selectedSale,
+  setSelectedSale
+] = useState<any>(null);
 
-  const [serviceName, setServiceName] = useState("");
+const [
+  showDetailModal,
+  setShowDetailModal
+] = useState(false);
 
-  const [originalPrice, setOriginalPrice] = useState("");
+const [
+  showScheduleModal,
+  setShowScheduleModal
+] = useState(false);
 
-  const [soldPrice, setSoldPrice] = useState("");
+const [
+  scheduleDate,
+  setScheduleDate
+] = useState("");
 
-  const [advance, setAdvance] = useState("");
+const [
+  scheduleTime,
+  setScheduleTime
+] = useState("");
 
-  const [origin, setOrigin] = useState("Recepción");
+const [
+  branchId,
+  setBranchId
+] = useState("");
 
-  const [notes, setNotes] = useState("");
+const [
+  workerId,
+  setWorkerId
+] = useState("");
 
-  useEffect(() => {
+const [
+  workers,
+  setWorkers
+] = useState<any[]>([]);
 
-    loadData();
+const [
+  branches,
+  setBranches
+] = useState<any[]>([]);
 
-  }, []);
+const [
+  saleItems,
+  setSaleItems
+] = useState<any[]>([]);
 
-  const loadData = async () => {
+useEffect(() => {
 
-    const { data: clientsData } = await supabase
-      .from("clients")
-      .select("id, full_name")
-      .order("full_name");
+  loadPendingSales();
 
-    const { data: servicesData } = await supabase
-      .from("services")
-      .select("id, name, price")
-      .order("name");
+}, []);
 
-    setClients(clientsData || []);
-    setServices(servicesData || []);
+const loadPendingSales = async () => {
 
-  };
+  const { data } = await supabase
 
-  const selectService = (id: string) => {
+    .from("pending_sales")
 
-    setServiceId(id);
+    .select(`
 
-    const service = services.find(
-      (s) => s.id === Number(id)
+      *,
+
+      clients(
+        full_name
+      )
+
+    `)
+
+    .order(
+      "created_at",
+      { ascending: false }
     );
 
-    if (!service) return;
+  setPendingSales(
+    data || []
+  );
 
-    setServiceName(service.name);
+  const { data: workersData } =
 
-    setOriginalPrice(service.price.toString());
+  await supabase
 
-    setSoldPrice(service.price.toString());
+    .from("workers")
 
-  };
+    .select("id,name")
 
-  const savePendingService = async () => {
+    .eq("active", true)
 
-    if (!clientId) {
+    .order("name");
 
-      alert("Seleccione un cliente.");
+setWorkers(
+  workersData || []
+);
 
-      return;
+const { data: branchesData } =
+
+  await supabase
+
+    .from("branches")
+
+    .select("id,name")
+
+    .eq("active", true)
+
+    .order("name");
+
+setBranches(
+  branchesData || []
+);
+
+};
+
+
+
+
+const openSale = async (
+  sale: any
+) => {
+
+  const { data } =
+    await supabase
+
+      .from(
+        "pending_sale_items"
+      )
+
+      .select("*")
+
+      .eq(
+        "pending_sale_id",
+        sale.id
+      );
+
+  setSaleItems(
+    data || []
+  );
+
+  setSelectedSale(
+    sale
+  );
+
+  setShowDetailModal(
+    true
+  );
+
+};
+
+const createAppointmentFromPendingSale =
+async () => {
+
+  if (
+
+    !scheduleDate ||
+
+    !scheduleTime ||
+
+    !workerId ||
+
+    !branchId
+
+  ) {
+
+    alert("Complete todos los datos.");
+
+    return;
+
+  }
+
+  const { data: items } =
+
+    await supabase
+
+      .from("pending_sale_items")
+
+      .select("*")
+
+      .eq(
+        "pending_sale_id",
+        selectedSale.id
+      );
+
+  if (!items || items.length === 0) {
+
+    alert("Esta venta no tiene servicios.");
+
+    return;
+
+  }
+
+  let totalMinutes = 0;
+
+  for (const item of items) {
+
+    const { data: service } =
+
+      await supabase
+
+        .from("services")
+
+        .select("duration")
+
+        .eq(
+          "id",
+          item.service_id
+        )
+
+        .single();
+
+    const duration =
+      service?.duration || "";
+
+    if (
+
+      duration
+        .toLowerCase()
+        .includes("hora")
+
+    ) {
+
+      totalMinutes +=
+        (
+          parseInt(duration) || 1
+        ) * 60;
 
     }
 
-    if (!serviceId) {
+    else if (
 
-      alert("Seleccione un servicio.");
+      duration
+        .toLowerCase()
+        .includes("min")
 
-      return;
+    ) {
 
-    }
-
-    if (!soldPrice) {
-
-      alert("Ingrese el precio vendido.");
-
-      return;
+      totalMinutes +=
+        parseInt(duration) || 60;
 
     }
 
-    if (!advance) {
+    else {
 
-      alert("Ingrese el adelanto.");
-
-      return;
+      totalMinutes += 60;
 
     }
 
-    if (Number(advance) > Number(soldPrice)) {
+  }
 
-      alert("El adelanto no puede ser mayor al precio.");
+  const start =
+    new Date(
+      `${scheduleDate}T${scheduleTime}`
+    );
 
-      return;
+  const end =
+    new Date(start);
 
-    }
+  end.setMinutes(
+    end.getMinutes() +
+    totalMinutes
+  );
 
-    const { error } = await supabase
+  const endTime =
+    end
+      .toTimeString()
+      .slice(0,5);
 
-      .from("pending_services")
+  const { data: appointment, error } =
+
+    await supabase
+
+      .from("appointments")
 
       .insert({
 
-        client_id: Number(clientId),
+        client_id:
+          selectedSale.client_id,
 
-        service_id: Number(serviceId),
+          service_id:
+  items[0].service_id,
 
-        service_name: serviceName,
+        worker_id:
+          Number(workerId),
 
-        original_price: Number(originalPrice),
+        branch_id:
+          Number(branchId),
 
-        sold_price: Number(soldPrice),
+        appointment_date:
+          scheduleDate,
 
-        advance: Number(advance),
+        start_time:
+          scheduleTime,
 
-        status: "Pendiente",
+        end_time:
+          endTime,
 
-        origin,
+        status:
+          "Pendiente"
 
-        notes
+      })
 
-      });
+      .select()
 
-    if (error) {
+      .single();
 
-      console.log(error);
+  if (error) {
 
-      alert(error.message);
+    alert(error.message);
 
-      return;
+    return;
 
-    }
+  }
 
-    alert("Servicio pendiente registrado.");
+  alert("Cita creada.");
 
-    setClientId("");
-    setServiceId("");
-    setServiceName("");
-    setOriginalPrice("");
-    setSoldPrice("");
-    setAdvance("");
-    setOrigin("Recepción");
-    setNotes("");
-
-  };
-
+};
   return (
 
     <div className="space-y-6">
@@ -169,7 +341,7 @@ export default function PendingServicesPage() {
 
         <p className="text-gray-500 mt-2">
 
-          Registro de servicios vendidos sin fecha de atención.
+          Aquí se mostrarán todas las ventas futuras pendientes de programar.
 
         </p>
 
@@ -177,255 +349,432 @@ export default function PendingServicesPage() {
 
       <div className="bg-white rounded-3xl shadow p-8">
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="flex justify-between items-center">
 
-          <div>
+          <input
 
-            <label className="block mb-2 font-medium">
+            type="text"
 
-              Cliente
+            placeholder="Buscar cliente..."
 
-            </label>
+            className="border rounded-2xl p-3 w-[350px]"
 
-            <select
+          />
 
-              value={clientId}
+          <select className="border rounded-2xl p-3 w-[220px]">
 
-              onChange={(e) =>
-                setClientId(e.target.value)
-              }
+            <option>Todos</option>
+            <option>Pendiente</option>
+            <option>Agendado</option>
+            <option>Cancelado</option>
 
-              className="w-full border rounded-xl p-3"
-
-            >
-
-              <option value="">
-
-                Seleccionar cliente
-
-              </option>
-
-              {clients.map((client) => (
-
-                <option
-                  key={client.id}
-                  value={client.id}
-                >
-
-                  {client.full_name}
-
-                </option>
-
-              ))}
-
-            </select>
-
-          </div>
-
-          <div>
-
-            <label className="block mb-2 font-medium">
-
-              Servicio
-
-            </label>
-
-            <select
-
-              value={serviceId}
-
-              onChange={(e) =>
-                selectService(e.target.value)
-              }
-
-              className="w-full border rounded-xl p-3"
-
-            >
-
-              <option value="">
-
-                Seleccionar servicio
-
-              </option>
-
-              {services.map((service) => (
-
-                <option
-                  key={service.id}
-                  value={service.id}
-                >
-
-                  {service.name}
-
-                </option>
-
-              ))}
-
-            </select>
-
-          </div>
-
-          <div>
-
-            <label className="block mb-2 font-medium">
-
-              Precio catálogo
-
-            </label>
-
-            <input
-
-              value={originalPrice}
-
-              readOnly
-
-              className="w-full border rounded-xl p-3 bg-gray-100"
-
-            />
-
-          </div>
-
-          <div>
-
-            <label className="block mb-2 font-medium">
-
-              Precio vendido
-
-            </label>
-
-            <input
-
-              value={soldPrice}
-
-              onChange={(e) =>
-                setSoldPrice(e.target.value)
-              }
-
-              className="w-full border rounded-xl p-3"
-
-            />
-
-          </div>
-
-          <div>
-
-            <label className="block mb-2 font-medium">
-
-              Adelanto
-
-            </label>
-
-            <input
-
-              value={advance}
-
-              onChange={(e) =>
-                setAdvance(e.target.value)
-              }
-
-              className="w-full border rounded-xl p-3"
-
-            />
-
-          </div>
-
-          <div>
-
-            <label className="block mb-2 font-medium">
-
-              Saldo
-
-            </label>
-
-            <input
-
-              readOnly
-
-              value={
-                Number(soldPrice || 0) -
-                Number(advance || 0)
-              }
-
-              className="w-full border rounded-xl p-3 bg-gray-100"
-
-            />
-
-          </div>
-
-          <div>
-
-            <label className="block mb-2 font-medium">
-
-              Origen
-
-            </label>
-
-            <select
-
-              value={origin}
-
-              onChange={(e) =>
-                setOrigin(e.target.value)
-              }
-
-              className="w-full border rounded-xl p-3"
-
-            >
-
-              <option>Recepción</option>
-
-              <option>Venta adicional</option>
-
-              <option>WhatsApp</option>
-
-            </select>
-
-          </div>
-
-          <div>
-
-            <label className="block mb-2 font-medium">
-
-              Observaciones
-
-            </label>
-
-            <input
-
-              value={notes}
-
-              onChange={(e) =>
-                setNotes(e.target.value)
-              }
-
-              className="w-full border rounded-xl p-3"
-
-            />
-
-          </div>
+          </select>
 
         </div>
 
-        <div className="mt-8">
+        <div className="mt-8 overflow-x-auto">
 
-          <button
+          <table className="w-full">
 
-            onClick={savePendingService}
+            <thead>
 
-            className="bg-[#243847] text-white px-8 py-3 rounded-2xl"
+              <tr className="border-b">
 
-          >
+                <th className="text-left p-4">Cliente</th>
 
-            Guardar Servicio Pendiente
+                <th className="text-left p-4">Total</th>
 
-          </button>
+                <th className="text-left p-4">Adelanto</th>
+
+                <th className="text-left p-4">Saldo</th>
+
+                <th className="text-left p-4">Estado</th>
+
+                <th className="text-left p-4">Acciones</th>
+
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              {pendingSales.map((sale) => (
+
+  <tr
+    key={sale.id}
+    className="border-b"
+  >
+
+    <td className="p-4">
+
+      {sale.clients?.full_name}
+
+    </td>
+
+    <td className="p-4">
+
+      S/{sale.sold_total}
+
+    </td>
+
+    <td className="p-4">
+
+      S/{sale.advance}
+
+    </td>
+
+    <td className="p-4">
+
+      S/{
+        Number(sale.sold_total) -
+        Number(sale.advance)
+      }
+
+    </td>
+
+    <td className="p-4">
+
+      {sale.status}
+
+    </td>
+
+    <td className="p-4">
+
+      <button
+
+      onClick={() =>
+        openSale(sale)
+      }
+
+      className="bg-blue-600 text-white px-4 py-2 rounded-xl"
+
+    >
+
+      Ver detalle
+
+    </button>
+
+    <button
+
+  onClick={() => {
+
+    setSelectedSale(sale);
+
+    setShowScheduleModal(true);
+
+  }}
+
+  className="bg-green-600 text-white px-4 py-2 rounded-xl ml-2"
+
+>
+
+  Agendar cita
+
+</button>
+
+    
+
+    </td>
+
+  </tr>
+
+))}
+
+            </tbody>
+
+          </table>
 
         </div>
 
       </div>
 
+      {showDetailModal && (
+
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+    <div className="bg-white rounded-3xl p-8 w-[650px]">
+
+      <h2 className="text-3xl font-bold mb-6">
+
+        Venta futura
+
+      </h2>
+
+      <div className="space-y-2">
+
+        {saleItems.map((item) => (
+
+          <div
+
+            key={item.id}
+
+            className="flex justify-between border-b py-3"
+
+          >
+
+            <span>
+
+              {item.service_name}
+
+            </span>
+
+            <strong>
+
+              S/{item.sold_price}
+
+            </strong>
+
+          </div>
+
+        ))}
+
+      </div>
+
+      <div className="mt-6 border-t pt-5 space-y-2">
+
+        <div className="flex justify-between">
+
+          <span>Total vendido</span>
+
+          <strong>
+
+            S/{selectedSale?.sold_total}
+
+          </strong>
+
+        </div>
+
+        <div className="flex justify-between">
+
+          <span>Adelanto</span>
+
+          <strong>
+
+            S/{selectedSale?.advance}
+
+          </strong>
+
+        </div>
+
+        <div className="flex justify-between">
+
+          <span>Saldo</span>
+
+          <strong className="text-red-600">
+
+            S/{
+
+              Number(
+                selectedSale?.sold_total || 0
+              ) -
+
+              Number(
+                selectedSale?.advance || 0
+              )
+
+            }
+
+          </strong>
+
+        </div>
+
+      </div>
+
+      <div className="flex justify-end mt-8">
+
+        <button
+
+          onClick={() =>
+            setShowDetailModal(false)
+          }
+
+          className="bg-gray-300 px-6 py-3 rounded-2xl"
+
+        >
+
+          Cerrar
+
+        </button>
+
+      </div>
+
     </div>
+
+  </div>
+
+)}
+
+
+{showScheduleModal && (
+
+<div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+<div className="bg-white rounded-3xl p-8 w-[500px]">
+
+<h2 className="text-3xl font-bold mb-6">
+
+Agendar cita
+
+</h2>
+
+<div className="space-y-5">
+
+<input
+
+type="date"
+
+value={scheduleDate}
+
+onChange={(e)=>
+
+setScheduleDate(e.target.value)
+
+}
+
+className="w-full border rounded-xl p-3"
+
+/>
+
+<input
+
+type="time"
+
+value={scheduleTime}
+
+onChange={(e)=>
+
+setScheduleTime(e.target.value)
+
+}
+
+className="w-full border rounded-xl p-3"
+
+/>
+
+<select
+
+value={workerId}
+
+onChange={(e)=>
+
+setWorkerId(e.target.value)
+
+}
+
+className="w-full border rounded-xl p-3"
+
+>
+
+<option value="">
+
+Seleccionar trabajadora
+
+</option>
+
+{workers.map(worker=>(
+
+<option
+
+key={worker.id}
+
+value={worker.id}
+
+>
+
+{worker.name}
+
+</option>
+
+))}
+
+</select>
+
+<select
+
+value={branchId}
+
+onChange={(e)=>
+
+setBranchId(e.target.value)
+
+}
+
+className="w-full border rounded-xl p-3"
+
+>
+
+<option value="">
+
+Seleccionar sede
+
+</option>
+
+{branches.map(branch=>(
+
+<option
+
+key={branch.id}
+
+value={branch.id}
+
+>
+
+{branch.name}
+
+</option>
+
+))}
+
+</select>
+
+</div>
+
+<div className="flex justify-end gap-3 mt-8">
+
+<button
+
+onClick={()=>
+
+setShowScheduleModal(false)
+
+}
+
+className="bg-gray-300 px-5 py-3 rounded-2xl"
+
+>
+
+Cancelar
+
+</button>
+
+<button
+
+onClick={
+createAppointmentFromPendingSale
+}
+
+className="bg-green-600 text-white px-5 py-3 rounded-2xl"
+
+>
+
+Crear cita
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+)}
+    </div>
+
+
+
+
+
 
   );
 
-}
+} 
