@@ -950,13 +950,13 @@ const maxEffectiveness =
 
   return (
     <div>
-      <h1 className="text-5xl font-bold text-[#243847] mb-8">
+      <h1 className="text-3xl md:text-4xl xl:text-5xl font-bold text-[#243847] mb-6 md:mb-8">
         Dashboard
       </h1>
 
-      <div className="flex gap-4 mb-8">
+      <div className="flex flex-col lg:flex-row gap-4 mb-8">
 
-  <div>
+  <div className="w-full lg:w-auto">
     <label className="block text-sm text-gray-500 mb-1">
       Desde
     </label>
@@ -971,7 +971,7 @@ const maxEffectiveness =
     />
   </div>
 
-  <div>
+ <div className="w-full lg:w-auto">
     <label className="block text-sm text-gray-500 mb-1">
       Hasta
     </label>
@@ -988,14 +988,14 @@ const maxEffectiveness =
 
   <button
   onClick={exportToExcel}
-  className="bg-green-600 text-white px-4 py-2 rounded-xl self-end"
+className="bg-green-600 text-white px-4 py-3 rounded-xl w-full lg:w-auto lg:self-end"
 >
   📊 Exportar Excel
 </button>
 
 </div>
 
-      <div className="grid grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
 
         <div className="bg-white p-6 rounded-3xl shadow">
           <p className="text-gray-500">
