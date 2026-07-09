@@ -42,10 +42,10 @@ const [
 
   return (
 
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-gray-100 overflow-hidden">
 
       {/* SIDEBAR */}
-      <div className="w-[280px] bg-[#243847] text-white p-6 flex flex-col">
+      <div className="w-64 xl:w-72 bg-[#243847] text-white p-4 md:p-6 flex flex-col flex-shrink-0 overflow-y-auto">
 
         {/* LOGO */}
         <div className="flex justify-center mb-10">
@@ -53,7 +53,7 @@ const [
           <img
             src="/logo.png"
             alt="Natural Essence"
-            className="w-[220px] object-contain"
+            className="w-40 md:w-48 xl:w-56 object-contain"
           />
 
         </div>
@@ -65,7 +65,7 @@ const [
   onClick={() =>
     setPage("dashboard")
   }
-  className={`text-left p-4 rounded-2xl transition font-medium ${
+  className={`text-left px-4 py-3 rounded-2xl transition font-medium ${
     page === "dashboard"
       ? "bg-white text-[#243847]"
       : "hover:bg-white/10"
@@ -81,7 +81,7 @@ const [
             onClick={() =>
               setPage("reservas")
             }
-            className={`text-left p-4 rounded-2xl transition font-medium ${
+            className={`text-left px-4 py-3 rounded-2xl transition font-medium ${
               page === "reservas"
                 ? "bg-white text-[#243847]"
                 : "hover:bg-white/10"
@@ -97,7 +97,7 @@ const [
             onClick={() =>
               setPage("clientes")
             }
-            className={`text-left p-4 rounded-2xl transition font-medium ${
+            className={`text-left px-4 py-3 rounded-2xl transition font-medium ${
               page === "clientes"
                 ? "bg-white text-[#243847]"
                 : "hover:bg-white/10"
@@ -113,7 +113,7 @@ const [
             onClick={() =>
               setPage("servicios")
             }
-            className={`text-left p-4 rounded-2xl transition font-medium ${
+            className={`text-left px-4 py-3 rounded-2xl transition font-medium ${
               page === "servicios"
                 ? "bg-white text-[#243847]"
                 : "hover:bg-white/10"
@@ -131,7 +131,7 @@ const [
             onClick={() =>
               setPage("inventario")
             }
-            className={`text-left p-4 rounded-2xl transition font-medium ${
+            className={`text-left px-4 py-3 rounded-2xl transition font-medium ${
               page === "inventario"
                 ? "bg-white text-[#243847]"
                 : "hover:bg-white/10"
@@ -148,7 +148,7 @@ const [
       "movimientos-inventario"
     )
   }
-  className={`text-left p-4 rounded-2xl transition ${
+  className={`text-left px-4 py-3 rounded-2xl transition ${
     page ===
     "movimientos-inventario"
       ? "bg-white text-[#243847]"
@@ -167,7 +167,7 @@ const [
                 "trabajadoras"
               )
             }
-            className={`text-left p-4 rounded-2xl transition font-medium ${
+            className={`text-left px-4 py-3 rounded-2xl transition font-medium ${
               page === "trabajadoras"
                 ? "bg-white text-[#243847]"
                 : "hover:bg-white/10"
@@ -182,7 +182,7 @@ const [
             onClick={() =>
               setPage("paquetes")
             }
-            className={`text-left p-4 rounded-2xl transition ${
+            className={`text-left px-4 py-3 rounded-2xl transition ${
               page === "paquetes"
                 ? "bg-white text-[#243847]"
                 : "hover:bg-white/10"
@@ -197,7 +197,7 @@ const [
   onClick={() =>
     setPage("zonas-laser")
   }
-  className={`text-left p-4 rounded-2xl transition font-medium ${
+  className={`text-left px-4 py-3 rounded-2xl transition font-medium ${
     page === "zonas-laser"
       ? "bg-white text-[#243847]"
       : "hover:bg-white/10"
@@ -212,7 +212,7 @@ const [
   onClick={() =>
     setPage("calculadora-laser")
   }
-  className={`text-left p-4 rounded-2xl transition font-medium ${
+  className={`text-left px-4 py-3 rounded-2xl transition font-medium ${
     page === "calculadora-laser"
       ? "bg-white text-[#243847]"
       : "hover:bg-white/10"
@@ -229,7 +229,7 @@ const [
       "ventas-internas"
     )
   }
-  className={`text-left p-4 rounded-2xl transition ${
+  className={`text-left px-4 py-3 rounded-2xl transition ${
     page ===
     "ventas-internas"
       ? "bg-white text-[#243847]"
@@ -247,7 +247,7 @@ const [
       "ventas-productos"
     )
   }
-  className={`text-left p-4 rounded-2xl transition ${
+  className={`text-left px-4 py-3 rounded-2xl transition ${
     page ===
     "ventas-productos"
       ? "bg-white text-[#243847]"
@@ -263,7 +263,7 @@ const [
   onClick={() =>
     setPage("servicios-pendientes")
   }
-  className={`text-left p-4 rounded-2xl transition ${
+  className={`text-left px-4 py-3 rounded-2xl transition ${
     page === "servicios-pendientes"
       ? "bg-white text-[#243847]"
       : "hover:bg-white/10"
@@ -278,7 +278,7 @@ const [
   onClick={() =>
     setPage("gastos")
   }
-  className={`text-left p-4 rounded-2xl transition ${
+  className={`text-left px-4 py-3 rounded-2xl transition ${
     page === "gastos"
       ? "bg-white text-[#243847]"
       : "hover:bg-white/10"
@@ -294,7 +294,7 @@ const [
       </div>
 
       {/* CONTENIDO */}
-      <div className="flex-1 p-10 overflow-auto">
+      <div className="flex-1 overflow-auto p-4 md:p-6 xl:p-10 min-w-0">
 
         {/* RESERVAS */}
         {page === "reservas" && (
