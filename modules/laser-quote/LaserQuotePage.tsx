@@ -24,27 +24,11 @@ export default function LaserQuotePage() {
 
   }, []);
 
-  const subtotal = selectedZones.reduce(
+const subtotal = selectedZones.reduce(
 
-  (sum, zone) => {
+  (sum, zone) =>
 
-    let unitPrice = Number(zone.price);
-
-    if (packageType === 3) {
-
-      unitPrice *= 0.90;
-
-    }
-
-    if (packageType === 6) {
-
-      unitPrice *= 0.85;
-
-    }
-
-    return sum + (unitPrice * packageType);
-
-  },
+    sum + Number(zone.price),
 
   0
 
@@ -62,30 +46,15 @@ if (selectedZones.length >= 3) {
 
   selectedZones.forEach((zone) => {
 
-    let unitPrice = Number(zone.price);
+    const totalPrice = Number(zone.price);
 
-    if (packageType === 3) {
+if (totalPrice < cheapestPrice) {
 
-      unitPrice *= 0.90;
+  cheapestPrice = totalPrice;
 
-    }
+  cheapestZone = zone;
 
-    if (packageType === 6) {
-
-      unitPrice *= 0.85;
-
-    }
-
-    const totalPrice =
-      unitPrice * packageType;
-
-    if (totalPrice < cheapestPrice) {
-
-      cheapestPrice = totalPrice;
-
-      cheapestZone = zone;
-
-    }
+}
 
   });
 
@@ -116,29 +85,12 @@ ${packageType} sesión${packageType > 1 ? "es" : ""}
 
   selectedZones.forEach((zone) => {
 
-    let unitPrice = Number(zone.price);
+  message +=
 
-    if (packageType === 3) {
-
-      unitPrice *= 0.90;
-
-    }
-
-    if (packageType === 6) {
-
-      unitPrice *= 0.85;
-
-    }
-
-    const totalPrice =
-      unitPrice * packageType;
-
-    message +=
-
-`• ${zone.name}: S/${totalPrice.toFixed(2)}
+`• ${zone.name}: S/${Number(zone.price).toFixed(2)}
 `;
 
-  });
+});
 
   message += `
 
@@ -462,82 +414,59 @@ Agregar
 
     <div className="space-y-3">
 
-      {selectedZones.map((zone) => {
+{selectedZones.map((zone) => (
 
-        let unitPrice = Number(zone.price);
+  <div
 
-        if (packageType === 3) {
+    key={zone.id}
 
-          unitPrice *= 0.90;
+    className="flex justify-between items-center border rounded-2xl p-4"
 
-        }
+  >
 
-        if (packageType === 6) {
+    <div>
 
-          unitPrice *= 0.85;
+      <p className="font-semibold">
 
-        }
+        {zone.name}
 
-        const totalPrice =
-          unitPrice * packageType;
+      </p>
 
-        return (
+      <p className="text-green-600">
 
-          <div
+        S/{Number(zone.price).toFixed(2)}
 
-            key={zone.id}
+      </p>
 
-            className="flex justify-between items-center border rounded-2xl p-4"
+    </div>
 
-          >
+    <button
 
-            <div>
+      onClick={() =>
 
-              <p className="font-semibold">
+        setSelectedZones(
 
-                {zone.name}
+          selectedZones.filter(
 
-              </p>
+            (item) => item.id !== zone.id
 
-              <p className="text-green-600">
+          )
 
-                S/{totalPrice.toFixed(2)}
+        )
 
-              </p>
+      }
 
-            </div>
+      className="bg-red-500 text-white px-4 py-2 rounded-xl"
 
-            <button
+    >
 
-              onClick={() =>
+      Quitar
 
-                setSelectedZones(
+    </button>
 
-                  selectedZones.filter(
+  </div>
 
-                    (item) =>
-
-                      item.id !== zone.id
-
-                  )
-
-                )
-
-              }
-
-              className="bg-red-500 text-white px-4 py-2 rounded-xl"
-
-            >
-
-              Quitar
-
-            </button>
-
-          </div>
-
-        );
-
-      })}
+))}
 
     </div>
 
