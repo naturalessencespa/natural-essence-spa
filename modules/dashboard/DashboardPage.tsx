@@ -1035,13 +1035,17 @@ className="bg-green-600 text-white px-4 py-3 rounded-xl w-full lg:w-auto lg:self
 
       </div>
 
-      <div className="bg-white rounded-3xl shadow mt-8 p-6">
+      <div className="bg-white rounded-3xl shadow mt-8 p-4 md:p-6">
 
-        <h2 className="text-2xl font-bold text-[#243847] mb-4">
-          Citas Atendidas
-        </h2>
+  <h2 className="text-xl md:text-2xl font-bold text-[#243847] mb-4">
 
-       <table className="w-full">
+    Citas Atendidas
+
+  </h2>
+
+  <div className="overflow-x-auto">
+
+    <table className="w-full min-w-[900px]">
 
   <thead>
 
@@ -1167,15 +1171,19 @@ className="bg-green-600 text-white px-4 py-3 rounded-xl w-full lg:w-auto lg:self
 
 </table>
 
-      </div>
+  </div>
 
-      <div className="bg-white rounded-3xl shadow mt-8 p-6">
+</div>
 
-  <h2 className="text-2xl font-bold text-[#243847] mb-4">
+    <div className="bg-white rounded-3xl shadow mt-8 p-4 md:p-6">
+
+  <h2 className="text-xl md:text-2xl font-bold text-[#243847] mb-4">
     Ventas por Día
   </h2>
 
-  <table className="w-full">
+  <div className="overflow-x-auto">
+
+    <table className="w-full min-w-[450px]">
 
     <thead>
 
@@ -1237,13 +1245,16 @@ className="bg-green-600 text-white px-4 py-3 rounded-xl w-full lg:w-auto lg:self
 
 </div>
 
-  <div className="bg-white rounded-3xl shadow mt-8 p-6">
+</div>
+<div className="bg-white rounded-3xl shadow mt-8 p-4 md:p-6">
 
-  <h2 className="text-2xl font-bold text-[#243847] mb-4">
+  <h2 className="text-xl md:text-2xl font-bold text-[#243847] mb-4">
     Ventas por Trabajadora
   </h2>
 
-  <table className="w-full">
+  <div className="overflow-x-auto">
+
+    <table className="w-full min-w-[650px]">
 
     <thead>
 
@@ -1301,13 +1312,17 @@ className="bg-green-600 text-white px-4 py-3 rounded-xl w-full lg:w-auto lg:self
 
 </div>
 
-<div className="bg-white rounded-3xl shadow mt-8 p-6">
+</div>
 
-  <h2 className="text-2xl font-bold text-[#243847] mb-4">
+<div className="bg-white rounded-3xl shadow mt-8 p-4 md:p-6">
+
+  <h2 className="text-xl md:text-2xl font-bold text-[#243847] mb-4">
     Efectividad en Ventas Adicionales
   </h2>
 
-  <table className="w-full">
+  <div className="overflow-x-auto">
+
+    <table className="w-full min-w-[850px]">
 
     <thead>
 
@@ -1398,13 +1413,17 @@ className="bg-green-600 text-white px-4 py-3 rounded-xl w-full lg:w-auto lg:self
 
 </div>
 
-<div className="bg-white rounded-3xl shadow mt-8 p-6">
+</div>
 
-  <h2 className="text-2xl font-bold text-[#243847] mb-4">
+<div className="bg-white rounded-3xl shadow mt-8 p-4 md:p-6">
+
+  <h2 className="text-xl md:text-2xl font-bold text-[#243847] mb-4">
     Servicios Más Vendidos
   </h2>
 
-  <table className="w-full">
+  <div className="overflow-x-auto">
+
+    <table className="w-full min-w-[600px]">
 
     <thead>
 
@@ -1462,13 +1481,17 @@ className="bg-green-600 text-white px-4 py-3 rounded-xl w-full lg:w-auto lg:self
 
 </div>
 
-<div className="bg-white rounded-3xl shadow mt-8 p-6">
+</div>
 
-  <h2 className="text-2xl font-bold text-[#243847] mb-4">
+<div className="bg-white rounded-3xl shadow mt-8 p-4 md:p-6">
+
+  <h2 className="text-xl md:text-2xl font-bold text-[#243847] mb-4">
     Mejores Clientes
   </h2>
 
-  <table className="w-full">
+  <div className="overflow-x-auto">
+
+    <table className="w-full min-w-[650px]">
 
     <thead>
 
@@ -1527,14 +1550,18 @@ className="bg-green-600 text-white px-4 py-3 rounded-xl w-full lg:w-auto lg:self
 
 </div>
 
+</div>
 
-<div className="bg-white rounded-3xl shadow mt-8 p-6">
 
-  <h2 className="text-2xl font-bold text-[#243847] mb-4">
+<div className="bg-white rounded-3xl shadow mt-8 p-4 md:p-6">
+
+  <h2 className="text-xl md:text-2xl font-bold text-[#243847] mb-4">
     Clientes Inactivos
   </h2>
 
-  <table className="w-full">
+  <div className="overflow-x-auto">
+
+    <table className="w-full min-w-[650px]">
 
     <thead>
 
@@ -1593,9 +1620,11 @@ className="bg-green-600 text-white px-4 py-3 rounded-xl w-full lg:w-auto lg:self
 
 </div>
 
-<div className="bg-white rounded-3xl shadow mt-8 p-6">
+</div>
 
-  <h2 className="text-2xl font-bold text-[#243847] mb-4">
+<div className="bg-white rounded-3xl shadow mt-8 p-4 md:p-6">
+
+  <h2 className="text-xl md:text-2xl font-bold text-[#243847] mb-4">
     ⭐ Ventas Adicionales
   </h2>
 
@@ -1606,7 +1635,9 @@ className="bg-green-600 text-white px-4 py-3 rounded-xl w-full lg:w-auto lg:self
 
   </p>
 
-  <table className="w-full">
+  <div className="overflow-x-auto">
+
+    <table className="w-full min-w-[900px]">
 
     <thead>
 
@@ -1704,6 +1735,7 @@ className="bg-green-600 text-white px-4 py-3 rounded-xl w-full lg:w-auto lg:self
 
   </table>
 
+</div>
 </div>
     </div>
   );
