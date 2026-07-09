@@ -3545,22 +3545,79 @@ setSessionFrequency(
 
 </div>
 
-<div>
+<div className="bg-amber-50 border-2 border-amber-400 rounded-3xl p-6 mb-6">
+
+  <div className="flex items-center gap-3 mb-4">
+
+    <span className="text-3xl">
+      💰
+    </span>
+
+    <div>
+
+      <h3 className="text-xl font-bold text-amber-700">
+
+        Precio final acordado con el cliente
+
+      </h3>
+
+      <p className="text-sm text-gray-600">
+
+        Este será el importe total que pagará el cliente por todo el paquete.
+
+      </p>
+
+    </div>
+
+  </div>
 
   <label className="block mb-2 font-medium text-gray-700">
+
     Precio final
+
   </label>
 
   <input
+
     type="number"
+
     value={manualPackagePrice}
+
     onChange={(e)=>
+
       setManualPackagePrice(
+
         Number(e.target.value)
+
       )
+
     }
-    className="w-full border p-4 rounded-2xl"
+
+    className="w-full border-2 border-amber-500 rounded-2xl p-4 text-3xl font-bold text-center"
+
   />
+
+  <p className="mt-3 text-red-600 text-sm font-medium">
+
+    ⚠️ Verifica este importe antes de guardar el paquete.
+
+  </p>
+
+</div>
+
+<div className="border-t pt-4 flex justify-between items-center">
+
+  <span className="text-xl font-bold text-[#243847]">
+
+    TOTAL FINAL
+
+  </span>
+
+  <span className="text-3xl font-bold text-[#243847]">
+
+    S/ {totalPrice.toFixed(2)}
+
+  </span>
 
 </div>
 
