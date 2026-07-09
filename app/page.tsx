@@ -35,6 +35,8 @@ export default function Home() {
 const [page, setPage] =
   useState("dashboard");
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
 const [
   pendingLaserSale,
   setPendingLaserSale
@@ -42,10 +44,87 @@ const [
 
   return (
 
-    <div className="flex min-h-screen bg-gray-100 overflow-hidden">
+   <div className="relative flex min-h-screen bg-gray-100">
+
+    {/* BOTÓN MÓVIL */}
+
+<button
+
+  onClick={() =>
+
+    setSidebarOpen(true)
+
+  }
+
+  className="md:hidden fixed top-4 left-4 z-50 bg-[#243847] text-white p-3 rounded-xl shadow-lg"
+
+>
+
+☰
+
+</button>
 
       {/* SIDEBAR */}
-      <div className="w-64 xl:w-72 bg-[#243847] text-white p-4 md:p-6 flex flex-col flex-shrink-0 overflow-y-auto">
+      <div
+
+className={`
+
+fixed md:static
+
+top-0 left-0
+
+h-screen
+
+w-72
+
+bg-[#243847]
+
+text-white
+
+p-6
+
+flex
+
+flex-col
+
+transition-transform
+
+duration-300
+
+z-50
+
+${
+
+sidebarOpen
+
+? "translate-x-0"
+
+: "-translate-x-full"
+
+}
+
+md:translate-x-0
+
+`}
+
+>
+  
+
+  {sidebarOpen && (
+
+<div
+
+onClick={()=>
+
+setSidebarOpen(false)
+
+}
+
+className="fixed inset-0 bg-black/40 z-40 md:hidden"
+
+/>
+
+)}
 
         {/* LOGO */}
         <div className="flex justify-center mb-10">
@@ -62,9 +141,10 @@ const [
         <div className="flex flex-col gap-3">
 
           <button
-  onClick={() =>
-    setPage("dashboard")
-  }
+  onClick={() => {
+    setPage("dashboard");
+      setSidebarOpen(false);
+  }}
   className={`text-left px-4 py-3 rounded-2xl transition font-medium ${
     page === "dashboard"
       ? "bg-white text-[#243847]"
@@ -78,9 +158,11 @@ const [
 
           {/* RESERVAS */}
           <button
-            onClick={() =>
-              setPage("reservas")
-            }
+            onClick={() =>{
+              setPage("reservas");
+              setSidebarOpen(false);
+              
+            }}
             className={`text-left px-4 py-3 rounded-2xl transition font-medium ${
               page === "reservas"
                 ? "bg-white text-[#243847]"
@@ -94,9 +176,10 @@ const [
 
           {/* CLIENTES */}
           <button
-            onClick={() =>
-              setPage("clientes")
-            }
+            onClick={() =>{
+              setPage("clientes");
+              setSidebarOpen(false);
+            }}
             className={`text-left px-4 py-3 rounded-2xl transition font-medium ${
               page === "clientes"
                 ? "bg-white text-[#243847]"
@@ -110,9 +193,10 @@ const [
 
           {/* SERVICIOS */}
           <button
-            onClick={() =>
-              setPage("servicios")
-            }
+            onClick={() =>{
+              setPage("servicios");
+              setSidebarOpen(false);
+            }}
             className={`text-left px-4 py-3 rounded-2xl transition font-medium ${
               page === "servicios"
                 ? "bg-white text-[#243847]"
@@ -128,9 +212,10 @@ const [
 
           {/* INVENTARIO */}
           <button
-            onClick={() =>
-              setPage("inventario")
-            }
+            onClick={() =>{
+              setPage("inventario");
+              setSidebarOpen(false);
+            }}
             className={`text-left px-4 py-3 rounded-2xl transition font-medium ${
               page === "inventario"
                 ? "bg-white text-[#243847]"
@@ -143,11 +228,12 @@ const [
           </button>
 
             <button
-  onClick={() =>
+  onClick={() =>{
     setPage(
       "movimientos-inventario"
-    )
-  }
+    );
+    setSidebarOpen(false);
+  }}
   className={`text-left px-4 py-3 rounded-2xl transition ${
     page ===
     "movimientos-inventario"
@@ -162,11 +248,12 @@ const [
 
           {/* TRABAJADORAS */}
           <button
-            onClick={() =>
+            onClick={() =>{
               setPage(
                 "trabajadoras"
-              )
-            }
+              );
+              setSidebarOpen(false);
+            }}
             className={`text-left px-4 py-3 rounded-2xl transition font-medium ${
               page === "trabajadoras"
                 ? "bg-white text-[#243847]"
@@ -179,9 +266,10 @@ const [
           </button>
 
           <button
-            onClick={() =>
-              setPage("paquetes")
-            }
+            onClick={() =>{
+              setPage("paquetes");
+              setSidebarOpen(false);
+            }}
             className={`text-left px-4 py-3 rounded-2xl transition ${
               page === "paquetes"
                 ? "bg-white text-[#243847]"
@@ -194,9 +282,10 @@ const [
          </button>
 
          <button
-  onClick={() =>
-    setPage("zonas-laser")
-  }
+  onClick={() =>{
+    setPage("zonas-laser");
+    setSidebarOpen(false);
+  }}
   className={`text-left px-4 py-3 rounded-2xl transition font-medium ${
     page === "zonas-laser"
       ? "bg-white text-[#243847]"
@@ -209,9 +298,10 @@ const [
 </button>
 
 <button
-  onClick={() =>
-    setPage("calculadora-laser")
-  }
+  onClick={() =>{
+    setPage("calculadora-laser");
+    setSidebarOpen(false);
+  }}
   className={`text-left px-4 py-3 rounded-2xl transition font-medium ${
     page === "calculadora-laser"
       ? "bg-white text-[#243847]"
@@ -224,11 +314,12 @@ const [
 </button>
 
          <button
-  onClick={() =>
+  onClick={() =>{
     setPage(
       "ventas-internas"
-    )
-  }
+    );
+    setSidebarOpen(false);
+  }}
   className={`text-left px-4 py-3 rounded-2xl transition ${
     page ===
     "ventas-internas"
@@ -242,11 +333,12 @@ const [
 </button>
 
 <button
-  onClick={() =>
+  onClick={() =>{
     setPage(
       "ventas-productos"
-    )
-  }
+    );
+    setSidebarOpen(false);
+  }}
   className={`text-left px-4 py-3 rounded-2xl transition ${
     page ===
     "ventas-productos"
@@ -260,9 +352,10 @@ const [
 </button>
 
 <button
-  onClick={() =>
-    setPage("servicios-pendientes")
-  }
+  onClick={() =>{
+    setPage("servicios-pendientes");
+    setSidebarOpen(false);
+  }}
   className={`text-left px-4 py-3 rounded-2xl transition ${
     page === "servicios-pendientes"
       ? "bg-white text-[#243847]"
@@ -275,9 +368,10 @@ const [
 </button>
 
 <button
-  onClick={() =>
-    setPage("gastos")
-  }
+  onClick={() =>{
+    setPage("gastos");
+    setSidebarOpen(false);
+  }}
   className={`text-left px-4 py-3 rounded-2xl transition ${
     page === "gastos"
       ? "bg-white text-[#243847]"
@@ -294,7 +388,7 @@ const [
       </div>
 
       {/* CONTENIDO */}
-      <div className="flex-1 overflow-auto p-4 md:p-6 xl:p-10 min-w-0">
+      <div className="flex-1 overflow-auto p-4 md:p-6 xl:p-10">
 
         {/* RESERVAS */}
         {page === "reservas" && (
