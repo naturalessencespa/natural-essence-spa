@@ -56,7 +56,22 @@ const [
 
   }
 
-  className="md:hidden fixed top-4 left-4 z-50 bg-[#243847] text-white p-3 rounded-xl shadow-lg"
+ className={`
+
+md:hidden
+fixed
+top-4
+left-4
+z-50
+bg-[#243847]
+text-white
+p-3
+rounded-xl
+shadow-lg
+
+${sidebarOpen ? "hidden" : ""}
+
+`}
 
 >
 
@@ -110,21 +125,7 @@ md:translate-x-0
 >
   
 
-  {sidebarOpen && (
 
-<div
-
-onClick={()=>
-
-setSidebarOpen(false)
-
-}
-
-className="fixed inset-0 bg-black/40 z-40 md:hidden"
-
-/>
-
-)}
 
         {/* LOGO */}
         <div className="flex justify-center mb-10">
@@ -386,6 +387,22 @@ className="fixed inset-0 bg-black/40 z-40 md:hidden"
         </div>
 
       </div>
+
+        {sidebarOpen && (
+
+<div
+
+onClick={()=>
+
+setSidebarOpen(false)
+
+}
+
+className="fixed inset-0 bg-black/40 z-40 md:hidden"
+
+/>
+
+)}
 
       {/* CONTENIDO */}
       <div className="flex-1 overflow-auto p-4 md:p-6 xl:p-10">
