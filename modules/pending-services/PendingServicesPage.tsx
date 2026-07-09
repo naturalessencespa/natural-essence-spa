@@ -11,6 +11,16 @@ const [
 ] = useState<any[]>([]);
 
 const [
+  search,
+  setSearch
+] = useState("");
+
+const [
+  statusFilter,
+  setStatusFilter
+] = useState("Pendiente");
+
+const [
   selectedSale,
   setSelectedSale
 ] = useState<any>(null);
@@ -64,28 +74,37 @@ useEffect(() => {
 
   loadPendingSales();
 
-}, []);
+}, [statusFilter]);
 
 const loadPendingSales = async () => {
 
-  const { data } = await supabase
+  let query = supabase
 
     .from("pending_sales")
 
     .select(`
-
       *,
-
       clients(
         full_name
       )
-
     `)
 
     .order(
       "created_at",
       { ascending: false }
     );
+
+  if (statusFilter !== "Todos") {
+
+    query = query.eq(
+      "status",
+      statusFilter
+    );
+
+  }
+
+  const { data } =
+    await query;
 
   setPendingSales(
     data || []
@@ -286,31 +305,37 @@ async () => {
 
       .insert({
 
-        client_id:
-          selectedSale.client_id,
+  client_id:
+    selectedSale.client_id,
 
-          service_id:
-  items[0].service_id,
+  service_id:
+    items[0].service_id,
 
-        worker_id:
-          Number(workerId),
+  worker_id:
+    Number(workerId),
 
-        branch_id:
-          Number(branchId),
+  branch_id:
+    Number(branchId),
 
-        appointment_date:
-          scheduleDate,
+  appointment_date:
+    scheduleDate,
 
-        start_time:
-          scheduleTime,
+  start_time:
+    scheduleTime,
 
-        end_time:
-          endTime,
+  end_time:
+    endTime,
 
-        status:
-          "Pendiente"
+  original_price:
+    Number(selectedSale.sold_total),
 
-      })
+  final_price:
+    Number(selectedSale.sold_total),
+
+  status:
+    "Pendiente"
+
+})
 
       .select()
 
@@ -324,7 +349,100 @@ async () => {
 
   }
 
-  alert("Cita creada.");
+  const reservedServices = items.map((item) => ({
+
+  appointment_id: appointment.id,
+
+  service_id: item.service_id
+
+}));
+
+const { error: reservedError } =
+
+  await supabase
+
+    .from("appointment_reserved_services")
+
+    .insert(reservedServices);
+
+if (reservedError) {
+
+  alert(reservedError.message);
+
+  return;
+
+}
+
+if (Number(selectedSale.advance) > 0) {
+
+  const { error: advanceError } =
+
+    await supabase
+
+      .from("appointment_advances")
+
+      .insert({
+
+        appointment_id:
+          appointment.id,
+
+        client_id:
+          selectedSale.client_id,
+
+        amount:
+          Number(selectedSale.advance),
+
+        status:
+          "Activo"
+
+      });
+
+  if (advanceError) {
+
+    alert(advanceError.message);
+
+    return;
+
+  }
+
+}
+
+const { error: pendingError } =
+
+  await supabase
+
+    .from("pending_sales")
+
+    .update({
+
+      status:
+        "Agendado",
+
+      appointment_generated_id:
+        appointment.id
+
+    })
+
+    .eq(
+      "id",
+      selectedSale.id
+    );
+
+if (pendingError) {
+
+  alert(pendingError.message);
+
+  return;
+
+}
+
+  
+
+  setShowScheduleModal(false);
+
+loadPendingSales();
+
+alert("Cita creada correctamente.");
 
 };
   return (
@@ -351,24 +469,55 @@ async () => {
 
         <div className="flex justify-between items-center">
 
-          <input
+         <input
 
-            type="text"
+type="text"
 
-            placeholder="Buscar cliente..."
+placeholder="Buscar cliente..."
 
-            className="border rounded-2xl p-3 w-[350px]"
+value={search}
 
-          />
+onChange={(e)=>
 
-          <select className="border rounded-2xl p-3 w-[220px]">
+setSearch(
+e.target.value
+)
 
-            <option>Todos</option>
-            <option>Pendiente</option>
-            <option>Agendado</option>
-            <option>Cancelado</option>
+}
 
-          </select>
+className="border rounded-2xl p-3 w-[350px]"
+
+/>
+
+          
+
+        <select
+
+value={statusFilter}
+
+onChange={(e)=>
+
+setStatusFilter(
+e.target.value
+)
+
+}
+
+className="border rounded-2xl p-3 w-[220px]"
+
+>
+
+<option>Pendiente</option>
+
+<option>Agendado</option>
+
+<option>Consumido</option>
+
+<option>Cancelado</option>
+
+<option>Todos</option>
+
+</select>
 
         </div>
 
@@ -398,7 +547,24 @@ async () => {
 
             <tbody>
 
-              {pendingSales.map((sale) => (
+              {pendingSales
+
+.filter((sale)=>
+
+sale.clients?.full_name
+
+.toLowerCase()
+
+.includes(
+
+search.toLowerCase()
+
+)
+
+)
+
+.map((sale)=>(
+
 
   <tr
     key={sale.id}
@@ -454,23 +620,41 @@ async () => {
 
     </button>
 
-    <button
+{sale.status === "Pendiente" ? (
 
-  onClick={() => {
+<button
 
-    setSelectedSale(sale);
+onClick={() => {
 
-    setShowScheduleModal(true);
+setSelectedSale(sale);
 
-  }}
+setShowScheduleModal(true);
 
-  className="bg-green-600 text-white px-4 py-2 rounded-xl ml-2"
+}}
+
+className="bg-green-600 text-white px-4 py-2 rounded-xl ml-2"
 
 >
 
-  Agendar cita
+Agendar cita
 
 </button>
+
+) : (
+
+<button
+
+disabled
+
+className="bg-gray-300 text-gray-500 px-4 py-2 rounded-xl ml-2 cursor-not-allowed"
+
+>
+
+Agendar cita
+
+</button>
+
+)}
 
     
 

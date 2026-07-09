@@ -24,6 +24,8 @@ import DashboardPage from "@/modules/dashboard/DashboardPage";
 
 import LaserZonesPage from "@/modules/laser-zones/LaserZonesPage";
 
+import LaserQuotePage from "@/modules/laser-quote/LaserQuotePage";
+
 import ExpensesPage from "@/modules/expenses/ExpensesPage";
 
 import PendingServicesPage from "@/modules/pending-services/PendingServicesPage";
@@ -206,6 +208,21 @@ const [
 
 </button>
 
+<button
+  onClick={() =>
+    setPage("calculadora-laser")
+  }
+  className={`text-left p-4 rounded-2xl transition font-medium ${
+    page === "calculadora-laser"
+      ? "bg-white text-[#243847]"
+      : "hover:bg-white/10"
+  }`}
+>
+
+  Calculadora Láser
+
+</button>
+
          <button
   onClick={() =>
     setPage(
@@ -335,6 +352,10 @@ const [
         {/* ZONA LÁSER */}
         {page === "zonas-laser" && (
           <LaserZonesPage />
+        )}
+
+        {page === "calculadora-laser" && (
+          <LaserQuotePage />
         )}
 
        {/* VENTAS INTERNAS */}
