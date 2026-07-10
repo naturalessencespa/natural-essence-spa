@@ -197,3 +197,20 @@
   }
 
 }
+
+.fc .fc-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fc .fc-toolbar-chunk {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.fc .fc-button {
+  font-size: 12px;
+  padding: .3rem .5rem;
+}
