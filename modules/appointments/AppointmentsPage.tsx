@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 import FullCalendar from "@fullcalendar/react";
 
@@ -252,6 +252,9 @@ const [
 ] = useState<any>(null);
 
 const [isMobile, setIsMobile] = useState(false);
+
+const calendarRef =
+useRef<FullCalendar>(null);
 
   // OBTENER CITAS
   const fetchAppointments = async () => {
@@ -1039,21 +1042,29 @@ alert(
 
   }, []);
 
-  useEffect(() => {
+useEffect(() => {
 
-  const checkScreen = () => {
+  const handleResize = () => {
 
-    setIsMobile(window.innerWidth < 768);
+    setIsMobile(
+      window.innerWidth < 768
+    );
 
   };
 
-  checkScreen();
+  handleResize();
 
-  window.addEventListener("resize", checkScreen);
+  window.addEventListener(
+    "resize",
+    handleResize
+  );
 
   return () =>
 
-    window.removeEventListener("resize", checkScreen);
+    window.removeEventListener(
+      "resize",
+      handleResize
+    );
 
 }, []);
 
@@ -2450,6 +2461,32 @@ if (appointment?.package_id) {
       {/* CALENDARIO */}
       <div className="calendar-mobile bg-white p-2 md:p-6 rounded-3xl shadow-xl overflow-x-auto">
 
+        {isMobile && (
+
+<div className="flex justify-center mb-4">
+
+<button
+
+onClick={()=>
+
+calendarRef.current
+?.getApi()
+.today()
+
+}
+
+className="bg-[#243847] text-white px-6 py-2 rounded-xl"
+
+>
+
+Hoy
+
+</button>
+
+</div>
+
+)}
+
         <FullCalendar
  
           locale={esLocale}
@@ -2481,7 +2518,7 @@ titleFormat={{
 
 }
 
-          headerToolbar={
+        headerToolbar={
 
   isMobile
 
@@ -2491,7 +2528,7 @@ titleFormat={{
 
         center: "title",
 
-        right: "today"
+        right: ""
 
       }
 
