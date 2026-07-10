@@ -214,3 +214,51 @@
   font-size: 12px;
   padding: .3rem .5rem;
 }
+
+/* ===========================
+   FullCalendar móvil
+=========================== */
+
+@media (max-width:768px){
+
+  .calendar-mobile .fc-header-toolbar{
+
+    display:grid !important;
+
+    grid-template-columns:1fr;
+
+    row-gap:8px;
+
+  }
+
+  .calendar-mobile .fc-toolbar-chunk{
+
+    display:flex !important;
+
+    justify-content:center;
+
+    flex-wrap:wrap;
+
+    gap:6px;
+
+  }
+
+  .calendar-mobile .fc-toolbar-title{
+
+    font-size:16px !important;
+
+    font-weight:700;
+
+    text-align:center;
+
+  }
+
+  .calendar-mobile .fc-button{
+
+    font-size:11px !important;
+
+    padding:5px 8px !important;
+
+  }
+
+}
