@@ -159,3 +159,41 @@
   }
 
 }
+
+@media (max-width: 768px) {
+
+  /* Horas */
+  .calendar-mobile .fc-timegrid-slot-label {
+    font-size: 11px !important;
+  }
+
+  /* Encabezados de los días */
+  .calendar-mobile .fc-col-header-cell {
+    font-size: 12px !important;
+  }
+
+  /* Eventos */
+  .calendar-mobile .fc-event {
+    font-size: 10px !important;
+    padding: 2px !important;
+    border-radius: 6px !important;
+  }
+
+  /* Hora del evento */
+  .calendar-mobile .fc-event-time {
+    font-size: 10px !important;
+  }
+
+  /* Título del evento */
+  .calendar-mobile .fc-event-title {
+    font-size: 10px !important;
+    white-space: normal;
+    line-height: 1.2;
+  }
+
+  /* Reduce la altura mínima de las filas */
+  .calendar-mobile .fc-timegrid-slot {
+    height: 32px !important;
+  }
+
+}
