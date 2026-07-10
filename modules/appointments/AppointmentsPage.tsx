@@ -2381,13 +2381,13 @@ if (appointment?.package_id) {
       {/* HEADER */}
       <div className="mb-8">
 
-        <h2 className="text-5xl font-bold text-[#243847]">
+        <h2 className="text-3xl md:text-4xl xl:text-5xl font-bold text-[#243847]">
 
           Reservas 📅
 
         </h2>
 
-        <p className="text-gray-600 mt-3 text-lg">
+        <p className="text-gray-600 mt-2 text-sm md:text-lg">
 
           Gestión visual de citas
 
