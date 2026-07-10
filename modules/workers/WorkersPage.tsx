@@ -834,7 +834,7 @@ setOverrides(
 
         <div className="absolute inset-0 flex items-start justify-center bg-black/40 z-30 p-6 overflow-y-auto">
 
-          <div className="bg-white p-8 rounded-3xl w-full max-w-[650px] shadow-2xl mt-10 mb-20">
+          <div className="bg-white p-5 md:p-8 rounded-3xl w-full max-w-[650px] shadow-2xl mt-4 md:mt-10 mb-10 md:mb-20 max-h-[95vh] overflow-y-auto">
 
             <h3 className="text-2xl font-bold text-[#243847] mb-6">
 
@@ -1104,7 +1104,7 @@ setOverrides(
 
                 </label>
 
-                <label className="flex items-center justify-center w-[180px] h-[180px] border-2 border-dashed rounded-3xl cursor-pointer hover:bg-gray-50 transition overflow-hidden">
+                <label className="flex items-center justify-center w-36 h-36 md:w-[180px] md:h-[180px] border-2 border-dashed rounded-3xl cursor-pointer hover:bg-gray-50 transition overflow-hidden">
 
                   <input
                     type="file"
@@ -1234,13 +1234,13 @@ setOverrides(
             </div>
 
             {/* BOTONES */}
-            <div className="flex gap-4 mt-8 pb-2">
+            <div className="flex flex-col-reverse md:flex-row gap-4 mt-8 pb-2">
 
               <button
                 onClick={() =>
                   setShowModal(false)
                 }
-                className="bg-gray-200 px-5 py-3 rounded-2xl"
+                className="w-full md:w-auto bg-gray-200 px-5 py-3 rounded-2xl"
               >
 
                 Cancelar
@@ -1249,7 +1249,7 @@ setOverrides(
 
               <button
                 onClick={saveWorker}
-                className="bg-[#243847] text-white px-5 py-3 rounded-2xl"
+                className="w-full md:w-auto bg-[#243847] text-white px-5 py-3 rounded-2xl"
               >
 
                 {editingWorkerId
