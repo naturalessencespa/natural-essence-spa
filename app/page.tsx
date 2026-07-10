@@ -88,7 +88,7 @@ fixed md:static
 
 top-0 left-0
 
-h-screen
+h-screen overflow-y-auto
 
 w-72
 
