@@ -499,11 +499,11 @@ if (overridesError) {
     <div className="relative">
 
       {/* HEADER */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
 
         <div>
 
-          <h2 className="text-5xl font-bold text-[#243847]">
+          <h2 className="text-3xl md:text-5xl font-bold text-[#243847]">
 
             Trabajadoras 👩‍💼
 
@@ -549,7 +549,7 @@ setAddress("");
             setShowModal(true);
 
           }}
-          className="bg-[#243847] text-white px-6 py-4 rounded-2xl"
+          className="w-full md:w-auto bg-[#243847] text-white px-6 py-4 rounded-2xl"
         >
 
           + Nueva Trabajadora
@@ -570,15 +570,15 @@ setAddress("");
               e.target.value
             )
           }
-          className="border p-4 rounded-2xl w-[300px]"
+         className="border p-4 rounded-2xl w-full md:w-[300px]"
         />
 
       </div>
 
       {/* TABLA */}
-      <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+      <div className="bg-white rounded-3xl shadow-xl overflow-x-auto">
 
-        <table className="w-full">
+       <table className="min-w-[900px] w-full">
 
           <thead className="bg-[#243847] text-white">
 
