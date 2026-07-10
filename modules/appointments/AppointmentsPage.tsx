@@ -251,10 +251,7 @@ const [
   setPendingServiceAppointment
 ] = useState<any>(null);
 
-const isMobile =
-  typeof window !== "undefined" &&
-  window.innerWidth < 768;
-  
+const [isMobile, setIsMobile] = useState(false);
 
   // OBTENER CITAS
   const fetchAppointments = async () => {
@@ -1041,6 +1038,24 @@ alert(
     fetchFormData();
 
   }, []);
+
+  useEffect(() => {
+
+  const checkScreen = () => {
+
+    setIsMobile(window.innerWidth < 768);
+
+  };
+
+  checkScreen();
+
+  window.addEventListener("resize", checkScreen);
+
+  return () =>
+
+    window.removeEventListener("resize", checkScreen);
+
+}, []);
 
 const cancelAppointment =
 
