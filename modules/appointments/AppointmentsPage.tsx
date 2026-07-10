@@ -250,6 +250,10 @@ const [
   pendingServiceAppointment,
   setPendingServiceAppointment
 ] = useState<any>(null);
+
+const isMobile =
+  typeof window !== "undefined" &&
+  window.innerWidth < 768;
   
 
   // OBTENER CITAS
@@ -2429,10 +2433,10 @@ if (appointment?.package_id) {
 
 
       {/* CALENDARIO */}
-      <div className="bg-white p-2 md:p-6 rounded-3xl shadow-xl overflow-x-auto">
+      <div className="calendar-mobile bg-white p-2 md:p-6 rounded-3xl shadow-xl overflow-x-auto">
 
         <FullCalendar
-
+ 
           locale={esLocale}
 
           dayHeaderFormat={{
@@ -2447,11 +2451,46 @@ titleFormat={{
 
           plugins={[
             dayGridPlugin,
+
             timeGridPlugin,
             interactionPlugin,
           ]}
 
-          initialView="timeGridWeek"
+          initialView={
+
+  isMobile
+
+    ? "timeGridDay"
+
+    : "timeGridWeek"
+
+}
+
+          headerToolbar={
+
+  isMobile
+
+    ? {
+
+        left: "prev,next",
+
+        center: "title",
+
+        right: "today"
+
+      }
+
+    : {
+
+        left: "prev,next today",
+
+        center: "title",
+
+        right: "dayGridMonth,timeGridWeek,timeGridDay"
+
+      }
+
+}
 
            height={"auto"}
 
@@ -2874,18 +2913,7 @@ eventDrop={async (info) => {
 
           }}
 
-          headerToolbar={{
-
-            left:
-              "prev,next today",
-
-            center:
-              "title",
-
-            right:
-              "dayGridMonth,timeGridWeek,timeGridDay",
-
-          }}
+        
 
           buttonText={{
 
