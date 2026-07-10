@@ -162,13 +162,13 @@ active
 
       <div>
 
-        <h1 className="text-5xl font-bold text-[#243847]">
+        <h1 className="text-3xl md:text-4xl xl:text-5xl font-bold text-[#243847]">
 
           Calculadora Depilación Láser
 
         </h1>
 
-        <p className="text-gray-500 mt-2">
+       <p className="text-gray-500 mt-2 text-sm md:text-base">
 
           Cotiza automáticamente las zonas seleccionadas.
 
@@ -178,7 +178,7 @@ active
 
       
 
-      <div className="bg-white rounded-3xl shadow p-8">
+     <div className="bg-white rounded-3xl shadow p-4 md:p-6 xl:p-8">
 
      <div className="mb-8">
 
@@ -188,7 +188,7 @@ active
 
   </h2>
 
-  <div className="flex gap-4 mt-5">
+  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
 
     <button
 
@@ -196,7 +196,7 @@ active
         setPackageType(1)
       }
 
-      className={`px-6 py-3 rounded-2xl ${
+      className={`w-full px-6 py-3 rounded-2xl font-semibold ${
         packageType === 1
           ? "bg-[#243847] text-white"
           : "bg-gray-200"
@@ -214,7 +214,7 @@ active
         setPackageType(3)
       }
 
-      className={`px-6 py-3 rounded-2xl ${
+      className={`w-full px-6 py-3 rounded-2xl font-semibold ${
         packageType === 3
           ? "bg-[#243847] text-white"
           : "bg-gray-200"
@@ -232,7 +232,7 @@ active
         setPackageType(6)
       }
 
-      className={`px-6 py-3 rounded-2xl ${
+      className={`w-full px-6 py-3 rounded-2xl font-semibold ${
         packageType === 6
           ? "bg-[#243847] text-white"
           : "bg-gray-200"
@@ -272,7 +272,7 @@ active
 
     }
 
-    className="w-full border rounded-2xl p-4"
+   className="w-full border rounded-2xl p-3 md:p-4"
 
   />
 
@@ -334,7 +334,7 @@ const price = unitPrice * packageType;
 
 key={zone.id}
 
-className="flex justify-between items-center border-b p-4"
+className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border-b p-4"
 
 >
 
@@ -376,7 +376,7 @@ setSearchZone("");
 
 }}
 
-className="bg-[#243847] text-white px-4 py-2 rounded-xl"
+className="w-full sm:w-auto bg-[#243847] text-white px-4 py-2 rounded-xl"
 
 >
 
@@ -420,7 +420,7 @@ Agregar
 
     key={zone.id}
 
-    className="flex justify-between items-center border rounded-2xl p-4"
+    className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border rounded-2xl p-4"
 
   >
 
@@ -456,7 +456,7 @@ Agregar
 
       }
 
-      className="bg-red-500 text-white px-4 py-2 rounded-xl"
+      className="w-full sm:w-auto bg-red-500 text-white px-4 py-2 rounded-xl"
 
     >
 
@@ -474,15 +474,15 @@ Agregar
 
 </div>
 
-<div className="mt-10 bg-gray-50 rounded-3xl p-6">
+<div className="mt-10 bg-gray-50 rounded-3xl p-4 md:p-6">
 
-  <h2 className="text-2xl font-bold text-[#243847] mb-6">
+  <h2 className="text-xl md:text-2xl font-bold text-[#243847] mb-6">
 
     Resumen de la cotización
 
   </h2>
 
-  <div className="flex justify-between mb-3">
+  <div className="flex justify-between items-center mb-3 gap-4">
 
     <span>
 
@@ -564,7 +564,7 @@ Agregar
 
 )}
 
-<div className="flex justify-between border-t pt-5 text-2xl font-bold">
+<div className="flex justify-between items-center border-t pt-5 text-xl md:text-2xl font-bold gap-4">
 
   <span>
 
@@ -612,7 +612,7 @@ Agregar
 
 </div>
 
-<div className="flex gap-4 mt-8">
+<div className="flex flex-col sm:flex-row gap-4 mt-8">
 
   <button
 
@@ -624,7 +624,7 @@ Agregar
 
     }}
 
-    className="bg-gray-300 px-6 py-3 rounded-2xl"
+    className="w-full sm:w-auto bg-gray-300 px-6 py-3 rounded-2xl"
 
   >
 
@@ -636,7 +636,7 @@ Agregar
 
     onClick={copyQuotation}
 
-    className="bg-[#243847] text-white px-6 py-3 rounded-2xl"
+    className="w-full sm:w-auto bg-[#243847] text-white px-6 py-3 rounded-2xl"
 
   >
 
