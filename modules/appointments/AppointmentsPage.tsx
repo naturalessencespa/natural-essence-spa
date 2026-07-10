@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 
 import FullCalendar from "@fullcalendar/react";
 
@@ -251,10 +251,6 @@ const [
   setPendingServiceAppointment
 ] = useState<any>(null);
 
-const [isMobile, setIsMobile] = useState(false);
-
-const calendarRef =
-useRef<FullCalendar>(null);
 
   // OBTENER CITAS
   const fetchAppointments = async () => {
@@ -1042,31 +1038,7 @@ alert(
 
   }, []);
 
-useEffect(() => {
 
-  const handleResize = () => {
-
-    setIsMobile(
-      window.innerWidth < 768
-    );
-
-  };
-
-  handleResize();
-
-  window.addEventListener(
-    "resize",
-    handleResize
-  );
-
-  return () =>
-
-    window.removeEventListener(
-      "resize",
-      handleResize
-    );
-
-}, []);
 
 const cancelAppointment =
 
@@ -2461,31 +2433,7 @@ if (appointment?.package_id) {
       {/* CALENDARIO */}
       <div className="calendar-mobile bg-white p-2 md:p-6 rounded-3xl shadow-xl overflow-x-auto">
 
-        {isMobile && (
-
-<div className="flex justify-center mb-4">
-
-<button
-
-onClick={()=>
-
-calendarRef.current
-?.getApi()
-.today()
-
-}
-
-className="bg-[#243847] text-white px-6 py-2 rounded-xl"
-
->
-
-Hoy
-
-</button>
-
-</div>
-
-)}
+      
 
         <FullCalendar
  
@@ -2508,41 +2456,13 @@ titleFormat={{
             interactionPlugin,
           ]}
 
-          initialView={
+         initialView="timeGridWeek"
 
-  isMobile
-
-    ? "timeGridDay"
-
-    : "timeGridWeek"
-
-}
-
-        headerToolbar={
-
-  isMobile
-
-    ? {
-
-        left: "prev,next",
-
-        center: "title",
-
-        right: ""
-
-      }
-
-    : {
-
-        left: "prev,next today",
-
-        center: "title",
-
-        right: "dayGridMonth,timeGridWeek,timeGridDay"
-
-      }
-
-}
+headerToolbar={{
+  left: "prev,next today",
+  center: "title",
+  right: "dayGridMonth,timeGridWeek,timeGridDay",
+}}
 
            height={"auto"}
 
