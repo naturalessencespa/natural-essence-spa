@@ -128,3 +128,34 @@
     @apply font-sans;
   }
 }
+
+/* ============================= */
+/* FULLCALENDAR RESPONSIVE */
+/* ============================= */
+
+@media (max-width: 768px) {
+
+  .calendar-mobile .fc-toolbar {
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .calendar-mobile .fc-toolbar-title {
+    font-size: 20px !important;
+    text-align: center;
+  }
+
+  .calendar-mobile .fc-button {
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+  }
+
+  .calendar-mobile .fc-toolbar-chunk {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+}
