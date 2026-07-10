@@ -2435,6 +2435,16 @@ if (appointment?.package_id) {
 
           locale={esLocale}
 
+          dayHeaderFormat={{
+  weekday: "short",
+  day: "numeric"
+}}
+
+titleFormat={{
+  month: "short",
+  day: "numeric"
+}}
+
           plugins={[
             dayGridPlugin,
             timeGridPlugin,
