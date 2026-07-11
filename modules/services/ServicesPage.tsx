@@ -271,7 +271,7 @@ const [
       {/* HEADER */}
       <div className="mb-8">
 
-        <h2 className="text-5xl font-bold text-[#243847]">
+        <h2 className="text-2xl md:text-3xl font-bold">
 
           Servicios Premium ✨
 
@@ -296,7 +296,7 @@ const [
 
         </h3>
 
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
 
           {/* NOMBRE */}
           <input
@@ -381,7 +381,7 @@ const [
         </div>
 
         {/* CHECKBOX */}
-        <div className="flex items-center gap-3 mt-5">
+        <div className="flex flex-wrap items-center gap-3 mt-5">
 
           <input
             type="checkbox"
@@ -407,7 +407,7 @@ const [
         {/* BOTÓN */}
         <button
           onClick={saveService}
-          className="mt-6 bg-[#243847] text-white px-6 py-3 rounded-2xl hover:opacity-90 transition"
+          className="mt-6 w-full md:w-auto bg-[#243847] text-white px-6 py-3 rounded-2xl hover:opacity-90 transition"
         >
 
           {editingId
@@ -419,7 +419,7 @@ const [
       </div>
 
       {/* ORDENAMIENTO */}
-      <div className="flex justify-end mb-4">
+    <div className="flex justify-start md:justify-end mb-4">
 
         <select
           value={sortBy}
@@ -428,7 +428,7 @@ const [
               e.target.value
             )
           }
-          className="border p-3 rounded-2xl bg-white"
+         className="border p-3 rounded-2xl bg-white w-full md:w-auto"
         >
 
           <option value="id">
@@ -448,9 +448,9 @@ const [
       </div>
 
       {/* TABLA */}
-      <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+      <div className="bg-white rounded-3xl shadow-xl overflow-x-auto">
 
-        <table className="w-full">
+        <table className="min-w-[1300px] w-full">
 
           <thead className="bg-[#dbe8ee]">
 
@@ -596,7 +596,7 @@ const [
                   {/* ACCIONES */}
                   <td className="p-5">
 
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-2">
 
                       {/* EDITAR */}
                       <button
@@ -605,7 +605,7 @@ const [
                             service
                           )
                         }
-                        className="bg-blue-100 p-3 rounded-xl hover:scale-105 transition"
+                        className="bg-blue-100 p-2 md:p-3 rounded-xl hover:scale-105 transition"
                       >
 
                         <Pencil size={18} />
@@ -619,7 +619,7 @@ const [
                             service.id
                           )
                         }
-                        className="bg-red-100 p-3 rounded-xl hover:scale-105 transition"
+                        className="bg-red-100 p-2 md:p-3 rounded-xl hover:scale-105 transition"
                       >
 
                         <Trash2 size={18} />
@@ -713,7 +713,7 @@ onClick={async () => {
 
 }}
 
-  className="bg-violet-600 text-white px-4 py-2 rounded-2xl"
+ className="bg-violet-600 text-white px-3 py-2 rounded-2xl text-sm"
 
 >
 
@@ -739,7 +739,7 @@ onClick={async () => {
 
   }}
 
-  className="bg-emerald-600 text-white px-4 py-2 rounded-2xl"
+  className="bg-emerald-600 text-white px-3 py-2 rounded-2xl text-sm"
 
 >
 
@@ -766,7 +766,7 @@ onClick={async () => {
 
   <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
-    <div className="bg-white p-8 rounded-3xl w-[900px] shadow-2xl">
+    <div className="bg-white rounded-3xl p-5 md:p-8 w-full max-w-5xl max-h-[95vh] overflow-y-auto">
 
       <h3 className="text-2xl font-bold text-[#243847] mb-6">
 
@@ -790,7 +790,7 @@ onClick={async () => {
 
       />
 
-      <div className="flex gap-4 mt-6">
+    <div className="flex flex-col-reverse md:flex-row gap-4 mt-6">
 
         <button
 
@@ -800,7 +800,7 @@ onClick={async () => {
             )
           }
 
-          className="bg-gray-200 px-5 py-3 rounded-2xl"
+          className="w-full md:w-auto bg-gray-200 px-5 py-3 rounded-2xl"
 
         >
 
@@ -810,7 +810,7 @@ onClick={async () => {
 
         <button
 
-          className="bg-violet-600 text-white px-5 py-3 rounded-2xl"
+         className="w-full md:w-auto bg-violet-600 text-white px-5 py-3 rounded-2xl"
 
         >
 
@@ -961,7 +961,7 @@ const pdfUrl =
 
   }}
 
-  className="bg-[#243847] text-white px-5 py-3 rounded-2xl"
+className="w-full min-h-[320px] md:min-h-[500px] border p-4 rounded-2xl"
 
 >
 
