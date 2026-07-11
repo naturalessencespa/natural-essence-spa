@@ -1009,7 +1009,7 @@ const currentMonth =
 
       <div className="mb-8">
 
-        <h2 className="text-5xl font-bold text-[#243847]">
+        <h2 className="text-3xl md:text-5xl font-bold text-[#243847]">
 
           Gastos 💸
 
@@ -1023,7 +1023,7 @@ const currentMonth =
 
       </div>
 
-      <div className="grid grid-cols-3 gap-6 mb-8">
+     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
 
         <div className="bg-white p-6 rounded-3xl shadow-xl">
 
@@ -1085,7 +1085,7 @@ const currentMonth =
 
         </h3>
 
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
 
           <input
             type="date"
@@ -1287,7 +1287,7 @@ const currentMonth =
 
         <button
           onClick={saveExpense}
-          className="mt-6 bg-[#243847] text-white px-6 py-3 rounded-2xl"
+         className="mt-6 w-full md:w-auto bg-[#243847] text-white px-6 py-3 rounded-2xl"
         >
 
           {editingId
@@ -1298,7 +1298,7 @@ const currentMonth =
 
       </div>
 
-      <div className="flex gap-4 mb-6">
+      <div className="flex flex-col xl:flex-row gap-4 mb-6">
 
         <input
   type="date"
@@ -1331,7 +1331,7 @@ const currentMonth =
               e.target.value
             )
           }
-          className="border p-4 rounded-2xl w-[350px]"
+          className="border p-4 rounded-2xl w-full xl:w-[350px]"
         />
 
         <select
@@ -1417,7 +1417,7 @@ const currentMonth =
           </option>
 
         </select>
-<div className="ml-auto bg-red-50 border border-red-200 rounded-2xl px-6 py-3">
+<div className="w-full xl:w-auto xl:ml-auto bg-red-50 border border-red-200 rounded-2xl px-6 py-3">
 
   <p className="text-sm text-gray-500">
     Total filtrado
@@ -1428,9 +1428,9 @@ const currentMonth =
   </p>
 
 </div>
-      </div>      <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+      </div>     <div className="bg-white rounded-3xl shadow-xl overflow-x-auto">
 
-        <table className="w-full">
+        <table className="min-w-[1200px] w-full">
 
           <thead className="bg-[#dbe8ee]">
 
