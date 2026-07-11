@@ -561,11 +561,11 @@ setClientStats({
     <div>
 
       {/* HEADER */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
 
         <div>
 
-          <h2 className="text-5xl font-bold text-[#243847]">
+          <h2 className="text-3xl md:text-5xl font-bold text-[#243847]">
 
             Clientes 👩‍💼
 
@@ -578,6 +578,8 @@ setClientStats({
           </p>
 
         </div>
+
+        <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
 
         <button
           onClick={() => {
@@ -615,7 +617,7 @@ setClientStats({
             setShowModal(true);
 
           }}
-          className="bg-[#243847] text-white px-6 py-4 rounded-2xl"
+         className="w-full md:w-auto bg-[#243847] text-white px-6 py-4 rounded-2xl"
         >
 
           + Nuevo Cliente
@@ -631,10 +633,12 @@ setClientStats({
 
 </button>
 
+</div>
+
       </div>
 
       {/* TABLA */}
-      <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+      <div className="bg-white rounded-3xl shadow-xl overflow-x-auto">
 
       <div className="mb-6">
 
@@ -652,7 +656,7 @@ setClientStats({
 
 </div>
 
-        <table className="w-full">
+        <table className="min-w-[1100px] w-full">
 
           <thead className="bg-[#243847] text-white">
 
@@ -880,9 +884,9 @@ setShowViewModal(
 
         <div className="fixed inset-0 bg-black/40 flex items-start justify-center z-50 overflow-y-auto p-6">
 
-          <div className="bg-white p-8 rounded-3xl w-full max-w-[1100px] max-h-[90vh] overflow-y-auto shadow-2xl mt-10 mb-20">
+          <div className="bg-white p-5 md:p-8 rounded-3xl w-full max-w-[1100px] max-h-[95vh] overflow-y-auto shadow-2xl mt-4 md:mt-10 mb-10 md:mb-20">
 
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
 
               <h3 className="text-3xl font-bold text-[#243847]">
 
@@ -1225,7 +1229,9 @@ S/{clientStats.avgTicket}
 
   <div className="border rounded-2xl overflow-hidden">
 
-    <table className="w-full">
+  <div className="overflow-x-auto">
+
+<table className="min-w-[700px] w-full">
 
       <thead className="bg-[#243847] text-white">
 
@@ -1324,6 +1330,8 @@ S/{clientStats.avgTicket}
 
     </table>
 
+    </div>
+
   </div>
 
   <div className="mt-8">
@@ -1336,7 +1344,9 @@ S/{clientStats.avgTicket}
 
   <div className="border rounded-2xl overflow-hidden">
 
-    <table className="w-full">
+<div className="overflow-x-auto">
+
+<table className="min-w-[700px] w-full">
 
       <thead className="bg-[#243847] text-white">
 
@@ -1442,6 +1452,8 @@ S/{clientStats.avgTicket}
 
     </table>
 
+    </div>
+
   </div>
 
 </div>
@@ -1491,7 +1503,7 @@ S/{clientStats.avgTicket}
 
             </h3>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
               <input
                 type="text"
@@ -1792,13 +1804,13 @@ S/{clientStats.avgTicket}
 
             </div>
 
-            <div className="flex gap-4 mt-8">
+           <div className="flex flex-col-reverse md:flex-row gap-4 mt-8">
 
               <button
                 onClick={() =>
                   setShowModal(false)
                 }
-                className="bg-gray-200 px-5 py-3 rounded-2xl"
+                className="w-full md:w-auto bg-gray-200 px-5 py-3 rounded-2xl"
               >
 
                 Cancelar
@@ -1807,7 +1819,7 @@ S/{clientStats.avgTicket}
 
               <button
                 onClick={saveClient}
-                className="bg-[#243847] text-white px-5 py-3 rounded-2xl"
+                className="w-full md:w-auto bg-[#243847] text-white px-5 py-3 rounded-2xl"
               >
 
                 {editingClientId
