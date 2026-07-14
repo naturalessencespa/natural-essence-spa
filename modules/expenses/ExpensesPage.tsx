@@ -23,7 +23,13 @@ type Expense = {
   created_at: string;
 };
 
-export default function ExpensesPage() {
+type Props = {
+  selectedBranch: number;
+};
+
+export default function ExpensesPage({
+  selectedBranch,
+}: Props) {
 
   const [expenses,
     setExpenses] =

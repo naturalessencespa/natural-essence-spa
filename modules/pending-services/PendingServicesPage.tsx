@@ -3,7 +3,13 @@ import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 
 
-export default function PendingServicesPage() {
+type Props = {
+  selectedBranch: number;
+};
+
+export default function PendingServicesPage({
+  selectedBranch,
+}: Props) {
 
 const [
   pendingSales,

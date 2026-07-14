@@ -11,7 +11,13 @@ import {
 
 import * as XLSX from "xlsx";
 
-export default function InternalSalesPage() {
+type Props = {
+  selectedBranch: number;
+};
+
+export default function InternalSalesPage({
+  selectedBranch,
+}: Props) {
 
   const [
     sales,

@@ -453,12 +453,9 @@ className="fixed inset-0 bg-black/40 z-40 md:hidden"
         )}
 
         {/* SERVICIOS */}
-        {page === "servicios" && (
-       <ServicesPage
-  selectedBranch={selectedBranch}
-/>
-        )}
-
+    {page === "servicios" && (
+  <ServicesPage />
+)}
         {/* INVENTARIO */}
         {page === "inventario" && (
         <InventoryPage
@@ -492,17 +489,14 @@ className="fixed inset-0 bg-black/40 z-40 md:hidden"
         )}
 
         {/* ZONA LÁSER */}
-        {page === "zonas-laser" && (
-          <LaserZonesPage
-  selectedBranch={selectedBranch}
-/>
-        )}
+     {page === "zonas-laser" && (
+  <LaserZonesPage />
+)}
 
-        {page === "calculadora-laser" && (
-          <LaserQuotePage
-  selectedBranch={selectedBranch}
-/>
-        )}
+     {/* CALCULADORA LÁSER */}
+       {page === "calculadora-laser" && (
+  <LaserQuotePage />
+)}
 
        {/* VENTAS INTERNAS */}
         {page ===

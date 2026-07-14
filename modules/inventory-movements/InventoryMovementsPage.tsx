@@ -9,7 +9,13 @@ import {
   supabase,
 } from "@/lib/supabase";
 
-export default function InventoryMovementsPage() {
+type Props = {
+  selectedBranch: number;
+};
+
+export default function InventoryMovementsPage({
+  selectedBranch,
+}: Props) {
 
   const [
     movements,

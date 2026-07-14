@@ -9,7 +9,13 @@ import {
   supabase,
 } from "@/lib/supabase";
 
-export default function ProductSalesPage() {
+type Props = {
+  selectedBranch: number;
+};
+
+export default function ProductSalesPage({
+  selectedBranch,
+}: Props) {
 
   const [
     sales,

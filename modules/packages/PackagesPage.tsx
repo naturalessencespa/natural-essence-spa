@@ -17,12 +17,14 @@ import { useSearchParams } from "next/navigation";
 
   import { supabase } from "@/lib/supabase";
 
- type Props = {
+type Props = {
+  selectedBranch: number;
   pendingLaserSale: any;
   setPendingLaserSale: (data: any) => void;
 };
 
 export default function PackagesPage({
+  selectedBranch,
   pendingLaserSale,
   setPendingLaserSale,
 }: Props) {

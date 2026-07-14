@@ -4,7 +4,13 @@ import { useEffect, useState } from "react";
 
 import { supabase } from "@/lib/supabase";
 
-export default function WorkersPage() {
+type Props = {
+  selectedBranch: number;
+};
+
+export default function WorkersPage({
+  selectedBranch,
+}: Props) {
 
   const [workers, setWorkers] =
     useState<any[]>([]);

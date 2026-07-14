@@ -8,7 +8,13 @@ import * as XLSX from "xlsx";
 
 import { saveAs } from "file-saver";
 
-export default function InventoryPage() {
+type Props = {
+  selectedBranch: number;
+};
+
+export default function InventoryPage({
+  selectedBranch,
+}: Props) {
 
   const [products, setProducts] =
     useState<any[]>([]);
