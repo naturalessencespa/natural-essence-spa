@@ -4,7 +4,13 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";  
 import * as XLSX from "xlsx";
 
-export default function DashboardPage() {
+type DashboardPageProps = {
+  selectedBranch: number;
+};
+
+export default function DashboardPage({
+  selectedBranch,
+}: DashboardPageProps) {
 
   const [todayAppointments,
   setTodayAppointments] =

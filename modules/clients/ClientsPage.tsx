@@ -6,7 +6,13 @@ import { supabase } from "@/lib/supabase";
 
 import * as XLSX from "xlsx";
 
-export default function ClientsPage() {
+type Props = {
+  selectedBranch: number;
+};
+
+export default function ClientsPage({
+  selectedBranch,
+}: Props) {
 
   const [clients, setClients] =
     useState<any[]>([]);
@@ -148,6 +154,8 @@ export default function ClientsPage() {
 
         .eq("active", true)
 
+        .eq("branch_id", selectedBranch)
+
         .order("id", {
           ascending: false,
         });
@@ -276,6 +284,8 @@ export default function ClientsPage() {
                 fileUrl,
 
               active: true,
+
+              branch_id: selectedBranch,
 
             },
           ]);
@@ -550,11 +560,11 @@ setClientStats({
     fetchClients();
   };
 
-  useEffect(() => {
+useEffect(() => {
 
-    fetchClients();
+  fetchClients();
 
-  }, []);
+}, [selectedBranch]);
 
   return (
 

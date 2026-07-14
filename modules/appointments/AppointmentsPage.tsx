@@ -16,11 +16,13 @@ import { supabase } from "@/lib/supabase";
 
 
 type Props = {
+  selectedBranch: number;
   setPage: (page: string) => void;
   setPendingLaserSale: (data: any) => void;
 };
 
 export default function AppointmentsPage({
+  selectedBranch,
   setPage,
   setPendingLaserSale,
 }: Props) {
@@ -279,6 +281,7 @@ appointment_reserved_services(
   )
 )
 `)
+            .eq("branch_id", selectedBranch)
         
                         .neq(
           "status",
@@ -465,7 +468,9 @@ borderColor:
 
         .select("*")
 
-        .eq("active", true);
+        .eq("active", true)
+        
+        .eq("branch_id", selectedBranch);
 
     const { data: branchesData } =
       await supabase
@@ -1030,13 +1035,17 @@ alert(
 
 
   // CARGAR
-  useEffect(() => {
+ useEffect(() => {
 
-    fetchAppointments();
+  fetchAppointments();
 
-    fetchFormData();
+}, [selectedBranch]);
 
-  }, []);
+useEffect(() => {
+
+  fetchFormData();
+
+}, [selectedBranch]);
 
 
 
@@ -2459,11 +2468,10 @@ titleFormat={{
          initialView="timeGridWeek"
 
 headerToolbar={{
-  left: "prev,next today",
+  left: "prev today next",
   center: "title",
   right: "dayGridMonth,timeGridWeek,timeGridDay",
 }}
-
            height={"auto"}
 
           slotMinTime="09:00:00"

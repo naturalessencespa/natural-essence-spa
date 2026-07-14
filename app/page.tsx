@@ -35,6 +35,8 @@ export default function Home() {
 const [page, setPage] =
   useState("dashboard");
 
+  const [selectedBranch, setSelectedBranch] = useState(1);
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
 const [
@@ -407,87 +409,128 @@ className="fixed inset-0 bg-black/40 z-40 md:hidden"
       {/* CONTENIDO */}
       <div className="flex-1 overflow-auto p-4 md:p-6 xl:p-10">
 
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+
+  <h1 className="text-2xl md:text-3xl font-bold text-[#243847]">
+    Natural Essence Spa
+  </h1>
+
+  <select
+    value={selectedBranch}
+    onChange={(e) =>
+      setSelectedBranch(Number(e.target.value))
+    }
+    className="w-full md:w-64 border rounded-2xl px-4 py-3 bg-white shadow"
+  >
+    <option value={1}>📍 Los Olivos</option>
+    <option value={2}>📍 San Borja</option>
+  </select>
+
+</div>
+
+    
+
         {/* RESERVAS */}
         {page === "reservas" && (
           <AppointmentsPage
+  selectedBranch={selectedBranch}
   setPage={setPage}
-  setPendingLaserSale={
-    setPendingLaserSale
-  }
+  setPendingLaserSale={setPendingLaserSale}
 />
         )}
 
         {page === "dashboard" && (
-          <DashboardPage />
+          <DashboardPage
+          selectedBranch={selectedBranch}
+/>
         )}
 
         {/* CLIENTES */}
         {page === "clientes" && (
-          <ClientsPage />
+          <ClientsPage
+  selectedBranch={selectedBranch}
+/>
         )}
 
         {/* SERVICIOS */}
         {page === "servicios" && (
-          <ServicesPage />
+       <ServicesPage
+  selectedBranch={selectedBranch}
+/>
         )}
 
         {/* INVENTARIO */}
         {page === "inventario" && (
-          <InventoryPage />
+        <InventoryPage
+  selectedBranch={selectedBranch}
+/>
         )}
 
          {/* MOVIMIENTOS INVENTARIO */}
 
         {page ===
           "movimientos-inventario" && (
-          <InventoryMovementsPage />
+          <InventoryMovementsPage
+  selectedBranch={selectedBranch}
+/>
         )}
 
         {/* TRABAJADORAS */}
         {page === "trabajadoras" && (
-          <WorkersPage />
+         <WorkersPage
+  selectedBranch={selectedBranch}
+/>
         )}
 
          {/* PAQUETES */}
         {page === "paquetes" && (
-          <PackagesPage
-  pendingLaserSale={
-    pendingLaserSale
-  }
-  setPendingLaserSale={
-    setPendingLaserSale
-  }
+<PackagesPage
+  selectedBranch={selectedBranch}
+  pendingLaserSale={pendingLaserSale}
+  setPendingLaserSale={setPendingLaserSale}
 />
         )}
 
         {/* ZONA LÁSER */}
         {page === "zonas-laser" && (
-          <LaserZonesPage />
+          <LaserZonesPage
+  selectedBranch={selectedBranch}
+/>
         )}
 
         {page === "calculadora-laser" && (
-          <LaserQuotePage />
+          <LaserQuotePage
+  selectedBranch={selectedBranch}
+/>
         )}
 
        {/* VENTAS INTERNAS */}
         {page ===
           "ventas-internas" && (
-          <InternalSalesPage />
+       <InternalSalesPage
+  selectedBranch={selectedBranch}
+/>
         )}
 
         {/* VENTAS PRODUCTOS */}
         {page ===
           "ventas-productos" && (
-          <ProductSalesPage />
+          <ProductSalesPage
+  selectedBranch={selectedBranch}
+/>
         )}
 
         {page ===
           "servicios-pendientes" && (
-          <PendingServicesPage />
+          <PendingServicesPage
+  selectedBranch={selectedBranch}
+/>
         )}
 
         {page === "gastos" && (
-          <ExpensesPage />
+          <ExpensesPage
+  selectedBranch={selectedBranch}
+/>
         )}
 
       </div>
