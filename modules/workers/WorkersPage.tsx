@@ -116,6 +116,8 @@ const days = [
 
         .eq("active", true)
 
+        .eq("branch_id", selectedBranch)
+
         .order("name");
 
     if (error) {
@@ -488,11 +490,11 @@ if (overridesError) {
 
 };
 
-  useEffect(() => {
+ useEffect(() => {
 
-    fetchWorkers();
+  fetchWorkers();
 
-  }, [search]);
+}, [search, selectedBranch]);
 
   useEffect(() => {
 

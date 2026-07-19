@@ -1033,6 +1033,46 @@ alert(
     fetchAppointments();
   };
 
+  const updatePackageWorker = async () => {
+
+  if (!editingAppointmentId || !workerId) {
+
+    alert("Seleccione una trabajadora.");
+
+    return;
+
+  }
+
+  const { error } = await supabase
+
+    .from("appointments")
+
+    .update({
+
+      worker_id: Number(workerId)
+
+    })
+
+    .eq("id", editingAppointmentId);
+
+  if (error) {
+
+    console.log(error);
+
+    alert("Error actualizando trabajadora.");
+
+    return;
+
+  }
+
+  alert("Trabajadora actualizada correctamente.");
+
+  fetchAppointments();
+
+  setShowModal(false);
+
+};
+
 
   // CARGAR
  useEffect(() => {
@@ -1064,22 +1104,73 @@ const cancelAppointment =
     if (!confirmCancel)
       return;
 
-    const { error } =
-      await supabase
+    // Si pertenece a un paquete, liberar la sesión
+const { data: packageSession } =
+  await supabase
 
-        .from(
-          "appointments"
-        )
+    .from("package_sessions")
 
-        .update({
-          status:
-            "Cancelada",
-        })
+    .select("id")
 
-        .eq(
-          "id",
-          appointmentId
-        );
+    .eq(
+      "appointment_id",
+      appointmentId
+    )
+
+    .maybeSingle();
+
+if (packageSession) {
+
+  await supabase
+
+    .from("package_sessions")
+
+    .update({
+
+      appointment_id: null,
+
+      completed: false,
+
+      completed_at: null,
+
+      attended_date: null,
+
+      session_parameter: null,
+
+      session_progress: null,
+
+      session_notes: null,
+
+      before_photo_url: null,
+
+      after_photo_url: null,
+
+      notes: null
+
+    })
+
+    .eq(
+      "id",
+      packageSession.id
+    );
+
+}
+
+const { error } =
+  await supabase
+
+    .from("appointments")
+
+    .update({
+
+      status: "Cancelada"
+
+    })
+
+    .eq(
+      "id",
+      appointmentId
+    );
 
     if (error) {
 
@@ -3538,19 +3629,32 @@ eventDidMount={(info) => {
   </button>
 
 )}
-        {!isPackageAppointment && !isCompleted && (
-              <button
-                onClick={
-                  saveAppointment
-                }
-                className="bg-[#243847] text-white px-5 py-3 rounded-2xl"
-              >
+       {!isCompleted && (
 
-                {editingAppointmentId
-                  ? "Actualizar"
-                  : "Guardar Reserva"}
+  <button
 
-              </button>
+    onClick={
+
+      isPackageAppointment
+
+        ? updatePackageWorker
+
+        : saveAppointment
+
+    }
+
+    className="bg-[#243847] text-white px-5 py-3 rounded-2xl"
+
+  >
+
+    {editingAppointmentId
+
+      ? "Guardar cambios"
+
+      : "Guardar Reserva"}
+
+  </button>
+
 )}
             </div>
 
