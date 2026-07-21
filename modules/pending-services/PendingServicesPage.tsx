@@ -76,11 +76,130 @@ const [
   setSaleItems
 ] = useState<any[]>([]);
 
+const [sellerWorker, setSellerWorker] = useState<any>(null);
+
+const [
+  showCreateModal,
+  setShowCreateModal
+] = useState(false);
+
+const [
+  clients,
+  setClients
+] = useState<any[]>([]);
+
+const [
+  services,
+  setServices
+] = useState<any[]>([]);
+
+const [
+  clientSearch,
+  setClientSearch
+] = useState("");
+
+const [
+  clientId,
+  setClientId
+] = useState("");
+
+const [
+  origin,
+  setOrigin
+] = useState("MOSTRADOR");
+
+const [
+  serviceId,
+  setServiceId
+] = useState("");
+
+const [
+  servicePrice,
+  setServicePrice
+] = useState("");
+
+const [
+  salesCart,
+  setSalesCart
+] = useState<any[]>([]);
+
+const [
+  soldTotal,
+  setSoldTotal
+] = useState("");
+
+const [
+  advance,
+  setAdvance
+] = useState("");
+
+const [
+  notes,
+  setNotes
+] = useState("");
+
+const calculatedTotal = salesCart.reduce(
+
+  (sum, item) => sum + Number(item.sold_price),
+
+  0
+
+);
+
+const calculatedBalance = Math.max(
+  calculatedTotal - Number(advance || 0),
+  0
+);
+
+useEffect(() => {
+
+  if (Number(advance || 0) > calculatedTotal) {
+
+    setAdvance(String(calculatedTotal));
+
+  }
+
+}, [calculatedTotal]);
+
 useEffect(() => {
 
   loadPendingSales();
 
 }, [statusFilter]);
+
+useEffect(() => {
+
+  loadFormData();
+
+}, []);
+
+
+
+const loadFormData = async () => {
+
+  const { data: clientsData } = await supabase
+
+    .from("clients")
+
+    .select("*")
+
+    .eq("active", true)
+
+    .order("full_name");
+
+  setClients(clientsData || []);
+
+  const { data: servicesData } = await supabase
+
+    .from("services")
+
+    .select("*")
+
+    .order("name");
+
+  setServices(servicesData || []);
+
+};
 
 const loadPendingSales = async () => {
 
@@ -88,12 +207,15 @@ const loadPendingSales = async () => {
 
     .from("pending_sales")
 
-    .select(`
-      *,
-      clients(
-        full_name
-      )
-    `)
+   .select(`
+  *,
+  clients(
+    full_name
+  ),
+  workers:sold_by_worker_id(
+    name
+  )
+`)
 
     .order(
       "created_at",
@@ -174,6 +296,24 @@ const openSale = async (
   setSaleItems(
     data || []
   );
+
+  setSellerWorker(null);
+
+if (sale.sold_by_worker_id) {
+
+  const { data: worker } = await supabase
+
+    .from("workers")
+
+    .select("name")
+
+    .eq("id", sale.sold_by_worker_id)
+
+    .single();
+
+  setSellerWorker(worker);
+
+}
 
   setSelectedSale(
     sale
@@ -451,6 +591,146 @@ loadPendingSales();
 alert("Cita creada correctamente.");
 
 };
+
+const savePendingSale = async () => {
+
+  if (!clientId) {
+
+    alert("Seleccione un cliente.");
+    return;
+
+  }
+
+  if (salesCart.length === 0) {
+
+    alert("Agregue al menos un servicio.");
+    return;
+
+  }
+
+  if (Number(advance || 0) > calculatedTotal) {
+
+  alert("El adelanto no puede ser mayor al total pactado.");
+  return;
+
+}
+
+  const originalTotal = salesCart.reduce(
+
+    (sum, item) => sum + Number(item.sold_price),
+
+    0
+
+  );
+
+ const finalTotal = calculatedTotal;
+
+  const { data: sale, error } = await supabase
+
+    .from("pending_sales")
+
+    .insert({
+
+      client_id: Number(clientId),
+
+      sold_by_worker_id: null,
+
+      original_total: originalTotal,
+
+      sold_total: finalTotal,
+
+      advance: Number(advance || 0),
+
+      origin,
+
+      notes
+
+    })
+
+    .select()
+
+    .single();
+
+  if (error) {
+
+    alert(error.message);
+    return;
+
+  }
+
+  const items = salesCart.map(item => ({
+
+    pending_sale_id: sale.id,
+
+    service_id: item.service_id,
+
+    service_name: item.service_name,
+
+    original_price: Number(item.sold_price),
+
+    sold_price: Number(item.sold_price)
+
+  }));
+
+  const { error: itemsError } = await supabase
+
+    .from("pending_sale_items")
+
+    .insert(items);
+
+  if (itemsError) {
+
+    alert(itemsError.message);
+    return;
+
+  }
+
+  setClientId("");
+  setClientSearch("");
+  setOrigin("MOSTRADOR");
+  setServiceId("");
+  setServicePrice("");
+  setSalesCart([]);
+  setAdvance("");
+  setNotes("");
+
+  setShowCreateModal(false);
+
+  loadPendingSales();
+
+  alert("Venta registrada correctamente.");
+
+};
+
+const deletePendingSale = async (id: number) => {
+
+  const confirmDelete = confirm(
+    "¿Desea eliminar esta venta pendiente?"
+  );
+
+  if (!confirmDelete) return;
+
+  const { error } = await supabase
+
+    .from("pending_sales")
+
+    .delete()
+
+    .eq("id", id);
+
+  if (error) {
+
+    alert(error.message);
+    return;
+
+  }
+
+  loadPendingSales();
+
+  alert("Venta eliminada correctamente.");
+
+};
+
   return (
 
     <div className="space-y-6">
@@ -473,59 +753,47 @@ alert("Cita creada correctamente.");
 
       <div className="bg-white rounded-3xl shadow p-8">
 
-        <div className="flex justify-between items-center">
+    <div className="flex justify-between items-center">
 
-         <input
+  <div className="flex gap-3">
 
-type="text"
+    <input
+      type="text"
+      placeholder="Buscar cliente..."
+      value={search}
+      onChange={(e)=>
+        setSearch(e.target.value)
+      }
+      className="border rounded-2xl p-3 w-[350px]"
+    />
 
-placeholder="Buscar cliente..."
-
-value={search}
-
-onChange={(e)=>
-
-setSearch(
-e.target.value
-)
-
-}
-
-className="border rounded-2xl p-3 w-[350px]"
-
-/>
-
-          
-
-        <select
-
-value={statusFilter}
-
-onChange={(e)=>
-
-setStatusFilter(
-e.target.value
-)
-
-}
-
-className="border rounded-2xl p-3 w-[220px]"
-
+   <button
+  onClick={() => setShowCreateModal(true)}
+  className="bg-[#243847] text-white px-5 rounded-2xl"
 >
+  + Nueva venta
+</button>
 
-<option>Pendiente</option>
+  </div>
 
-<option>Agendado</option>
+  <select
+    value={statusFilter}
+    onChange={(e)=>
+      setStatusFilter(e.target.value)
+    }
+    className="border rounded-2xl p-3 w-[220px]"
+  >
 
-<option>Consumido</option>
+    <option>Pendiente</option>
+    <option>Agendado</option>
+    <option>Consumido</option>
+    <option>Cancelado</option>
+    <option>Todos</option>
 
-<option>Cancelado</option>
+  </select>
 
-<option>Todos</option>
+</div>
 
-</select>
-
-        </div>
 
         <div className="mt-8 overflow-x-auto">
 
@@ -534,6 +802,8 @@ className="border rounded-2xl p-3 w-[220px]"
             <thead>
 
               <tr className="border-b">
+
+                <th className="text-left p-4">Fecha venta</th>
 
                 <th className="text-left p-4">Cliente</th>
 
@@ -575,7 +845,15 @@ search.toLowerCase()
   <tr
     key={sale.id}
     className="border-b"
+
+
   >
+
+      <td className="p-4">
+
+  {new Date(sale.created_at).toLocaleDateString("es-PE")}
+
+</td>
 
     <td className="p-4">
 
@@ -625,6 +903,24 @@ search.toLowerCase()
       Ver detalle
 
     </button>
+
+
+    {sale.status === "Pendiente" && (
+
+<button
+
+onClick={() => deletePendingSale(sale.id)}
+
+className="bg-red-600 text-white px-4 py-2 rounded-xl ml-2"
+
+>
+
+Eliminar
+
+</button>
+
+)}
+
 
 {sale.status === "Pendiente" ? (
 
@@ -689,6 +985,45 @@ Agendar cita
         Venta futura
 
       </h2>
+
+      <div className="mb-6 border rounded-2xl p-4 bg-gray-50 space-y-2">
+
+  <div className="flex justify-between">
+    <span>Origen</span>
+    <strong>{selectedSale?.origin}</strong>
+  </div>
+
+  <div className="flex justify-between">
+    <span>Fecha de venta</span>
+    <strong>
+      {new Date(selectedSale.created_at).toLocaleDateString("es-PE")}
+    </strong>
+  </div>
+
+{sellerWorker && (
+
+    <div className="flex justify-between">
+      <span>Trabajadora que comisiona</span>
+      <strong>{sellerWorker?.name}</strong>
+    </div>
+
+  )}
+
+  {selectedSale?.notes && (
+
+    <div>
+
+      <span className="font-medium">
+        Observaciones
+      </span>
+
+      <p>{selectedSale.notes}</p>
+
+    </div>
+
+  )}
+
+</div>
 
       <div className="space-y-2">
 
@@ -958,13 +1293,340 @@ Crear cita
 </div>
 
 )}
+
+{showCreateModal && (
+
+<div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+  <div className="bg-white rounded-3xl p-8 w-[900px] max-h-[90vh] overflow-y-auto">
+
+    <h2 className="text-3xl font-bold mb-8">
+      Nueva venta futura
+    </h2>
+
+    <div className="grid grid-cols-2 gap-6">
+
+      <div>
+
+        <label className="block mb-2 font-medium">
+          Buscar cliente
+        </label>
+
+        <input
+          type="text"
+          value={clientSearch}
+          onChange={(e)=>setClientSearch(e.target.value)}
+          placeholder="Nombre del cliente..."
+          className="w-full border rounded-xl p-3"
+        />
+
+      </div>
+
+      <div>
+
+        <label className="block mb-2 font-medium">
+          Cliente
+        </label>
+
+        <select
+          value={clientId}
+          onChange={(e)=>setClientId(e.target.value)}
+          className="w-full border rounded-xl p-3"
+        >
+
+          <option value="">
+            Seleccionar cliente
+          </option>
+
+          {clients
+            .filter(client =>
+              client.full_name
+                .toLowerCase()
+                .includes(clientSearch.toLowerCase())
+            )
+            .map(client => (
+
+              <option
+                key={client.id}
+                value={client.id}
+              >
+                {client.full_name}
+              </option>
+
+            ))}
+
+        </select>
+
+      </div>
+
     </div>
 
+    <div className="mt-6">
 
+      <label className="block mb-2 font-medium">
+        Origen de la venta
+      </label>
 
+      <select
+        value={origin}
+        onChange={(e)=>setOrigin(e.target.value)}
+        className="w-full border rounded-xl p-3"
+      >
 
+        <option value="MOSTRADOR">
+          Mostrador
+        </option>
 
+        <option value="WHATSAPP">
+          WhatsApp
+        </option>
 
+        <option value="VENTA_INTERNA">
+          Venta interna
+        </option>
+
+      </select>
+
+    </div>
+
+    <div className="mt-8">
+
+      <label className="block mb-3 font-medium">
+        Agregar servicio
+      </label>
+
+      <div className="grid grid-cols-[1fr_160px_140px] gap-4">
+
+        <select
+          value={serviceId}
+          onChange={(e)=>{
+
+            setServiceId(e.target.value);
+
+            const service = services.find(
+              s => s.id === Number(e.target.value)
+            );
+
+            if(service){
+
+              setServicePrice(String(service.price));
+
+            }
+
+          }}
+          className="border rounded-xl p-3"
+        >
+
+          <option value="">
+            Seleccionar servicio
+          </option>
+
+          {services.map(service=>(
+
+            <option
+              key={service.id}
+              value={service.id}
+            >
+              {service.name}
+            </option>
+
+          ))}
+
+        </select>
+
+        <input
+          type="number"
+          value={servicePrice}
+          onChange={(e)=>setServicePrice(e.target.value)}
+          className="border rounded-xl p-3"
+        />
+
+        <button
+          onClick={()=>{
+
+            if(!serviceId) return;
+
+            const service = services.find(
+              s=>s.id===Number(serviceId)
+            );
+
+            if(!service) return;
+
+            setSalesCart([
+              ...salesCart,
+              {
+                service_id:service.id,
+                service_name:service.name,
+                sold_price:Number(servicePrice)
+              }
+            ]);
+
+            setServiceId("");
+            setServicePrice("");
+
+          }}
+          className="bg-green-600 text-white rounded-xl"
+        >
+          Agregar
+        </button>
+
+      </div>
+
+    </div>
+
+        {salesCart.length > 0 && (
+
+      <div className="mt-8 border rounded-2xl overflow-hidden">
+
+        <div className="grid grid-cols-[1fr_150px_120px] bg-gray-100 p-4 font-semibold">
+
+          <div>Servicio</div>
+
+          <div className="text-center">
+            Precio
+          </div>
+
+          <div></div>
+
+        </div>
+
+        {salesCart.map((item, index) => (
+
+          <div
+            key={index}
+            className="grid grid-cols-[1fr_150px_120px] items-center border-t p-4"
+          >
+
+            <div>
+
+              {item.service_name}
+
+            </div>
+
+            <div className="text-center">
+
+              S/{Number(item.sold_price).toFixed(2)}
+
+            </div>
+
+            <div className="text-right">
+
+              <button
+                onClick={() => {
+
+                  setSalesCart(
+                    salesCart.filter((_, i) => i !== index)
+                  );
+
+                }}
+                className="text-red-600 hover:underline"
+              >
+
+                Eliminar
+
+              </button>
+
+            </div>
+
+          </div>
+
+        ))}
+
+      </div>
+
+    )}
+
+    <div className="grid grid-cols-3 gap-6 mt-8">
+
+      <div>
+
+        <label className="block mb-2 font-medium">
+          Total pactado
+        </label>
+
+       <input
+  type="number"
+  value={calculatedTotal}
+  readOnly
+  className="w-full border rounded-xl p-3 bg-gray-100"
+/>
+
+      </div>
+
+      <div>
+
+        <label className="block mb-2 font-medium">
+          Adelanto
+        </label>
+
+        <input
+          type="number"
+          value={advance}
+          onChange={(e)=>setAdvance(e.target.value)}
+          className="w-full border rounded-xl p-3"
+        />
+
+      </div>
+
+      <div>
+
+  <label className="block mb-2 font-medium">
+    Saldo
+  </label>
+
+  <input
+    type="number"
+    value={calculatedBalance}
+    readOnly
+    className="w-full border rounded-xl p-3 bg-gray-100"
+  />
+
+</div>
+
+      <div>
+
+        <label className="block mb-2 font-medium">
+          Observaciones
+        </label>
+
+        <input
+          type="text"
+          value={notes}
+          onChange={(e)=>setNotes(e.target.value)}
+          className="w-full border rounded-xl p-3"
+        />
+
+      </div>
+
+    </div>
+
+    <div className="flex justify-end gap-3 mt-8">
+
+      <button
+        onClick={() => setShowCreateModal(false)}
+        className="bg-gray-300 px-6 py-3 rounded-2xl"
+      >
+        Cancelar
+      </button>
+
+    <button
+  onClick={savePendingSale}
+  className="bg-[#243847] text-white px-6 py-3 rounded-2xl"
+>
+  Guardar venta
+</button>
+
+    </div>
+
+  </div>
+
+</div>
+
+)}
+
+    </div>
+
+    
   );
 
 } 
