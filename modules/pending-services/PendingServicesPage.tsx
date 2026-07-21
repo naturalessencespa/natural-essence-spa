@@ -129,6 +129,12 @@ const [
 ] = useState("");
 
 const [
+  soldTotalEdited,
+  setSoldTotalEdited
+] = useState(false);
+
+
+const [
   advance,
   setAdvance
 ] = useState("");
@@ -138,7 +144,7 @@ const [
   setNotes
 ] = useState("");
 
-const calculatedTotal = salesCart.reduce(
+const originalTotal = salesCart.reduce(
 
   (sum, item) => sum + Number(item.sold_price),
 
@@ -146,20 +152,37 @@ const calculatedTotal = salesCart.reduce(
 
 );
 
+const soldTotalValue =
+
+  soldTotal === ""
+
+    ? originalTotal
+
+    : Number(soldTotal);
+
 const calculatedBalance = Math.max(
-  calculatedTotal - Number(advance || 0),
+
+  soldTotalValue - Number(advance || 0),
+
   0
+
 );
 
 useEffect(() => {
 
-  if (Number(advance || 0) > calculatedTotal) {
+  if (!soldTotalEdited) {
 
-    setAdvance(String(calculatedTotal));
+    setSoldTotal(String(originalTotal));
 
   }
 
-}, [calculatedTotal]);
+  if (Number(advance || 0) > soldTotalValue) {
+
+    setAdvance(String(soldTotalValue));
+
+  }
+
+}, [originalTotal, soldTotalEdited]);
 
 useEffect(() => {
 
@@ -623,7 +646,7 @@ const savePendingSale = async () => {
 
   );
 
- const finalTotal = calculatedTotal;
+const finalTotal = soldTotalValue;
 
   const { data: sale, error } = await supabase
 
@@ -685,27 +708,34 @@ const savePendingSale = async () => {
 
   }
 
-  setClientId("");
-  setClientSearch("");
-  setOrigin("MOSTRADOR");
-  setServiceId("");
-  setServicePrice("");
-  setSalesCart([]);
-  setAdvance("");
-  setNotes("");
+ resetCreateSaleForm();
 
-  setShowCreateModal(false);
+setShowCreateModal(false);
 
   loadPendingSales();
 
   alert("Venta registrada correctamente.");
 
 };
+const resetCreateSaleForm = () => {
+
+  setClientId("");
+  setClientSearch("");
+  setOrigin("MOSTRADOR");
+  setServiceId("");
+  setServicePrice("");
+  setSalesCart([]);
+  setSoldTotal("");
+  setSoldTotalEdited(false);
+  setAdvance("");
+  setNotes("");
+
+};
 
 const deletePendingSale = async (id: number) => {
 
   const confirmDelete = confirm(
-    "¿Desea eliminar esta venta pendiente?"
+    "¿Desea cancelar esta venta?"
   );
 
   if (!confirmDelete) return;
@@ -714,20 +744,25 @@ const deletePendingSale = async (id: number) => {
 
     .from("pending_sales")
 
-    .delete()
+    .update({
+
+      status: "Cancelado"
+
+    })
 
     .eq("id", id);
 
   if (error) {
 
     alert(error.message);
+
     return;
 
   }
 
   loadPendingSales();
 
-  alert("Venta eliminada correctamente.");
+  alert("Venta cancelada correctamente.");
 
 };
 
@@ -753,35 +788,37 @@ const deletePendingSale = async (id: number) => {
 
       <div className="bg-white rounded-3xl shadow p-8">
 
-    <div className="flex justify-between items-center">
+<div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
 
-  <div className="flex gap-3">
+  <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
 
     <input
       type="text"
       placeholder="Buscar cliente..."
       value={search}
-      onChange={(e)=>
-        setSearch(e.target.value)
-      }
-      className="border rounded-2xl p-3 w-[350px]"
+      onChange={(e)=>setSearch(e.target.value)}
+      className="border rounded-2xl p-3 w-full sm:w-[350px]"
     />
 
-   <button
-  onClick={() => setShowCreateModal(true)}
-  className="bg-[#243847] text-white px-5 rounded-2xl"
->
-  + Nueva venta
-</button>
+    <button
+      onClick={() => {
+
+  resetCreateSaleForm();
+
+  setShowCreateModal(true);
+
+}}
+      className="bg-[#243847] text-white px-5 py-3 rounded-2xl whitespace-nowrap"
+    >
+      + Nueva venta
+    </button>
 
   </div>
 
   <select
     value={statusFilter}
-    onChange={(e)=>
-      setStatusFilter(e.target.value)
-    }
-    className="border rounded-2xl p-3 w-[220px]"
+    onChange={(e)=>setStatusFilter(e.target.value)}
+    className="border rounded-2xl p-3 w-full sm:w-[220px]"
   >
 
     <option>Pendiente</option>
@@ -888,80 +925,57 @@ search.toLowerCase()
 
     </td>
 
-    <td className="p-4">
+   <td className="p-4">
 
-      <button
+  <div className="flex flex-wrap gap-2">
 
-      onClick={() =>
-        openSale(sale)
-      }
-
+    <button
+      onClick={() => openSale(sale)}
       className="bg-blue-600 text-white px-4 py-2 rounded-xl"
-
     >
-
       Ver detalle
-
     </button>
-
 
     {sale.status === "Pendiente" && (
 
-<button
+      <button
+        onClick={() => deletePendingSale(sale.id)}
+        className="bg-red-600 text-white px-4 py-2 rounded-xl"
+      >
+        Cancelar
+      </button>
 
-onClick={() => deletePendingSale(sale.id)}
+    )}
 
-className="bg-red-600 text-white px-4 py-2 rounded-xl ml-2"
+    {sale.status === "Pendiente" ? (
 
->
+      <button
+        onClick={() => {
 
-Eliminar
+          setSelectedSale(sale);
 
-</button>
+          setShowScheduleModal(true);
 
-)}
+        }}
+        className="bg-green-600 text-white px-4 py-2 rounded-xl"
+      >
+        Agendar cita
+      </button>
 
+    ) : (
 
-{sale.status === "Pendiente" ? (
+      <button
+        disabled
+        className="bg-gray-300 text-gray-500 px-4 py-2 rounded-xl cursor-not-allowed"
+      >
+        Agendar cita
+      </button>
 
-<button
+    )}
 
-onClick={() => {
+  </div>
 
-setSelectedSale(sale);
-
-setShowScheduleModal(true);
-
-}}
-
-className="bg-green-600 text-white px-4 py-2 rounded-xl ml-2"
-
->
-
-Agendar cita
-
-</button>
-
-) : (
-
-<button
-
-disabled
-
-className="bg-gray-300 text-gray-500 px-4 py-2 rounded-xl ml-2 cursor-not-allowed"
-
->
-
-Agendar cita
-
-</button>
-
-)}
-
-    
-
-    </td>
-
+</td>
   </tr>
 
 ))}
@@ -1298,13 +1312,13 @@ Crear cita
 
 <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
-  <div className="bg-white rounded-3xl p-8 w-[900px] max-h-[90vh] overflow-y-auto">
+  <div className="bg-white rounded-3xl p-5 md:p-8 w-[95vw] max-w-5xl max-h-[95vh] overflow-y-auto">
 
     <h2 className="text-3xl font-bold mb-8">
       Nueva venta futura
     </h2>
 
-    <div className="grid grid-cols-2 gap-6">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
       <div>
 
@@ -1395,7 +1409,7 @@ Crear cita
         Agregar servicio
       </label>
 
-      <div className="grid grid-cols-[1fr_160px_140px] gap-4">
+     <div className="grid grid-cols-1 md:grid-cols-[1fr_160px_140px] gap-4">
 
         <select
           value={serviceId}
@@ -1465,7 +1479,7 @@ Crear cita
             setServicePrice("");
 
           }}
-          className="bg-green-600 text-white rounded-xl"
+        className="bg-green-600 text-white rounded-xl py-3"
         >
           Agregar
         </button>
@@ -1476,9 +1490,9 @@ Crear cita
 
         {salesCart.length > 0 && (
 
-      <div className="mt-8 border rounded-2xl overflow-hidden">
+      <div className="mt-8 border rounded-2xl overflow-x-auto">
 
-        <div className="grid grid-cols-[1fr_150px_120px] bg-gray-100 p-4 font-semibold">
+       <div className="grid min-w-[520px] grid-cols-[1fr_150px_120px] bg-gray-100 p-4 font-semibold">
 
           <div>Servicio</div>
 
@@ -1494,7 +1508,7 @@ Crear cita
 
           <div
             key={index}
-            className="grid grid-cols-[1fr_150px_120px] items-center border-t p-4"
+         className="grid min-w-[520px] grid-cols-[1fr_150px_120px] items-center border-t p-4"
           >
 
             <div>
@@ -1536,74 +1550,101 @@ Crear cita
 
     )}
 
-    <div className="grid grid-cols-3 gap-6 mt-8">
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
 
-      <div>
+  <div>
 
-        <label className="block mb-2 font-medium">
-          Total pactado
-        </label>
+    <label className="block mb-2 font-medium">
+      Total original
+    </label>
 
-       <input
-  type="number"
-  value={calculatedTotal}
-  readOnly
-  className="w-full border rounded-xl p-3 bg-gray-100"
-/>
+    <input
+      type="number"
+      value={originalTotal}
+      readOnly
+      className="w-full border rounded-xl p-3 bg-gray-100"
+    />
 
-      </div>
+  </div>
 
-      <div>
+  <div>
 
-        <label className="block mb-2 font-medium">
-          Adelanto
-        </label>
+    <label className="block mb-2 font-medium">
+      Total pactado
+    </label>
 
-        <input
-          type="number"
-          value={advance}
-          onChange={(e)=>setAdvance(e.target.value)}
-          className="w-full border rounded-xl p-3"
-        />
+    <input
+      type="number"
+      value={soldTotal}
+      onChange={(e)=>{
 
-      </div>
+  setSoldTotal(e.target.value);
 
-      <div>
+  setSoldTotalEdited(true);
 
-  <label className="block mb-2 font-medium">
-    Saldo
-  </label>
+}}
+      className="w-full border rounded-xl p-3"
+    />
 
-  <input
-    type="number"
-    value={calculatedBalance}
-    readOnly
-    className="w-full border rounded-xl p-3 bg-gray-100"
-  />
+  </div>
+
+  <div>
+
+    <label className="block mb-2 font-medium">
+      Adelanto
+    </label>
+
+    <input
+      type="number"
+      value={advance}
+      onChange={(e)=>setAdvance(e.target.value)}
+      className="w-full border rounded-xl p-3"
+    />
+
+  </div>
+
+  <div>
+
+    <label className="block mb-2 font-medium">
+      Saldo
+    </label>
+
+    <input
+      type="number"
+      value={calculatedBalance}
+      readOnly
+      className="w-full border rounded-xl p-3 bg-gray-100"
+    />
+
+  </div>
+
+  <div className="md:col-span-2">
+
+    <label className="block mb-2 font-medium">
+      Observaciones
+    </label>
+
+    <input
+      type="text"
+      value={notes}
+      onChange={(e)=>setNotes(e.target.value)}
+      className="w-full border rounded-xl p-3"
+    />
+
+  </div>
 
 </div>
-
-      <div>
-
-        <label className="block mb-2 font-medium">
-          Observaciones
-        </label>
-
-        <input
-          type="text"
-          value={notes}
-          onChange={(e)=>setNotes(e.target.value)}
-          className="w-full border rounded-xl p-3"
-        />
-
-      </div>
-
-    </div>
 
     <div className="flex justify-end gap-3 mt-8">
 
       <button
-        onClick={() => setShowCreateModal(false)}
+        onClick={() => {
+
+  resetCreateSaleForm();
+
+  setShowCreateModal(false);
+
+}}
         className="bg-gray-300 px-6 py-3 rounded-2xl"
       >
         Cancelar
