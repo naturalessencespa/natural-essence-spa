@@ -992,7 +992,7 @@ search.toLowerCase()
 
   <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
-    <div className="bg-white rounded-3xl p-8 w-[650px]">
+    <div className="bg-white rounded-3xl p-5 md:p-8 w-[95vw] max-w-2xl max-h-[95vh] overflow-y-auto">
 
       <h2 className="text-3xl font-bold mb-6">
 
@@ -1148,7 +1148,7 @@ search.toLowerCase()
 
 <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
-<div className="bg-white rounded-3xl p-8 w-[500px]">
+<div className="bg-white rounded-3xl p-5 md:p-8 w-[95vw] max-w-lg">
 
 <h2 className="text-3xl font-bold mb-6">
 
@@ -1268,7 +1268,7 @@ value={branch.id}
 
 </div>
 
-<div className="flex justify-end gap-3 mt-8">
+<div className="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-8">
 
 <button
 
@@ -1278,7 +1278,7 @@ setShowScheduleModal(false)
 
 }
 
-className="bg-gray-300 px-5 py-3 rounded-2xl"
+className="bg-gray-300 px-5 py-3 rounded-2xl w-full sm:w-auto"
 
 >
 
@@ -1292,7 +1292,7 @@ onClick={
 createAppointmentFromPendingSale
 }
 
-className="bg-green-600 text-white px-5 py-3 rounded-2xl"
+className="bg-green-600 text-white px-5 py-3 rounded-2xl w-full sm:w-auto"
 
 >
 
@@ -1635,7 +1635,7 @@ Crear cita
 
 </div>
 
-    <div className="flex justify-end gap-3 mt-8">
+ <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-8">
 
       <button
         onClick={() => {
@@ -1645,14 +1645,14 @@ Crear cita
   setShowCreateModal(false);
 
 }}
-        className="bg-gray-300 px-6 py-3 rounded-2xl"
+      className="bg-gray-300 px-6 py-3 rounded-2xl w-full sm:w-auto"
       >
         Cancelar
       </button>
 
     <button
   onClick={savePendingSale}
-  className="bg-[#243847] text-white px-6 py-3 rounded-2xl"
+className="bg-[#243847] text-white px-6 py-3 rounded-2xl w-full sm:w-auto"
 >
   Guardar venta
 </button>
