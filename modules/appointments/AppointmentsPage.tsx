@@ -1920,27 +1920,39 @@ const addPendingSaleToCart = () => {
 
   if (!service) return;
 
-  setPendingSalesCart([
+const updatedCart = [
 
-    ...pendingSalesCart,
+  ...pendingSalesCart,
 
-    {
+  {
 
-      service_id: service.id,
+    service_id: service.id,
 
-      service_name: service.name,
+    service_name: service.name,
 
-      original_price: Number(service.price),
+    original_price: Number(service.price),
 
-      sold_price: Number(pendingServicePrice)
+    sold_price: Number(pendingServicePrice)
 
-    }
+  }
 
-  ]);
+];
 
-  setPendingServiceId("");
+setPendingSalesCart(updatedCart);
 
-  setPendingServicePrice("");
+const totalVendido = updatedCart.reduce(
+
+  (total, item) => total + Number(item.sold_price),
+
+  0
+
+);
+
+setPendingSoldTotal(totalVendido.toString());
+
+setPendingServiceId("");
+
+setPendingServicePrice("");
 
 };
   const saveAdditionalService =
@@ -3770,7 +3782,7 @@ eventDidMount={(info) => {
 
   <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
-    <div className="bg-white p-8 rounded-3xl w-[400px] shadow-2xl">
+    <div className="bg-white rounded-3xl w-full max-w-md mx-4 p-5 md:p-8 shadow-2xl">
 
     <h3 className="text-xl md:text-2xl font-bold text-[#243847] mb-6">
 
@@ -3814,7 +3826,7 @@ eventDidMount={(info) => {
 
       </div>
 
-      <div className="flex gap-4 mt-8">
+      <div className="flex flex-col-reverse md:flex-row justify-end gap-3 mt-8">
 
         <button
 
@@ -3862,7 +3874,7 @@ eventDidMount={(info) => {
 
   <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
-    <div className="bg-white p-8 rounded-3xl w-[500px] shadow-2xl">
+    <div className="bg-white rounded-3xl w-full max-w-2xl mx-4 p-5 md:p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
 
       <div className="flex justify-between items-center mb-10">
 
@@ -4139,7 +4151,7 @@ setPendingSalesCart([]);
 
   <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
-    <div className="bg-white p-8 rounded-3xl w-[450px] shadow-2xl">
+    <div className="bg-white rounded-3xl w-full max-w-lg mx-4 p-5 md:p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
 
       <h2 className="text-3xl font-bold text-[#243847] mb-6">
 
@@ -4227,7 +4239,7 @@ setPendingSalesCart([]);
 
 </div>  
 
-      <div className="flex gap-4 mt-8">
+      <div className="flex flex-col-reverse md:flex-row justify-end gap-3 mt-8">
 
         <button
 
@@ -4271,7 +4283,7 @@ setPendingSalesCart([]);
 
   <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
-    <div className="bg-white rounded-3xl p-8 w-[500px] shadow-2xl">
+    <div className="bg-white rounded-3xl w-full max-w-xl mx-4 p-5 md:p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
 
       <h2 className="text-3xl font-bold text-[#243847] mb-6">
 
@@ -4281,7 +4293,7 @@ setPendingSalesCart([]);
 
       <div className="bg-gray-50 rounded-2xl p-5 space-y-3">
 
-        <div className="flex justify-between">
+        <div className="flex items-center justify-between gap-3">
 
           <span>Total del servicio</span>
 
@@ -4305,7 +4317,7 @@ setPendingSalesCart([]);
 
         </div>
 
-        <div className="flex justify-between">
+        <div className="flex items-center justify-between gap-3">
 
           <span>Saldo pendiente</span>
 
@@ -4359,7 +4371,7 @@ setPendingSalesCart([]);
 
   <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
-    <div className="bg-white rounded-3xl p-8 w-[700px]">
+    <div className="bg-white rounded-3xl w-full max-w-3xl mx-4 p-5 md:p-8 max-h-[90vh] overflow-y-auto">
 
       <h2 className="text-3xl font-bold mb-6">
 
@@ -4476,17 +4488,27 @@ onChange={(e) => {
 
         <button
 
-          onClick={() =>
+        onClick={() => {
 
-            setPendingSalesCart(
+  const updatedCart = pendingSalesCart.filter(
+    (_, i) => i !== index
+  );
 
-              pendingSalesCart.filter(
-                (_, i) => i !== index
-              )
+  setPendingSalesCart(updatedCart);
 
-            )
+const totalVendido = updatedCart.reduce(
 
-          }
+  (total, item) =>
+
+    total + Number(item.sold_price),
+
+  0
+
+);
+
+setPendingSoldTotal(totalVendido.toString());
+
+}}
 
           className="bg-red-500 text-white px-3 py-1 rounded-xl"
 
@@ -4504,127 +4526,117 @@ onChange={(e) => {
 
 )}
 
+{pendingSalesCart.length > 0 && (
+
 <div className="bg-gray-50 rounded-2xl p-5 mt-5 space-y-3">
 
-  <div className="flex justify-between">
+<div className="space-y-2">
 
-    <span>Total catálogo</span>
+  <label className="text-sm font-medium text-gray-700">
 
-    <strong>
+    Total catálogo
 
-      S/{
+  </label>
 
-        pendingSalesCart.reduce(
+  <input
 
-          (total, item) =>
+    type="text"
 
-            total + Number(item.original_price),
+    value={`S/${pendingSalesCart.reduce(
 
-          0
+      (sum, item) =>
 
-        )
+        sum + Number(item.original_price),
 
-      }
+      0
 
-    </strong>
+    )}`}
 
-  </div>
+    readOnly
 
-  <div>
+    className="w-full rounded-xl border bg-gray-100 px-4 py-3 text-lg font-semibold text-gray-700 cursor-not-allowed"
 
-    <label className="block mb-2">
-
-      Precio vendido
-
-    </label>
-
-    <input
-
-      type="number"
-
-      value={pendingSoldTotal}
-
-      onChange={(e) =>
-
-        setPendingSoldTotal(
-
-          e.target.value
-
-        )
-
-      }
-
-      className="w-full border rounded-xl p-3"
-
-    />
-
-  </div>
-
-  <div>
-
-    <label className="block mb-2">
-
-      Adelanto
-
-    </label>
-
-    <input
-
-      type="number"
-
-      value={pendingAdvance}
-
-      onChange={(e) =>
-
-        setPendingAdvance(
-
-          e.target.value
-
-        )
-
-      }
-
-      className="w-full border rounded-xl p-3"
-
-    />
-
-  </div>
-
-  <div className="flex justify-between">
-
-    <span>Saldo</span>
-
-    <strong className="text-red-600">
-
-      S/{
-
-        Number(pendingSoldTotal || 0) -
-
-        Number(pendingAdvance || 0)
-
-      }
-
-    </strong>
-
-  </div>
+  />
 
 </div>
 
-        Cliente:
-        {" "}
-        {pendingServiceAppointment?.extendedProps?.client_name}
+<div>
+
+<label className="block mb-2 font-semibold text-lg">
+
+Precio vendido
+
+</label>
+
+<input
+
+type="number"
+
+value={pendingSoldTotal}
+
+onChange={(e)=>
+
+setPendingSoldTotal(e.target.value)
+
+}
+
+className="w-full border-2 border-green-500 rounded-xl p-4 text-2xl font-bold"
+
+/>
+
+</div>
+
+<div>
+
+<label className="block mb-2">
+
+Adelanto
+
+</label>
+
+<input
+
+type="number"
+
+value={pendingAdvance}
+
+onChange={(e)=>
+
+setPendingAdvance(e.target.value)
+
+}
+
+className="w-full border rounded-xl p-3"
+
+/>
+
+</div>
+
+<div className="flex justify-between text-lg">
+
+<span>Saldo</span>
+
+<strong className="text-red-600 text-xl">
+
+S/{
+
+Number(pendingSoldTotal || 0) -
+
+Number(pendingAdvance || 0)
+
+}
+
+</strong>
+
+</div>
+
+</div>
+
+)}
 
       </p>
 
-      <p className="text-gray-500">
-
-        Trabajadora:
-        {" "}
-        {pendingServiceAppointment?.extendedProps?.worker_name}
-
-      </p>
-
-      <div className="flex justify-end gap-4 mt-8">
+      <div className="flex flex-col-reverse md:flex-row justify-end gap-3 mt-8">
 
         <button
 
@@ -4640,12 +4652,14 @@ onChange={(e) => {
 
         </button>
 
-        <button
-
+  <button
   onClick={savePendingSale}
-
-  className="bg-green-600 text-white px-6 py-3 rounded-2xl"
-
+  disabled={pendingSalesCart.length === 0}
+  className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+    pendingSalesCart.length === 0
+      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+      : "bg-green-600 hover:bg-green-700 text-white"
+  }`}
 >
 
   Guardar venta futura
