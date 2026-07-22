@@ -631,7 +631,7 @@ const savePendingSale = async () => {
 
   }
 
-  if (Number(advance || 0) > calculatedTotal) {
+if (Number(advance || 0) > soldTotalValue) {
 
   alert("El adelanto no puede ser mayor al total pactado.");
   return;
