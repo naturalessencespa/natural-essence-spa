@@ -1172,7 +1172,7 @@ await supabase
     "appointment_generated_id",
     Number(appointmentId)
   );
-  
+
 const { error } =
   await supabase
 
@@ -1458,6 +1458,22 @@ const processAppointmentCompletion =
 async (
   appointmentId: number
 ) => {
+
+  const { data: pendingSale } =
+
+  await supabase
+
+    .from("pending_sales")
+
+    .select("*")
+
+    .eq(
+      "appointment_generated_id",
+      appointmentId
+    )
+
+    .maybeSingle();
+
 const { error } =
       await supabase
 
@@ -1488,6 +1504,73 @@ const { error } =
       return;
     }
 
+   if (pendingSale) {
+
+  if (pendingSale.sale_type === "Venta adicional") {
+
+    const { data: items } =
+
+      await supabase
+
+        .from("pending_sale_items")
+
+        .select("*")
+
+        .eq(
+          "pending_sale_id",
+          pendingSale.id
+        );
+
+    if (items && items.length > 0) {
+
+      const sales = items.map((item: any) => ({
+
+        appointment_id: appointmentId,
+
+        service_id: item.service_id,
+
+        worker_id:
+          pendingSale.sold_by_worker_id,
+
+        original_price:
+          item.original_price,
+
+        sold_price:
+          item.sold_price,
+
+        commission_percentage: 20,
+
+        commission_amount:
+          Number(item.sold_price) * 0.20
+
+      }));
+
+      await supabase
+
+        .from("appointment_services")
+
+        .insert(sales);
+
+    }
+
+  }
+
+  await supabase
+
+    .from("pending_sales")
+
+    .update({
+
+      status: "Consumido"
+
+    })
+
+    .eq(
+      "id",
+      pendingSale.id
+    );
+
+}
     const {
   data: packageSession
 } =
@@ -1974,45 +2057,47 @@ const savePendingSale = async () => {
 
   const { data, error } = await supabase
 
-    .from("pending_sales")
+   .from("pending_sales")
 
-    .insert({
+.insert({
 
-      client_id:
-        pendingServiceAppointment.extendedProps.client_id,
+  client_id:
+    pendingServiceAppointment.extendedProps.client_id,
 
-      appointment_id:
-         pendingServiceAppointment.id,
+  appointment_id:
+    pendingServiceAppointment.id,
 
-      sold_by_worker_id:
-        pendingServiceAppointment.extendedProps.worker_id,
+  sold_by_worker_id:
+    pendingServiceAppointment.extendedProps.worker_id,
 
-      original_total:
+  original_total:
 
-        pendingSalesCart.reduce(
+    pendingSalesCart.reduce(
 
-          (t, s) =>
+      (t, s) =>
 
-            t + Number(s.original_price),
+        t + Number(s.original_price),
 
-          0
+      0
 
-        ),
+    ),
 
-      sold_total:
-        Number(pendingSoldTotal),
+  sold_total:
+    Number(pendingSoldTotal),
 
-      advance:
-        Number(pendingAdvance || 0),
+  advance:
+    Number(pendingAdvance || 0),
 
-      origin:
-        "Venta adicional",
+  sale_type:
+    "Venta adicional",
 
-      notes:
-        pendingNotes
+  origin:
+    "Atención",
 
-    })
+  notes:
+    pendingNotes
 
+})
     .select()
 
     .single();

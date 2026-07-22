@@ -160,12 +160,40 @@ const loadAppointments =
       return;
     }
 
-    const filteredAppointments =
+ const { data: additionalAppointments } =
+  await supabase
+
+    .from("pending_sales")
+
+    .select("appointment_generated_id")
+
+    .eq(
+      "sale_type",
+      "Venta adicional"
+    );
+
+const additionalAppointmentIds =
+  new Set(
+
+    (additionalAppointments || [])
+      .map(
+        (item: any) =>
+          item.appointment_generated_id
+      )
+      .filter(Boolean)
+
+  );
+
+const filteredAppointments =
 
   (data || []).filter(
     (appointment: any) =>
 
-      appointment.client_packages?.internal_sale !== true
+      appointment.client_packages?.internal_sale !== true &&
+
+      !additionalAppointmentIds.has(
+        appointment.id
+      )
   );
 
   setTodayAppointments(
