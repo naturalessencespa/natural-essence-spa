@@ -650,25 +650,27 @@ const finalTotal = soldTotalValue;
 
   const { data: sale, error } = await supabase
 
-    .from("pending_sales")
+ .from("pending_sales")
 
-    .insert({
+.insert({
 
-      client_id: Number(clientId),
+  client_id: Number(clientId),
 
-      sold_by_worker_id: null,
+  sold_by_worker_id: null,
 
-      original_total: originalTotal,
+  original_total: originalTotal,
 
-      sold_total: finalTotal,
+  sold_total: finalTotal,
 
-      advance: Number(advance || 0),
+  advance: Number(advance || 0),
 
-      origin,
+  sale_type: "Reserva",
 
-      notes
+  origin,
 
-    })
+  notes
+
+})
 
     .select()
 
@@ -1393,10 +1395,6 @@ Crear cita
 
         <option value="WHATSAPP">
           WhatsApp
-        </option>
-
-        <option value="VENTA_INTERNA">
-          Venta interna
         </option>
 
       </select>
