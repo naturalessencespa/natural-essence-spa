@@ -1526,11 +1526,21 @@ Crear cita
             <div className="text-right">
 
               <button
-                onClick={() => {
+              onClick={() => {
 
-                  setSalesCart(
-                    salesCart.filter((_, i) => i !== index)
-                  );
+                  const newCart = salesCart.filter((_, i) => i !== index);
+
+                  setSalesCart(newCart);
+
+                  if (newCart.length === 0) {
+
+                    setSoldTotal("");
+
+                    setSoldTotalEdited(false);
+
+                    setAdvance("");
+
+                  }
 
                 }}
                 className="text-red-600 hover:underline"

@@ -1156,6 +1156,23 @@ if (packageSession) {
 
 }
 
+await supabase
+
+  .from("pending_sales")
+
+  .update({
+
+    status: "Pendiente",
+
+    appointment_generated_id: null
+
+  })
+
+  .eq(
+    "appointment_generated_id",
+    Number(appointmentId)
+  );
+  
 const { error } =
   await supabase
 
