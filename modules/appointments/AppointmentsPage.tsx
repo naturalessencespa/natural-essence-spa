@@ -328,14 +328,14 @@ title:
 
   "S/" +
 
-  (
-    appointment.final_price ||
+ (
+  appointment.final_price ??
 
-    appointment.services
-      ?.price ||
+  appointment.services
+    ?.price ??
 
-    0
-  )
+  0
+)
 
   +
 

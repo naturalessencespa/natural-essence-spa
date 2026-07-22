@@ -429,18 +429,14 @@ return manualPackagePrice;
     0
   );
 
-  const packageBalance = useMemo(() => {
+const packageBalance = useMemo(() => {
 
   if (!selectedPackage) return 0;
 
-  const balance =
-    Number(selectedPackage.balance || 0);
-
-  if (balance > 0) {
-    return balance;
-  }
-
-  return Number(selectedPackage.unit_price || 0);
+  return Math.max(
+    Number(selectedPackage.balance || 0),
+    0
+  );
 
 }, [selectedPackage]);
 
@@ -4382,7 +4378,7 @@ setShowScheduleSessionModal(
 
   <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[90] p-4">
 
-    <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl p-6 md:p-8">
+   <div className="bg-white rounded-3xl w-full max-w-xl max-h-[85vh] overflow-y-auto shadow-2xl p-5">
 
       <h3 className="text-2xl font-bold text-[#243847] mb-6">
 
@@ -4390,7 +4386,7 @@ setShowScheduleSessionModal(
 
       </h3>
 
-      <div className="space-y-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 
         <div>
 
@@ -4423,28 +4419,7 @@ setShowScheduleSessionModal(
 
 </select>
 
-<div className="bg-gray-100 rounded-2xl p-4 mt-3">
 
-  <p>
-    Precio por sesión:
-    <strong>
-      {" "}S/ {Number(selectedPackage?.unit_price || 0)}
-    </strong>
-  </p>
-
-  <p>
-    Descuento aplicado:
-    <strong>
-      {" "}
-      {additionalSessions === 1
-  ? "0%"
-  : additionalSessions === 3
-  ? "10%"
-  : "15%"}
-    </strong>
-  </p>
-
-</div>
 
         </div>
 
@@ -4468,6 +4443,26 @@ setShowScheduleSessionModal(
           />
 
         </div>
+
+        <div className="md:col-span-2 bg-blue-50 border border-blue-200 rounded-2xl px-5 py-3 flex flex-wrap items-center justify-between gap-3">
+
+  <p className="font-medium">
+  Precio por sesión:
+  <span className="font-bold">
+    {" "}S/ {Number(selectedPackage?.unit_price || 0)}
+  </span>
+</p>
+
+<p className="font-medium text-green-700">
+  Descuento:
+  {additionalSessions === 3
+    ? " 10%"
+    : additionalSessions === 6
+    ? " 15%"
+    : " 0%"}
+</p>
+
+</div>
 
         <div>
 
@@ -4532,7 +4527,7 @@ setShowScheduleSessionModal(
 
         </div>
 
-        <div>
+       <div className="md:col-span-2">
 
           <label className="font-medium">
 
@@ -4547,7 +4542,7 @@ setShowScheduleSessionModal(
                 e.target.value
               )
             }
-            rows={3}
+            rows={2}
             className="w-full border rounded-2xl p-4 mt-2"
           />
 
