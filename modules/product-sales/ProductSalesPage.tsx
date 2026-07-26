@@ -494,7 +494,7 @@ useEffect(() => {
 
       <div className="mb-8">
 
-        <h2 className="text-5xl font-bold text-[#243847]">
+        <h2 className="text-3xl md:text-4xl xl:text-5xl font-bold text-[#243847]">
 
           Ventas Productos 🧴
 
@@ -512,7 +512,7 @@ useEffect(() => {
     setShowModal(true)
   }
 
-  className="bg-[#243847] text-white px-5 py-3 rounded-2xl mt-6"
+ className="bg-[#243847] text-white px-5 py-3 rounded-2xl mt-6 w-full md:w-auto"
 
 >
 
@@ -522,7 +522,7 @@ useEffect(() => {
 
       </div>
 
-      <div className="flex gap-4 mb-6 flex-wrap">
+     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
 
   {/* PRODUCTO */}
   <input
@@ -539,7 +539,7 @@ useEffect(() => {
       )
     }
 
-    className="border p-4 rounded-2xl"
+   className="w-full border p-4 rounded-2xl"
 
   />
 
@@ -558,7 +558,7 @@ useEffect(() => {
       )
     }
 
-    className="border p-4 rounded-2xl"
+  className="w-full border p-4 rounded-2xl"
 
   />
 
@@ -575,7 +575,7 @@ useEffect(() => {
       )
     }
 
-    className="border p-4 rounded-2xl"
+  className="w-full border p-4 rounded-2xl"
 
   />
 
@@ -592,15 +592,15 @@ useEffect(() => {
       )
     }
 
-    className="border p-4 rounded-2xl"
+   className="w-full border p-4 rounded-2xl"
 
   />
 
 </div>
 
-      <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+      <div className="bg-white rounded-3xl shadow-xl overflow-x-auto">
 
-        <table className="w-full">
+       <table className="min-w-[900px] w-full">
 
           <thead className="bg-[#243847] text-white">
 
@@ -744,7 +744,7 @@ useEffect(() => {
 
   <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
-    <div className="bg-white p-8 rounded-3xl w-[500px] shadow-2xl">
+    <div className="bg-white p-6 md:p-8 rounded-3xl w-[95%] md:w-[500px] max-h-[90vh] overflow-y-auto shadow-2xl">
 
       <h3 className="text-2xl font-bold text-[#243847] mb-6">
 
@@ -954,7 +954,7 @@ useEffect(() => {
 
       </div>
 
-      <div className="flex gap-4 mt-8">
+     <div className="flex flex-col md:flex-row gap-4 mt-8">
 
         <button
 
@@ -962,7 +962,7 @@ useEffect(() => {
             setShowModal(false)
           }
 
-          className="bg-gray-200 px-5 py-3 rounded-2xl"
+          className="w-full md:w-auto bg-gray-200 px-5 py-3 rounded-2xl"
 
         >
 
@@ -976,7 +976,7 @@ useEffect(() => {
   saveProductSale
 }
 
-          className="bg-[#243847] text-white px-5 py-3 rounded-2xl"
+         className="w-full md:w-auto bg-[#243847] text-white px-5 py-3 rounded-2xl"
 
         >
 
