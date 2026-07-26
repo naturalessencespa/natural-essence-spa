@@ -179,9 +179,9 @@ export default function LaserZonesPage() {
 
     <div>
 
-      <div className="flex items-center justify-between mb-8">
+     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
 
-        <h1 className="text-5xl font-bold text-[#243847]">
+        <h1 className="text-3xl md:text-4xl xl:text-5xl font-bold text-[#243847]">
 
           Zonas Láser
 
@@ -199,7 +199,7 @@ export default function LaserZonesPage() {
             setShowModal(true);
 
           }}
-          className="bg-[#243847] text-white px-6 py-4 rounded-2xl"
+          className="w-full md:w-auto bg-[#243847] text-white px-6 py-4 rounded-2xl"
         >
 
           + Nueva Zona
@@ -224,9 +224,9 @@ export default function LaserZonesPage() {
 
       </div>
 
-      <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+      <div className="bg-white rounded-3xl shadow-xl overflow-x-auto">
 
-        <table className="w-full">
+      <table className="min-w-[700px] w-full">
 
           <thead className="bg-[#243847] text-white">
 
@@ -302,51 +302,43 @@ export default function LaserZonesPage() {
 
                   </td>
 
-                  <td className="p-5 flex gap-3">
+                <td className="p-5">
 
-                    <button
-                      onClick={() => {
+  <div className="flex flex-col md:flex-row gap-2">
 
-                        setEditingId(
-                          zone.id
-                        );
+    <button
+      onClick={() => {
 
-                        setName(
-                          zone.name
-                        );
+        setEditingId(zone.id);
 
-                        setPrice(
-                          Number(
-                            zone.price
-                          )
-                        );
+        setName(zone.name);
 
-                        setShowModal(
-                          true
-                        );
+        setPrice(Number(zone.price));
 
-                      }}
-                      className="bg-blue-500 text-white px-4 py-2 rounded-xl"
-                    >
+        setShowModal(true);
 
-                      Editar
+      }}
+      className="w-full md:w-auto bg-blue-500 text-white px-4 py-2 rounded-xl"
+    >
 
-                    </button>
+      Editar
 
-                    <button
-                      onClick={() =>
-                        deleteZone(
-                          zone.id
-                        )
-                      }
-                      className="bg-red-500 text-white px-4 py-2 rounded-xl"
-                    >
+    </button>
 
-                      Eliminar
+    <button
+      onClick={() =>
+        deleteZone(zone.id)
+      }
+      className="w-full md:w-auto bg-red-500 text-white px-4 py-2 rounded-xl"
+    >
 
-                    </button>
+      Eliminar
 
-                  </td>
+    </button>
+
+  </div>
+
+</td>
 
                 </tr>
 
@@ -360,9 +352,8 @@ export default function LaserZonesPage() {
 
       {showModal && (
 
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-
-          <div className="bg-white p-8 rounded-3xl w-[500px]">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+<div className="bg-white p-6 md:p-8 rounded-3xl w-[95%] md:w-[500px] max-h-[90vh] overflow-y-auto">
 
             <h2 className="text-2xl font-bold mb-6">
 
@@ -402,13 +393,13 @@ export default function LaserZonesPage() {
 
             </div>
 
-            <div className="flex gap-4 mt-6">
+           <div className="flex flex-col md:flex-row gap-4 mt-6">
 
               <button
                 onClick={() =>
                   setShowModal(false)
                 }
-                className="bg-gray-200 px-5 py-3 rounded-2xl"
+                className="w-full md:w-auto bg-gray-200 px-5 py-3 rounded-2xl"
               >
 
                 Cancelar
@@ -417,7 +408,7 @@ export default function LaserZonesPage() {
 
               <button
                 onClick={saveZone}
-                className="bg-[#243847] text-white px-5 py-3 rounded-2xl"
+                className="w-full md:w-auto bg-[#243847] text-white px-5 py-3 rounded-2xl"
               >
 
                 Guardar
