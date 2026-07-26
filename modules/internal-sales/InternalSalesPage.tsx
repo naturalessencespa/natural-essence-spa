@@ -380,7 +380,7 @@ useEffect(() => {
 
       <div className="mb-8">
 
-        <h2 className="text-5xl font-bold text-[#243847]">
+        <h2 className="text-3xl md:text-4xl xl:text-5xl font-bold text-[#243847]">
 
           Ventas Internas 💎
 
@@ -398,7 +398,7 @@ useEffect(() => {
 
     onClick={exportToExcel}
 
-    className="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-xl font-semibold"
+className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-xl font-semibold"
 
   >
 
@@ -410,9 +410,9 @@ useEffect(() => {
 
       </div>
 
-      <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
+    <div className="bg-white rounded-3xl shadow-xl p-4 md:p-6 mb-6">
 
-  <div className="grid grid-cols-6 gap-4">
+ <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4">
 
     <input
       type="date"
@@ -422,7 +422,7 @@ useEffect(() => {
           e.target.value
         )
       }
-      className="border rounded-xl p-3"
+     className="w-full border rounded-xl p-3"
     />
 
     <input
@@ -433,7 +433,7 @@ useEffect(() => {
           e.target.value
         )
       }
-      className="border rounded-xl p-3"
+     className="w-full border rounded-xl p-3"
     />
 
     <input
@@ -445,7 +445,7 @@ useEffect(() => {
           e.target.value
         )
       }
-      className="border rounded-xl p-3"
+    className="w-full border rounded-xl p-3"
     />
 
     <input
@@ -457,7 +457,7 @@ useEffect(() => {
           e.target.value
         )
       }
-      className="border rounded-xl p-3"
+     className="w-full border rounded-xl p-3"
     />
 
     <input
@@ -469,10 +469,10 @@ useEffect(() => {
           e.target.value
         )
       }
-      className="border rounded-xl p-3"
+   className="w-full border rounded-xl p-3"
     />
 
-    <div className="flex flex-col justify-center">
+    <div className="flex flex-col justify-center rounded-xl bg-gray-50 p-3">
 
       <span className="font-semibold">
 
@@ -494,9 +494,9 @@ useEffect(() => {
 
 </div>
 
-      <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+      <div className="bg-white rounded-3xl shadow-xl overflow-x-auto">
 
-        <table className="w-full">
+       <table className="min-w-[1050px] w-full">
 
           <thead className="bg-[#243847] text-white">
 
@@ -604,7 +604,7 @@ useEffect(() => {
           )
         }
 
-        className="border p-2 rounded-xl w-[120px]"
+       className="border p-2 rounded-xl w-full md:w-[120px]"
 
       />
 
@@ -651,7 +651,7 @@ sale.id ? (
       updateSale(sale.id)
     }
 
-    className="bg-green-600 text-white px-4 py-2 rounded-xl mr-2"
+    className="w-full md:w-auto bg-green-600 text-white px-4 py-2 rounded-xl mb-2 md:mb-0 md:mr-2"
 
   >
 
@@ -676,7 +676,7 @@ sale.id ? (
 
     }}
 
-    className="bg-orange-500 text-white px-4 py-2 rounded-xl mr-2"
+    className="w-full md:w-auto bg-orange-500 text-white px-4 py-2 rounded-xl mb-2 md:mb-0 md:mr-2"
 
   >
 
@@ -692,7 +692,7 @@ sale.id ? (
                         deleteSale(sale.id)
                         }
 
-                        className="bg-red-500 text-white px-4 py-2 rounded-xl"
+                        className="w-full md:w-auto bg-red-500 text-white px-4 py-2 rounded-xl"
 
                     >
 
