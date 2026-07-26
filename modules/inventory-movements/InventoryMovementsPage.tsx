@@ -94,11 +94,11 @@ setMovements(
 
   return (
 
-    <div>
+       <div className="space-y-6">
 
       <div className="mb-8">
 
-        <h2 className="text-5xl font-bold text-[#243847]">
+       <h2 className="text-3xl md:text-4xl xl:text-5xl font-bold text-[#243847]">
 
           Movimientos Inventario 📦
 
@@ -126,13 +126,13 @@ setMovements(
     )
   }
 
-  className="border p-4 rounded-2xl mb-6 w-[320px]"
+  className="w-full md:w-[320px] border p-4 rounded-2xl mb-6"
 
 />
 
-      <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+      <div className="bg-white rounded-3xl shadow-xl overflow-x-auto">
 
-        <table className="w-full">
+       <table className="min-w-[850px] w-full">
 
           <thead className="bg-[#243847] text-white">
 
