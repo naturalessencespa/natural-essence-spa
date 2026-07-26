@@ -2377,11 +2377,11 @@ if (
       <div>
 
         {/* HEADER */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
 
           <div>
 
-            <h2 className="text-5xl font-bold text-[#243847]">
+            <h2 className="text-3xl md:text-4xl xl:text-5xl font-bold text-[#243847]">
 
               Paquetes 🎯
 
@@ -2428,7 +2428,7 @@ if (
   setShowModal(true);
 
 }}
-            className="bg-[#243847] text-white px-6 py-4 rounded-2xl"
+          className="w-full md:w-auto bg-[#243847] text-white px-6 py-4 rounded-2xl"
           >
 
             + Nuevo paquete
@@ -2438,7 +2438,7 @@ if (
         </div>
 
         {/* FILTROS */}
-        <div className="flex gap-4 mb-6">
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
 
           <input
             type="text"
@@ -2449,7 +2449,7 @@ if (
                 e.target.value
               )
             }
-            className="border p-4 rounded-2xl w-[350px]"
+            className="w-full md:w-[350px] border p-4 rounded-2xl"
           />
 
           <select
@@ -2459,7 +2459,7 @@ if (
                 e.target.value
               )
             }
-            className="border p-4 rounded-2xl"
+           className="w-full md:w-auto border p-4 rounded-2xl"
           >
 
             <option value="date_desc">
@@ -2524,7 +2524,7 @@ if (
 
             <div
               key={session.id}
-              className="border rounded-2xl p-4 flex items-center justify-between"
+              className="border rounded-2xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
             >
 
               <div>
@@ -2651,7 +2651,7 @@ if (
 
             <div
               key={session.id}
-              className="border rounded-2xl p-5 flex justify-between items-center"
+             className="border rounded-2xl p-5 flex flex-col md:flex-row md:justify-between md:items-center gap-4"
             >
 
               <div>
@@ -2736,7 +2736,7 @@ if (
 
       <div
   key={pkg.id}
-  className="border rounded-2xl p-5 flex justify-between items-center hover:bg-gray-50 transition"
+  className="border rounded-2xl p-5 flex flex-col md:flex-row md:justify-between md:items-center gap-5 hover:bg-gray-50 transition"
 >
 
   <div>
@@ -2809,16 +2809,16 @@ if (
 
   </div>
 
-  <div className="flex gap-3">
+  <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
 
     <button
-      className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700"
+      className="w-full md:w-auto bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700"
     >
       💬 WhatsApp
     </button>
 
     <button
-      className="bg-[#243847] text-white px-4 py-2 rounded-xl hover:opacity-90"
+      className="w-full md:w-auto bg-[#243847] text-white px-4 py-2 rounded-xl hover:opacity-90"
     >
       ➕ Nuevo paquete
     </button>
@@ -2834,7 +2834,7 @@ if (
 </div>
 
         {/* TABLA */}
-        <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+        <div className="bg-white rounded-3xl shadow-xl overflow-x-auto">
 
           <table className="w-full min-w-[1000px]">
 
@@ -3840,7 +3840,7 @@ setSessionFrequency(
 
               </div>
 
-              <div className="flex justify-end gap-4 p-8 border-t">
+              <div className="flex flex-col md:flex-row md:justify-end gap-4 p-6 md:p-8 border-t">
 
                 <button
                  onClick={() => {
@@ -3875,7 +3875,7 @@ setSessionFrequency(
   setSavedTotalPrice(0);
 
 }}
-                  className="bg-gray-200 px-6 py-3 rounded-2xl"
+                 className="w-full md:w-auto bg-gray-200 px-6 py-3 rounded-2xl"
                 >
 
                   Cancelar
@@ -3884,7 +3884,7 @@ setSessionFrequency(
 
                 <button
                   onClick={savePackage}
-                  className="bg-[#243847] text-white px-6 py-3 rounded-2xl"
+                  className="w-full md:w-auto bg-[#243847] text-white px-6 py-3 rounded-2xl"
                 >
 
                   {editingId
@@ -3906,7 +3906,7 @@ setSessionFrequency(
 
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60] p-6">
 
-            <div className="bg-white rounded-3xl w-full max-w-[500px] overflow-hidden">
+           <div className="bg-white rounded-3xl w-full max-w-[500px] max-h-[90vh] overflow-y-auto overflow-hidden">
 
               <div className="bg-[#243847] text-white px-6 py-5 flex items-center justify-between">
 
@@ -3981,7 +3981,7 @@ setSessionFrequency(
 
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[70] p-6">
 
-            <div className="bg-white rounded-3xl w-full max-w-[1100px] overflow-y-auto max-h-[90vh]">
+            <div className="bg-white rounded-3xl w-[95%] max-w-[1100px] max-h-[90vh] overflow-y-auto">
 
               <div className="bg-[#243847] text-white px-6 py-5 flex items-center justify-between">
 
@@ -4231,7 +4231,7 @@ setShowScheduleSessionModal(
 
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[80]">
 
-      <div className="bg-white p-8 rounded-3xl w-[500px] shadow-2xl">
+     <div className="bg-white p-6 md:p-8 rounded-3xl w-[95%] md:w-[500px] max-h-[90vh] overflow-y-auto shadow-2xl">
 
         <h3 className="text-2xl font-bold text-[#243847] mb-6">
 
@@ -4336,7 +4336,7 @@ setShowScheduleSessionModal(
         </div>
 
 
-        <div className="flex gap-4 mt-8">
+        <div className="flex flex-col md:flex-row gap-4 mt-8">
 
           <button
 
@@ -4346,7 +4346,7 @@ setShowScheduleSessionModal(
               )
             }
 
-            className="bg-gray-200 px-5 py-3 rounded-2xl"
+            className="w-full md:w-auto bg-gray-200 px-5 py-3 rounded-2xl"
 
           >
 
@@ -4358,7 +4358,7 @@ setShowScheduleSessionModal(
 
             onClick={scheduleSession}
 
-            className="bg-[#243847] text-white px-5 py-3 rounded-2xl"
+           className="w-full md:w-auto bg-[#243847] text-white px-5 py-3 rounded-2xl"
 
           >
 
@@ -4378,7 +4378,7 @@ setShowScheduleSessionModal(
 
   <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[90] p-4">
 
-   <div className="bg-white rounded-3xl w-full max-w-xl max-h-[85vh] overflow-y-auto shadow-2xl p-5">
+   <div className="bg-white rounded-3xl w-[95%] max-w-xl max-h-[90vh] overflow-y-auto shadow-2xl p-5 md:p-6">
 
       <h3 className="text-2xl font-bold text-[#243847] mb-6">
 
