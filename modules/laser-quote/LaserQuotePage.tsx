@@ -636,7 +636,6 @@ Agregar
 
       setSelectedZones([]);
 
-      setPackageType(1);
 
     }}
 
