@@ -5,10 +5,7 @@ import { supabase } from "@/lib/supabase";
 
 export default function LaserQuotePage() {
 
-    const [
-  packageType,
-  setPackageType
-] = useState(1);
+   
 
   const [zones, setZones] = useState<any[]>([]);
 
@@ -24,60 +21,135 @@ export default function LaserQuotePage() {
 
   }, []);
 
-const subtotal = selectedZones.reduce(
+const calculateQuotation = (
+  sessions: number
+) => {
 
-  (sum, zone) =>
+  const zonesWithPrice =
+    selectedZones.map((zone) => {
 
-    sum + Number(zone.price),
+      let unitPrice =
+        Number(zone.price);
 
-  0
+      if (sessions === 3) {
 
-);
+        unitPrice =
+          unitPrice * 0.90;
 
-let promotionDiscount = 0;
+      }
 
-let promotionZone = "";
+      if (sessions === 6) {
 
-if (selectedZones.length >= 3) {
+        unitPrice =
+          unitPrice * 0.85;
 
-  let cheapestZone = selectedZones[0];
+      }
 
-  let cheapestPrice = Infinity;
+      return {
 
-  selectedZones.forEach((zone) => {
+        ...zone,
 
-    const totalPrice = Number(zone.price);
+        totalPrice:
+          unitPrice * sessions
 
-if (totalPrice < cheapestPrice) {
+      };
 
-  cheapestPrice = totalPrice;
+    });
 
-  cheapestZone = zone;
+  const subtotal =
+    zonesWithPrice.reduce(
 
-}
+      (sum, zone) =>
 
-  });
+        sum +
+        zone.totalPrice,
 
-  promotionDiscount =
-    cheapestPrice * 0.5;
+      0
 
-  promotionZone =
-    cheapestZone.name;
+    );
 
-}
+  let promotionDiscount = 0;
 
-const total =
-  subtotal -
-  promotionDiscount;
+  let promotionZone = "";
 
-  const copyQuotation = async () => {
+  if (
+    zonesWithPrice.length >= 3
+  ) {
+
+    let cheapest =
+      zonesWithPrice[0];
+
+    zonesWithPrice.forEach(
+      (zone) => {
+
+        if (
+          zone.totalPrice <
+          cheapest.totalPrice
+        ) {
+
+          cheapest = zone;
+
+        }
+
+      }
+    );
+
+    promotionDiscount =
+      cheapest.totalPrice * 0.5;
+
+    promotionZone =
+      cheapest.name;
+
+  }
+
+  return {
+
+    subtotal,
+
+    promotionDiscount,
+
+    promotionZone,
+
+    total:
+      subtotal -
+      promotionDiscount
+
+  };
+
+};
+
+const quotation1 =
+  calculateQuotation(1);
+
+const quotation3 =
+  calculateQuotation(3);
+
+const quotation6 =
+  calculateQuotation(6);
+
+const copyQuotation = async () => {
+
+  const quotations = [
+
+    {
+      title: "1 sesión",
+      data: quotation1
+    },
+
+    {
+      title: "3 sesiones",
+      data: quotation3
+    },
+
+    {
+      title: "6 sesiones",
+      data: quotation6
+    }
+
+  ];
 
   let message =
-
-`✨ *Cotización Depilación Láser* ✨
-
-📦 *Paquete:*
-${packageType} sesión${packageType > 1 ? "es" : ""}
+`✨ *COTIZACIÓN DEPILACIÓN LÁSER* ✨
 
 📍 *Zonas seleccionadas:*
 
@@ -85,54 +157,65 @@ ${packageType} sesión${packageType > 1 ? "es" : ""}
 
   selectedZones.forEach((zone) => {
 
-  message +=
-
-`• ${zone.name}: S/${Number(zone.price).toFixed(2)}
+    message += `• ${zone.name}
 `;
 
-});
+  });
 
   message += `
-
 ━━━━━━━━━━━━━━
 
-💰 *Subtotal:* S/${subtotal.toFixed(2)}
 `;
 
-if (selectedZones.length === 2) {
+  quotations.forEach((item) => {
+
+    message +=
+`💰 *${item.title}*
+S/${item.data.total.toFixed(2)}
+
+`;
+
+  });
+
+  message += `━━━━━━━━━━━━━━
+
+`;
+
+ if (selectedZones.length >= 3) {
 
   message +=
+`🎁 *Estos precios ya incluyen:*
 
-`🎁 *Promoción disponible*
-
-Agregando una zona más obtienes automáticamente *50% de descuento en la zona de menor valor.*
+• Descuento por paquete.
+• 50% de descuento en la zona de menor valor (*${quotation1.promotionZone}*).
 
 `;
 
 }
 
-  if (promotionDiscount > 0) {
+  if (selectedZones.length === 2) {
 
     message +=
+`🎁 *Promoción disponible*
 
-`🎁 *Promoción aplicada:*
-50% de descuento en ${promotionZone}
-
-Descuento: -S/${promotionDiscount.toFixed(2)}
+Agrega una zona más y obtén automáticamente 50% de descuento en la zona de menor valor.
 
 `;
 
   }
 
   message +=
+`💚 Todos nuestros paquetes utilizan tecnología Láser de 4 Ondas.
 
-`💵 *Total:* S/${total.toFixed(2)}
+Quedamos atentos para ayudarte a reservar tu primera sesión.`;
 
-Quedamos atentos para ayudarte a reservar tu primera sesión. 💚`;
+  await navigator.clipboard.writeText(
+    message
+  );
 
-  await navigator.clipboard.writeText(message);
-
-  alert("Cotización copiada al portapapeles.");
+  alert(
+    "Cotización copiada al portapapeles."
+  );
 
 };
 
@@ -182,75 +265,12 @@ active
 
      <div className="mb-8">
 
-  <h2 className="text-2xl font-semibold">
+ <h2 className="text-2xl font-semibold">
 
-    Selecciona el paquete
+  Zonas disponibles
 
-  </h2>
+</h2>
 
-  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
-
-    <button
-
-      onClick={() =>
-        setPackageType(1)
-      }
-
-      className={`w-full px-6 py-3 rounded-2xl font-semibold ${
-        packageType === 1
-          ? "bg-[#243847] text-white"
-          : "bg-gray-200"
-      }`}
-
-    >
-
-      1 sesión
-
-    </button>
-
-    <button
-
-      onClick={() =>
-        setPackageType(3)
-      }
-
-      className={`w-full px-6 py-3 rounded-2xl font-semibold ${
-        packageType === 3
-          ? "bg-[#243847] text-white"
-          : "bg-gray-200"
-      }`}
-
-    >
-
-      3 sesiones
-
-    </button>
-
-    <button
-
-      onClick={() =>
-        setPackageType(6)
-      }
-
-      className={`w-full px-6 py-3 rounded-2xl font-semibold ${
-        packageType === 6
-          ? "bg-[#243847] text-white"
-          : "bg-gray-200"
-      }`}
-
-    >
-
-      6 sesiones
-
-    </button>
-
-  </div>
-
-  <h2 className="text-2xl font-semibold mt-10">
-
-    Zonas disponibles
-
-  </h2>
 
 </div>
 
@@ -312,21 +332,7 @@ active
 
       .map((zone)=>{
 
-       let unitPrice = Number(zone.price);
-
-if (packageType === 3) {
-
-  unitPrice = unitPrice * 0.90;
-
-}
-
-if (packageType === 6) {
-
-  unitPrice = unitPrice * 0.85;
-
-}
-
-const price = unitPrice * packageType;
+  let unitPrice = Number(zone.price);
 
         return(
 
@@ -348,7 +354,7 @@ className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 bo
 
 <p className="text-green-600">
 
-S/{price.toFixed(2)}
+Desde S/{Number(zone.price).toFixed(2)}
 
 </p>
 
@@ -366,7 +372,7 @@ setSelectedZones([
 
 ...zone,
 
-price
+price: Number(zone.price)
 
 }
 
@@ -476,139 +482,117 @@ Agregar
 
 <div className="mt-10 bg-gray-50 rounded-3xl p-4 md:p-6">
 
-  <h2 className="text-xl md:text-2xl font-bold text-[#243847] mb-6">
+  <h2 className="text-xl md:text-2xl font-bold text-[#243847] mb-8">
 
     Resumen de la cotización
 
   </h2>
 
-  <div className="flex justify-between items-center mb-3 gap-4">
+  <div className="space-y-6">
 
-    <span>
+    {[
+      {
+        title: "1 sesión",
+        data: quotation1
+      },
+      {
+        title: "3 sesiones",
+        data: quotation3
+      },
+      {
+        title: "6 sesiones",
+        data: quotation6
+      }
+    ].map((item) => (
 
-      Cantidad de zonas
+      <div
+        key={item.title}
+        className="bg-white rounded-2xl border p-5"
+      >
 
-    </span>
+        <h3 className="text-xl font-bold text-[#243847] mb-4">
 
-    <strong>
+          {item.title}
 
-      {selectedZones.length}
+        </h3>
 
-    </strong>
+        <div className="flex justify-between mb-2">
 
-  </div>
+          <span>
 
-  <div className="flex justify-between mb-3">
+            Subtotal
 
-    <span>
+          </span>
 
-      Tipo de paquete
+          <strong>
 
-    </span>
+            S/{item.data.subtotal.toFixed(2)}
 
-    <strong>
+          </strong>
 
-      {packageType} sesión{packageType > 1 ? "es" : ""}
+        </div>
 
-    </strong>
+        <div className="flex justify-between mb-2">
 
-  </div>
+          <span>
 
-  <div className="flex justify-between mb-3">
+            Descuento
 
-  <span>
+          </span>
 
-    Subtotal
+          <strong className="text-green-600">
 
-  </span>
+            -S/{item.data.promotionDiscount.toFixed(2)}
 
-  <strong>
+          </strong>
 
-    S/{subtotal.toFixed(2)}
+        </div>
 
-  </strong>
+        {item.data.promotionZone !== "" && (
 
-</div>
+          <div className="bg-green-50 border border-green-300 rounded-xl p-3 my-4">
 
-<div className="flex justify-between mb-3">
+            ✅ 50% aplicado en <strong>{item.data.promotionZone}</strong>
 
-  <span>
+          </div>
 
-    Descuento
+        )}
 
-  </span>
+        <div className="flex justify-between border-t pt-4 text-xl font-bold">
 
-  <strong className="text-green-600">
+          <span>
 
-    -S/{promotionDiscount.toFixed(2)}
+            TOTAL
 
-  </strong>
+          </span>
 
-</div>
+          <span className="text-[#243847]">
 
-{promotionZone !== "" && (
+            S/{item.data.total.toFixed(2)}
 
-<div className="bg-green-50 border border-green-300 rounded-2xl p-4 mb-4">
+          </span>
 
-  ✅ 50% aplicado en:
+        </div>
 
-  <strong>
+      </div>
 
-    {" "}
+    ))}
 
-    {promotionZone}
+    {selectedZones.length === 2 && (
 
-  </strong>
+      <div className="bg-yellow-50 border border-yellow-300 rounded-2xl p-5">
 
-</div>
+        <p className="font-semibold text-yellow-700">
 
-)}
+          🎁 Agrega una zona más y obtén 50% de descuento en la zona de menor valor.
 
-<div className="flex justify-between items-center border-t pt-5 text-xl md:text-2xl font-bold gap-4">
+        </p>
 
-  <span>
+      </div>
 
-    TOTAL
-
-  </span>
-
-  <span className="text-[#243847]">
-
-    S/{total.toFixed(2)}
-
-  </span>
-
-</div>
-
-
-{selectedZones.length === 2 && (
-
-  <div className="mt-6 bg-yellow-50 border border-yellow-300 rounded-2xl p-5">
-
-    <p className="font-semibold text-yellow-700">
-
-      🎁 Agrega una zona más y obtén 50% de descuento en la zona de menor valor.
-
-    </p>
+    )}
 
   </div>
-
-)}
-
-{selectedZones.length >= 3 && (
-
-  <div className="mt-6 bg-green-50 border border-green-300 rounded-2xl p-5">
-
-    <p className="font-semibold text-green-700">
-
-      ✅ Promoción aplicada correctamente.
-
-    </p>
-
-  </div>
-
-)}
-
 
 </div>
 
