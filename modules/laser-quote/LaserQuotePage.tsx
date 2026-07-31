@@ -169,11 +169,43 @@ const copyQuotation = async () => {
 
   quotations.forEach((item) => {
 
-    message +=
+   message +=
 `💰 *${item.title}*
 S/${item.data.total.toFixed(2)}
+`;
+
+if (item.title !== "1 sesión") {
+
+  const discountPercent =
+    item.title === "3 sesiones"
+      ? 10
+      : 15;
+
+  const normalPrice =
+    selectedZones.reduce(
+      (sum, zone) =>
+        sum +
+        Number(zone.price) *
+        (item.title === "3 sesiones" ? 3 : 6),
+      0
+    );
+
+  const packageSaving =
+    normalPrice *
+    (discountPercent / 100);
+
+  message +=
+`${item.title === "3 sesiones" ? "✅" : "🔥"} Ahorras S/${packageSaving.toFixed(2)}
 
 `;
+
+} else {
+
+  message += `
+`;
+
+
+}
 
   });
 
