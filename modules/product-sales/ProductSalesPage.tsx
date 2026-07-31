@@ -101,6 +101,46 @@ const [
   setToDate
 ] = useState("");
 
+const [
+  productCommission,
+  setProductCommission
+] = useState(15);
+
+const loadProductCommission =
+async () => {
+
+  const { data } =
+    await supabase
+
+      .from("system_settings")
+
+      .select("setting_value")
+
+      .eq(
+        "branch_id",
+        selectedBranch
+      )
+
+      .eq(
+        "category",
+        "commission"
+      )
+
+      .eq(
+        "setting_key",
+        "product_sale"
+      )
+
+      .maybeSingle();
+
+  setProductCommission(
+    Number(
+      data?.setting_value ?? 15
+    )
+  );
+
+};
+
   const fetchSales =
     async () => {
 
@@ -306,8 +346,9 @@ setSales(
       qty *
   Number(unitPrice);
 
-    const commission =
-      total * 0.15;
+   const commission =
+  total *
+  (productCommission / 100);
 
     const { error } =
       await supabase
@@ -339,8 +380,8 @@ setSales(
             total:
               total,
 
-            commission_percentage:
-              15,
+          commission_percentage:
+  productCommission,
 
             commission_amount:
               commission,
@@ -474,6 +515,8 @@ await supabase
   };
 
 useEffect(() => {
+
+  loadProductCommission();
 
   fetchSales();
 
@@ -941,13 +984,14 @@ useEffect(() => {
           Comisión:
           S/
           {
-            (
-              (
-                Number(quantity || 0)
-                *
-                Number(unitPrice || 0)
-              ) * 0.15
-            ).toFixed(2)
+           (
+  (
+    Number(quantity || 0)
+    *
+    Number(unitPrice || 0)
+  ) *
+  (productCommission / 100)
+).toFixed(2)
           }
 
         </p>

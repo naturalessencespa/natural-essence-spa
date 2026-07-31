@@ -115,6 +115,11 @@ const [
   setSalesCart
 ] = useState<any[]>([]);
 
+const [
+  additionalSaleCommission,
+  setAdditionalSaleCommission
+] = useState(20);
+
 
 
   const [selectedDate,
@@ -253,6 +258,40 @@ const [
   setPendingServiceAppointment
 ] = useState<any>(null);
 
+const loadAdditionalSaleCommission =
+async () => {
+
+  const { data } =
+    await supabase
+
+      .from("system_settings")
+
+      .select("setting_value")
+
+      .eq(
+        "branch_id",
+        selectedBranch
+      )
+
+      .eq(
+        "category",
+        "commission"
+      )
+
+      .eq(
+        "setting_key",
+        "additional_sale"
+      )
+
+      .maybeSingle();
+
+  setAdditionalSaleCommission(
+    Number(
+      data?.setting_value ?? 20
+    )
+  );
+
+};
 
   // OBTENER CITAS
   const fetchAppointments = async () => {
@@ -1075,7 +1114,9 @@ alert(
 
 
   // CARGAR
- useEffect(() => {
+useEffect(() => {
+
+  loadAdditionalSaleCommission();
 
   fetchAppointments();
 
@@ -1537,11 +1578,12 @@ const { error } =
 
         sold_price:
           item.sold_price,
+commission_percentage:
+  additionalSaleCommission,
 
-        commission_percentage: 20,
-
-        commission_amount:
-          Number(item.sold_price) * 0.20
+commission_amount:
+  Number(item.sold_price) *
+  (additionalSaleCommission / 100)
 
       }));
 
@@ -1732,11 +1774,12 @@ if (
         sold_price:
           payment.amount,
 
-        commission_percentage:
-          20,
+    commission_percentage:
+  additionalSaleCommission,
 
-        commission_amount:
-          payment.amount * 0.20
+commission_amount:
+  payment.amount *
+  (additionalSaleCommission / 100)
 
       });
 
@@ -2005,10 +2048,11 @@ async () => {
           sale.sold_price,
 
         commission_percentage:
-          20,
+  additionalSaleCommission,
 
-        commission_amount:
-          sale.sold_price * 0.20,
+commission_amount:
+  sale.sold_price *
+  (additionalSaleCommission / 100),
 
       })
     );

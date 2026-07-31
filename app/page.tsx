@@ -30,6 +30,9 @@ import ExpensesPage from "@/modules/expenses/ExpensesPage";
 
 import PendingServicesPage from "@/modules/pending-services/PendingServicesPage";
 
+
+import SystemSettingsPage from "@/modules/system-settings/SystemSettingsPage";
+
 export default function Home() {
 
 const [page, setPage] =
@@ -386,6 +389,22 @@ md:translate-x-0
 
 </button>
 
+<button
+  onClick={() =>{
+    setPage("parametros");
+    setSidebarOpen(false);
+  }}
+  className={`text-left px-4 py-3 rounded-2xl transition ${
+    page === "parametros"
+      ? "bg-white text-[#243847]"
+      : "hover:bg-white/10"
+  }`}
+>
+
+  Parámetros
+
+</button>
+
         </div>
 
       </div>
@@ -526,6 +545,12 @@ className="fixed inset-0 bg-black/40 z-40 md:hidden"
   selectedBranch={selectedBranch}
 />
         )}
+
+        {page === "parametros" && (
+  <SystemSettingsPage
+    selectedBranch={selectedBranch}
+  />
+)}
 
       </div>
 

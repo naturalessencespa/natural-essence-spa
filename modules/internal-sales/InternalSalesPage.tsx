@@ -83,6 +83,11 @@ const [
   setServices
 ] = useState<any[]>([]);
 
+const [
+  commissionPercentage,
+  setCommissionPercentage
+] = useState(20);
+
   const [
   editingSaleId,
   setEditingSaleId
@@ -92,6 +97,41 @@ const [
   editSoldPrice,
   setEditSoldPrice
 ] = useState("");
+
+const loadCommission =
+  async () => {
+
+    const { data } =
+      await supabase
+
+        .from("system_settings")
+
+        .select("setting_value")
+
+        .eq(
+          "branch_id",
+          selectedBranch
+        )
+
+        .eq(
+          "category",
+          "commission"
+        )
+
+        .eq(
+          "setting_key",
+          "additional_sale"
+        )
+
+        .maybeSingle();
+
+    setCommissionPercentage(
+      Number(
+        data?.setting_value ?? 20
+      )
+    );
+
+  };
 
   const fetchSales =
     async () => {
@@ -270,8 +310,9 @@ setTotalCommission(
         editSoldPrice
       );
 
-    const commission =
-      sold * 0.20;
+  const commission =
+  sold *
+  (commissionPercentage / 100);
 
     const { error } =
       await supabase
@@ -363,6 +404,8 @@ setTotalCommission(
 };
 
 useEffect(() => {
+
+  loadCommission();
 
   fetchSales();
 
@@ -613,9 +656,10 @@ className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white px-5 py-3
         Comisión:
         S/
         {(
-          Number(
-            editSoldPrice || 0
-          ) * 0.20
+         (Number(
+  editSoldPrice || 0
+) *
+(commissionPercentage / 100))
         ).toFixed(2)}
 
       </p>
