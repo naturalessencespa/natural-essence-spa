@@ -145,20 +145,11 @@ export default function ClientsPage({
   // OBTENER CLIENTES
   const fetchClients = async () => {
 
-    const { data, error } =
-      await supabase
-
-        .from("clients")
-
-        .select("*")
-
-        .eq("active", true)
-
-        .eq("branch_id", selectedBranch)
-
-        .order("id", {
-          ascending: false,
-        });
+  const { data, error } = await supabase
+  .from("clients")
+  .select("*")
+  .eq("active", true)
+  .order("id", { ascending: false });
 
     if (error) {
 
@@ -173,22 +164,145 @@ export default function ClientsPage({
   // GUARDAR / EDITAR CLIENTE
   const saveClient = async () => {
 
-    if (!fullName) {
+  if (!fullName.trim()) {
 
-      alert("Ingresa nombre");
+    alert("Ingresa nombre");
+
+    return;
+  }
+
+  // EDITAR
+  if (editingClientId) {
+
+    const { error } =
+      await supabase
+
+        .from("clients")
+
+        .update({
+
+          full_name: fullName,
+
+          phone,
+
+          email,
+
+          birth_date:
+            birthDate || null,
+
+          dni,
+
+          address,
+
+          allergies,
+
+          medical_conditions:
+            medicalConditions,
+
+          consent_signed:
+            consentSigned,
+
+          emergency_contact:
+            emergencyContact,
+
+          emergency_phone:
+            emergencyPhone,
+
+          notes,
+
+          file_url:
+            fileUrl,
+
+        })
+
+        .eq(
+          "id",
+          editingClientId
+        );
+
+    if (error) {
+
+      console.log(error);
+
+      alert("Error al actualizar");
 
       return;
     }
 
-    // EDITAR
-    if (editingClientId) {
+    alert("Cliente actualizado");
 
-      const { error } =
+  } else {
+
+    // CREAR
+    // Validar posible cliente duplicado por nombre + teléfono
+    const normalizedName =
+      fullName
+        .trim()
+        .replace(/\s+/g, " ")
+        .toLowerCase();
+
+    const normalizedPhone =
+      phone
+        .trim()
+        .replace(/\D/g, "");
+
+    if (normalizedPhone) {
+
+      const { data: existingClients, error: duplicateError } =
         await supabase
 
           .from("clients")
 
-          .update({
+          .select("id, full_name, phone")
+
+          .eq("active", true);
+
+      if (duplicateError) {
+
+        console.log(duplicateError);
+
+        alert("No se pudo validar si el cliente ya existe");
+
+        return;
+      }
+
+      const duplicateClient =
+        existingClients?.find((client) => {
+
+          const existingName =
+            (client.full_name || "")
+              .trim()
+              .replace(/\s+/g, " ")
+              .toLowerCase();
+
+          const existingPhone =
+            (client.phone || "")
+              .trim()
+              .replace(/\D/g, "");
+
+          return (
+            existingName === normalizedName &&
+            existingPhone === normalizedPhone
+          );
+        });
+
+      if (duplicateClient) {
+
+        alert(
+          `Este cliente ya está registrado como "${duplicateClient.full_name}".\n\nPuedes buscarlo y utilizar el cliente existente en lugar de crear uno nuevo.`
+        );
+
+        return;
+      }
+    }
+
+    const { error } =
+      await supabase
+
+        .from("clients")
+
+        .insert([
+          {
 
             full_name: fullName,
 
@@ -222,118 +336,57 @@ export default function ClientsPage({
             file_url:
               fileUrl,
 
-          })
+            active: true,
 
-          .eq(
-            "id",
-            editingClientId
-          );
+            branch_id: selectedBranch,
 
-      if (error) {
+          },
+        ]);
 
-        console.log(error);
+    if (error) {
 
-        alert("Error al actualizar");
+      console.log(error);
 
-        return;
-      }
+      alert("Error al guardar");
 
-      alert("Cliente actualizado");
-
-    } else {
-
-      // CREAR
-      const { error } =
-        await supabase
-
-          .from("clients")
-
-          .insert([
-            {
-
-              full_name: fullName,
-
-              phone,
-
-              email,
-
-              birth_date:
-                birthDate || null,
-
-              dni,
-
-              address,
-
-              allergies,
-
-              medical_conditions:
-                medicalConditions,
-
-              consent_signed:
-                consentSigned,
-
-              emergency_contact:
-                emergencyContact,
-
-              emergency_phone:
-                emergencyPhone,
-
-              notes,
-
-              file_url:
-                fileUrl,
-
-              active: true,
-
-              branch_id: selectedBranch,
-
-            },
-          ]);
-
-      if (error) {
-
-        console.log(error);
-
-        alert("Error al guardar");
-
-        return;
-      }
-
-      alert("Cliente creado");
+      return;
     }
 
-    setShowModal(false);
+    alert("Cliente creado");
+  }
 
-    setEditingClientId(null);
+  setShowModal(false);
 
-    setFullName("");
+  setEditingClientId(null);
 
-    setPhone("");
+  setFullName("");
 
-    setEmail("");
+  setPhone("");
 
-    setBirthDate("");
+  setEmail("");
 
-    setDni("");
+  setBirthDate("");
 
-    setAddress("");
+  setDni("");
 
-    setAllergies("");
+  setAddress("");
 
-    setMedicalConditions("");
+  setAllergies("");
 
-    setConsentSigned(false);
+  setMedicalConditions("");
 
-    setEmergencyContact("");
+  setConsentSigned(false);
 
-    setEmergencyPhone("");
+  setEmergencyContact("");
 
-    setNotes("");
+  setEmergencyPhone("");
 
-    setFileUrl("");
+  setNotes("");
 
-    fetchClients();
-  };
+  setFileUrl("");
+
+  fetchClients();
+};
 
     const loadClientHistory =
   async (
