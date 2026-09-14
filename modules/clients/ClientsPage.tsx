@@ -577,41 +577,75 @@ setClientStats({
 
 };
   // ELIMINAR
-  const deleteClient = async (
-    id: number
-  ) => {
+const deleteClient = async (
+  id: number
+) => {
 
-    const confirmDelete =
-      confirm(
-        "¿Eliminar cliente?"
-      );
+  // Verificar a qué sede pertenece el cliente
+  const { data: client, error: clientError } =
+    await supabase
 
-    if (!confirmDelete) return;
+      .from("clients")
 
-    const { error } =
-      await supabase
+      .select("id, full_name, branch_id")
 
-        .from("clients")
+      .eq("id", id)
 
-        .update({
-          active: false,
-        })
+      .single();
 
-        .eq("id", id);
+  if (clientError || !client) {
 
-    if (error) {
+    console.log(clientError);
 
-      console.log(error);
+    alert("No se pudo verificar el cliente");
 
-      alert("Error al eliminar");
+    return;
+  }
 
-      return;
-    }
+  // Solo se puede eliminar desde la sede a la que pertenece
+  if (Number(client.branch_id) !== Number(selectedBranch)) {
 
-    alert("Cliente eliminado");
+    alert(
+      "Solo puedes eliminar clientes pertenecientes a la sede activa."
+    );
 
-    fetchClients();
-  };
+    return;
+  }
+
+  // Confirmación
+  const confirmDelete =
+    confirm(
+      `¿Eliminar cliente "${client.full_name}"?`
+    );
+
+  if (!confirmDelete) return;
+
+  // Baja lógica protegida también por sede
+  const { error } =
+    await supabase
+
+      .from("clients")
+
+      .update({
+        active: false,
+      })
+
+      .eq("id", id)
+      .eq("branch_id", selectedBranch);
+
+  if (error) {
+
+    console.log(error);
+
+    alert("Error al eliminar");
+
+    return;
+  }
+
+  alert("Cliente eliminado");
+
+  fetchClients();
+};
 
 useEffect(() => {
 
