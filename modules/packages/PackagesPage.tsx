@@ -453,13 +453,20 @@ const packageBalance = useMemo(() => {
 
             .select(`
               *,
-              clients(full_name),
+              clients!inner(
+                full_name,
+                branch_id
+              ),
               services(name)
             `)
 
-            .eq(
+                       .eq(
               "active",
               true
+            )
+            .eq(
+              "clients.branch_id",
+              selectedBranch
             );
 
         if (error) {
@@ -480,27 +487,36 @@ const packageBalance = useMemo(() => {
           data: clientsData,
         } = await supabase
 
-          .from("clients")
+        .from("clients")
 
-          .select("*")
+.select("*")
 
-          .eq(
-            "active",
-            true
-          );
+.eq(
+  "active",
+  true
+)
 
-        const {
-          data: servicesData,
-        } = await supabase
+.eq(
+  "branch_id",
+  selectedBranch
+);
 
-          .from("services")
-
-          .select("*")
-
-          .eq(
-            "allow_packages",
-            true
-          );
+      const { data: servicesData } = await supabase
+  .from("branch_services")
+  .select(`
+    service_id,
+    price,
+    services!inner(
+      id,
+      name,
+      duration,
+      allow_packages,
+      protocol_url
+    )
+  `)
+  .eq("branch_id", selectedBranch)
+  .eq("active", true)
+  .eq("services.allow_packages", true);
 
         const {
           data: zonesData,
@@ -532,9 +548,16 @@ const packageBalance = useMemo(() => {
           clientsData || []
         );
 
-        setServices(
-          servicesData || []
-        );
+       setServices(
+  (servicesData || []).map((item: any) => ({
+    id: item.services.id,
+    name: item.services.name,
+    duration: item.services.duration,
+    allow_packages: item.services.allow_packages,
+    protocol_url: item.services.protocol_url,
+    price: item.price,
+  }))
+);
 
         setLaserZones(
           zonesData || []
@@ -563,8 +586,46 @@ const packageBalance = useMemo(() => {
           return;
         }
 
+        const { data: selectedClient } = await supabase
+        .from("clients")
+        .select("id, branch_id")
+        .eq("id", parseInt(clientId))
+        .eq("branch_id", selectedBranch)
+        .single();
+
+      if (!selectedClient) {
+        alert("El cliente no pertenece a la sede seleccionada");
+        return;
+      }
+
         // EDITAR
         if (editingId) {
+
+                    const { data: packageToEdit } =
+            await supabase
+              .from("client_packages")
+              .select(`
+                id,
+                clients!inner(
+                  branch_id
+                )
+              `)
+              .eq(
+                "id",
+                editingId
+              )
+              .eq(
+                "clients.branch_id",
+                selectedBranch
+              )
+              .single();
+
+          if (!packageToEdit) {
+            alert(
+              "El paquete no pertenece a la sede seleccionada"
+            );
+            return;
+          }
 
           const { error } =
             await supabase
@@ -676,9 +737,13 @@ if (currentPackage?.appointment_id) {
 
     })
 
-    .eq(
+        .eq(
       "id",
       currentPackage.appointment_id
+    )
+    .eq(
+      "branch_id",
+      selectedBranch
     );
 
 }
@@ -1027,7 +1092,7 @@ if (
      
           package_id: data.id,
 
-        branch_id: 1,
+        branch_id: selectedBranch,
 
         appointment_date: startDate,
         start_time: startTime,
@@ -1155,21 +1220,29 @@ if (
       if (!confirmDelete)
         return;
 
-      const { data: pkg } =
+          const { data: pkg } =
         await supabase
-
           .from(
             "client_packages"
           )
-
-          .select("*")
-
+          .select(`
+            *,
+            clients!inner(
+              branch_id
+            )
+          `)
           .eq(
             "id",
             id
           )
-
+          .eq(
+            "clients.branch_id",
+            selectedBranch
+          )
           .single();
+
+      if (!pkg)
+        return;
 
       if (!pkg)
         return;
@@ -1536,13 +1609,14 @@ if (futureSessions) {
 
           .select(`
   *,
-client_packages(
+client_packages!inner(
   id,
   total_sessions,
   session_frequency,
-  clients(
+  clients!inner(
     full_name,
-    phone
+    phone,
+    branch_id
   ),
   services(name),
   client_package_zones(
@@ -1565,6 +1639,11 @@ client_packages(
           "scheduled_date",
           nextWeekDate
           )
+
+          .eq(
+              "client_packages.clients.branch_id",
+              selectedBranch
+            )
 
           .order(
             "scheduled_date",
@@ -1593,9 +1672,10 @@ async () => {
 
     .select(`
   *,
-  clients(
+  clients!inner(
     full_name,
-    phone
+    phone,
+    branch_id
   ),
   services(name),
   client_package_zones(
@@ -1607,9 +1687,13 @@ async () => {
         )
       `)
 
-      .eq(
+           .eq(
         "active",
         true
+      )
+      .eq(
+        "clients.branch_id",
+        selectedBranch
       );
 
   if (error) return;
@@ -1759,11 +1843,13 @@ async () => {
 
       .select(`
         *,
-        client_packages(
+        client_packages!inner(
           id,
-          clients(
+                   clients!inner(
             full_name,
-            phone
+            phone,
+            branch_id
+          ),
           ),
           services(
             name
@@ -1779,6 +1865,11 @@ async () => {
       .lt(
         "scheduled_date",
         today
+      )
+
+            .eq(
+        "client_packages.clients.branch_id",
+        selectedBranch
       )
 
       .order(
@@ -1814,7 +1905,7 @@ useEffect(() => {
 
   fetchMissedSessions();
 
-}, []);
+}, [selectedBranch]);
 
 useEffect(() => {
 
@@ -2118,7 +2209,7 @@ await supabase
 
               package_id: selectedPackage.id,
               
-              branch_id: 1,
+              branch_id: selectedBranch,
 
               appointment_date:
                 scheduleDate,

@@ -134,12 +134,12 @@ const loadCommission =
   };
 
   const fetchSales =
-    async () => {
+  async () => {
 
-      const {
-  data,
-  error
-} =
+    const {
+      data,
+      error
+    } =
   await supabase
 
     .from(
@@ -150,11 +150,17 @@ const loadCommission =
       *,
       services(name),
       workers(name),
-      appointments(
+      appointments!inner(
+        branch_id,
         appointment_date,
         clients(full_name)
       )
     `)
+
+    .eq(
+      "appointments.branch_id",
+      selectedBranch
+    )
 
     .order(
       "created_at",
@@ -410,6 +416,7 @@ useEffect(() => {
   fetchSales();
 
 }, [
+  selectedBranch,
   startDate,
   endDate,
   workerFilter,

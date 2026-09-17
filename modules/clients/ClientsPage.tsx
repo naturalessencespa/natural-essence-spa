@@ -143,23 +143,24 @@ export default function ClientsPage({
 };
 
   // OBTENER CLIENTES
-  const fetchClients = async () => {
+ const fetchClients = async () => {
 
   const { data, error } = await supabase
-  .from("clients")
-  .select("*")
-  .eq("active", true)
-  .order("id", { ascending: false });
+    .from("clients")
+    .select("*")
+    .eq("active", true)
+    .eq("branch_id", selectedBranch)
+    .order("id", { ascending: false });
 
-    if (error) {
+  if (error) {
 
-      console.log(error);
+    console.log(error);
 
-      return;
-    }
+    return;
+  }
 
-    setClients(data || []);
-  };
+  setClients(data || []);
+};
 
   // GUARDAR / EDITAR CLIENTE
   const saveClient = async () => {
@@ -215,10 +216,14 @@ export default function ClientsPage({
 
         })
 
-        .eq(
-          "id",
-          editingClientId
-        );
+       .eq(
+  "id",
+  editingClientId
+)
+.eq(
+  "branch_id",
+  selectedBranch
+);
 
     if (error) {
 
@@ -248,14 +253,15 @@ export default function ClientsPage({
 
     if (normalizedPhone) {
 
-      const { data: existingClients, error: duplicateError } =
-        await supabase
+    const { data: existingClients, error: duplicateError } =
+  await supabase
 
-          .from("clients")
+    .from("clients")
 
-          .select("id, full_name, phone")
+    .select("id, full_name, phone")
 
-          .eq("active", true);
+    .eq("active", true)
+    .eq("branch_id", selectedBranch);
 
       if (duplicateError) {
 
@@ -409,14 +415,17 @@ export default function ClientsPage({
   )
 `)
 
-      .eq(
+           .eq(
         "client_id",
         clientId
       )
-
-      .neq(
+      .eq(
+        "branch_id",
+        selectedBranch
+      )
+      .eq(
         "status",
-        "Cancelada"
+        "Completada"
       )
 
       .order(
@@ -465,30 +474,41 @@ async (
   sold_price,
   services(name),
   workers(name),
-  appointments(
-    client_id,
-    appointment_date
-  )
+appointments!inner(
+  client_id,
+  appointment_date,
+  branch_id
+)
 `)
 
-  if (error) {
+.eq(
+  "appointments.branch_id",
+  selectedBranch
+);
 
-    console.log(error);
+if (error) {
 
-    return;
+  console.log(error);
 
-  }
+  return;
+
+}
 console.log("VENTAS ADICIONALES");
 console.log(data);
- const filteredSales =
+const filteredSales =
 
   (data || []).filter(
     (sale: any) =>
-
       sale
         ?.appointments
         ?.client_id ===
-      clientId
+      clientId &&
+      Number(
+        sale
+          ?.appointments
+          ?.branch_id
+      ) ===
+      Number(selectedBranch)
   );
 
     console.log(filteredSales);

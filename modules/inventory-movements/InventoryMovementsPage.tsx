@@ -41,11 +41,16 @@ export default function InventoryMovementsPage({
           )
 
           .select(`
-            *,
-            inventory_products(name)
-          `)
+  *,
+  inventory_products(name)
+`)
 
-          .order(
+.eq(
+  "branch_id",
+  selectedBranch
+)
+
+.order(
                 "id",
                 {
                     ascending:
@@ -86,11 +91,14 @@ setMovements(
 );
     };
 
-  useEffect(() => {
+ useEffect(() => {
 
-    fetchMovements();
+  fetchMovements();
 
-    }, [productFilter]);
+  }, [
+    selectedBranch,
+    productFilter
+  ]);
 
   return (
 

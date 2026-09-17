@@ -484,21 +484,65 @@ borderColor:
   // OBTENER DATOS FORMULARIO
   const fetchFormData = async () => {
 
-    const { data: clientsData } =
-      await supabase
+ const { data: clientsData } =
+  await supabase
 
-        .from("clients")
+    .from("clients")
 
-        .select("*")
+    .select("*")
 
-        .eq("active", true);
+    .eq("active", true)
+    .eq("branch_id", selectedBranch);
 
-    const { data: servicesData } =
-      await supabase
+   
 
-        .from("services")
+const { data: branchServicesData, error: branchServicesError } =
+  await supabase
+    .from("branch_services")
+    .select("*")
+    .eq("branch_id", selectedBranch)
+    .eq("active", true);
 
-        .select("*");
+if (branchServicesError) {
+  console.log(branchServicesError);
+  return;
+}
+
+const { data: servicesData, error: servicesError } =
+  await supabase
+    .from("services")
+    .select("*");
+
+if (servicesError) {
+  console.log(servicesError);
+  return;
+}
+
+const servicesWithBranchData =
+  (branchServicesData || [])
+    .map((branchService) => {
+
+      const service =
+        (servicesData || []).find(
+          (item) =>
+            Number(item.id) ===
+            Number(branchService.service_id)
+        );
+
+      if (!service) return null;
+
+      return {
+        id: service.id,
+        name: service.name,
+        price: branchService.price,
+        duration: service.duration,
+        description: service.description,
+        protocol_url: service.protocol_url,
+        protocol_text: service.protocol_text,
+        allow_packages: service.allow_packages,
+      };
+    })
+    .filter(Boolean);
 
     const { data: workersData } =
       await supabase
@@ -522,7 +566,9 @@ borderColor:
 
     setClients(clientsData || []);
 
-    setServices(servicesData || []);
+setServices(
+  servicesWithBranchData || []
+);
 
     setWorkers(workersData || []);
 
@@ -532,11 +578,10 @@ borderColor:
   // GUARDAR / EDITAR CITA
   const saveAppointment = async () => {
 
-   if (
+if (
   !clientId ||
   selectedServices.length === 0 ||
-  !workerId ||
-  !branchId
+  !workerId
 ) {
 
       alert(
@@ -659,32 +704,31 @@ const endTime =
     .toTimeString()
     .slice(0, 5);
 
-    const {
-      data:
-        existingAppointments,
-      error:
-        validationError,
-    } =
-      await supabase
-
-        .from("appointments")
-
-        .select("*")
-
-            .neq(
-            "status",
-            "Cancelada"
-          )
-
-        .eq(
-          "worker_id",
-          parseInt(workerId)
-        )
-
-        .eq(
-          "appointment_date",
-          appointmentDate
-        );
+ const {
+  data:
+    existingAppointments,
+  error:
+    validationError,
+} =
+  await supabase
+    .from("appointments")
+    .select("*")
+    .neq(
+      "status",
+      "Cancelada"
+    )
+    .eq(
+      "worker_id",
+      parseInt(workerId)
+    )
+    .eq(
+      "appointment_date",
+      appointmentDate
+    )
+    .eq(
+      "branch_id",
+      selectedBranch
+    );
 
     if (validationError) {
 
@@ -752,28 +796,25 @@ const endTime =
     }
 
             // VALIDAR CRUCE
-                const { data: conflicts } =
+          const { data: conflicts } =
   await supabase
-
-    .from(
-      "appointments"
-    )
-
+    .from("appointments")
     .select("*")
-
     .neq(
       "status",
       "Cancelada"
     )
-
     .eq(
       "worker_id",
       parseInt(workerId)
     )
-
     .eq(
       "appointment_date",
       appointmentDate
+    )
+    .eq(
+      "branch_id",
+      selectedBranch
     );
 
  const hasConflict =
@@ -836,10 +877,8 @@ const endTime =
           workerId
         ),
 
-      branch_id:
-        parseInt(
-          branchId
-        ),
+         branch_id:
+        selectedBranch,
 
       appointment_date:
         appointmentDate,
@@ -858,9 +897,13 @@ const endTime =
 
     })
 
-    .eq(
+        .eq(
       "id",
       editingAppointmentId
+    )
+    .eq(
+      "branch_id",
+      selectedBranch
     );
 
 if (error) {
@@ -962,13 +1005,11 @@ alert(
             workerId
           ),
 
-        branch_id:
-          parseInt(
-            branchId
-          ),
+       branch_id:
+  selectedBranch,
 
-        appointment_date:
-          appointmentDate,
+appointment_date:
+  appointmentDate,
 
         start_time:
           startTime,
@@ -1082,17 +1123,13 @@ alert(
 
   }
 
-  const { error } = await supabase
-
-    .from("appointments")
-
-    .update({
-
-      worker_id: Number(workerId)
-
-    })
-
-    .eq("id", editingAppointmentId);
+const { error } = await supabase
+  .from("appointments")
+  .update({
+    worker_id: Number(workerId)
+  })
+  .eq("id", editingAppointmentId)
+  .eq("branch_id", selectedBranch);
 
   if (error) {
 
@@ -1197,49 +1234,49 @@ if (packageSession) {
 
 }
 
-await supabase
+const { data: appointmentForPendingSales } =
+  await supabase
+    .from("appointments")
+    .select("id")
+    .eq("id", Number(appointmentId))
+    .eq("branch_id", selectedBranch)
+    .maybeSingle();
 
-  .from("pending_sales")
-
-  .update({
-
-    status: "Pendiente",
-
-    appointment_generated_id: null
-
-  })
-
-  .eq(
-    "appointment_generated_id",
-    Number(appointmentId)
-  );
+if (appointmentForPendingSales) {
+  await supabase
+    .from("pending_sales")
+    .update({
+      status: "Pendiente",
+      appointment_generated_id: null
+    })
+    .eq(
+      "appointment_generated_id",
+      Number(appointmentId)
+    );
+}
 
 const { error } =
   await supabase
-
     .from("appointments")
-
     .update({
-
       status: "Cancelada"
-
     })
-
     .eq(
       "id",
       appointmentId
+    )
+    .eq(
+      "branch_id",
+      selectedBranch
     );
 
-    if (error) {
-
-      console.log(error);
-
-      alert(
-        "Error cancelando cita"
-      );
-
-      return;
-    }
+if (error) {
+  console.log(error);
+  alert(
+    "Error cancelando cita"
+  );
+  return;
+}
 
     alert(
       "Cita cancelada"
@@ -1500,38 +1537,58 @@ async (
   appointmentId: number
 ) => {
 
-  const { data: pendingSale } =
-
+ const { data: appointmentForPendingSale } =
   await supabase
+    .from("appointments")
+    .select("id")
+    .eq(
+      "id",
+      appointmentId
+    )
+    .eq(
+      "branch_id",
+      selectedBranch
+    )
+    .maybeSingle();
 
+if (!appointmentForPendingSale) {
+  alert(
+    "La cita no pertenece a la sede activa."
+  );
+  return;
+}
+
+const { data: pendingSale } =
+  await supabase
     .from("pending_sales")
-
     .select("*")
-
     .eq(
       "appointment_generated_id",
       appointmentId
     )
-
+    .eq(
+      "branch_id",
+      selectedBranch
+    )
     .maybeSingle();
 
 const { error } =
       await supabase
-
         .from(
           "appointments"
         )
-
         .update({
 
           status:
             "Atendida",
-
         })
-
         .eq(
           "id",
           appointmentId
+        )
+        .eq(
+          "branch_id",
+          selectedBranch
         );
 
     if (error) {
@@ -1859,22 +1916,21 @@ async () => {
   }
 
   await supabase
-
-    .from(
-      "appointments"
-    )
-
-    .update({
-
-      has_advance:
-        false
-
-    })
-
-    .eq(
-      "id",
-      completingAppointmentId
-    );
+  .from(
+    "appointments"
+  )
+  .update({
+    has_advance:
+      true
+  })
+  .eq(
+    "id",
+    editingAppointmentId
+  )
+  .eq(
+    "branch_id",
+    selectedBranch
+  );
 
   setShowPaymentModal(false);
 
@@ -2117,14 +2173,14 @@ const savePendingSale = async () => {
 
 .insert({
 
-  client_id:
-    pendingServiceAppointment.extendedProps.client_id,
-
-  appointment_id:
-    pendingServiceAppointment.id,
-
-  sold_by_worker_id:
-    pendingServiceAppointment.extendedProps.worker_id,
+ client_id:
+  pendingServiceAppointment.extendedProps.client_id,
+branch_id:
+  selectedBranch,
+appointment_id:
+  pendingServiceAppointment.id,
+sold_by_worker_id:
+  pendingServiceAppointment.extendedProps.worker_id,
 
   original_total:
 
@@ -2243,21 +2299,17 @@ async (
   appointmentId: number
 ) => {
 
-  const {
-
-  data: pendingSales
-
-} = await supabase
-
+ const { data: pendingSales } = await supabase
   .from("pending_sales")
-
   .select("id")
-
   .eq(
     "appointment_id",
     appointmentId
   )
-
+  .eq(
+    "branch_id",
+    selectedBranch
+  )
   .eq(
     "status",
     "Pendiente"
@@ -2283,25 +2335,23 @@ Cancelar = Conservarlas`
   if (cancelar) {
 
     await supabase
-
-      .from("pending_sales")
-
-      .update({
-
-        status:
-          "Cancelado"
-
-      })
-
-      .eq(
-        "appointment_id",
-        appointmentId
-      )
-
-      .eq(
-        "status",
-        "Pendiente"
-      );
+  .from("pending_sales")
+  .update({
+    status:
+      "Cancelado"
+  })
+  .eq(
+    "appointment_id",
+    appointmentId
+  )
+  .eq(
+    "branch_id",
+    selectedBranch
+  )
+  .eq(
+    "status",
+    "Pendiente"
+  );
 
   }
 
@@ -2333,9 +2383,13 @@ Cancelar = Conservarlas`
 
     })
 
-    .eq(
+      .eq(
       "id",
       appointmentId
+    )
+    .eq(
+      "branch_id",
+      selectedBranch
     );
 
   alert(
@@ -2458,9 +2512,13 @@ const endTime =
 
         })
 
-        .eq(
+               .eq(
           "id",
           appointmentId
+        )
+        .eq(
+          "branch_id",
+          selectedBranch
         );
 
     if (error) {
@@ -2481,6 +2539,7 @@ const { data: appointment } =
     .select("package_id")
 
     .eq("id", appointmentId)
+    .eq("branch_id", selectedBranch)
 
     .single();
 
@@ -2932,34 +2991,39 @@ eventDrop={async (info) => {
       .worker_id;
 
   // VALIDAR CRUCE
-  const { data: conflicts } =
-    await supabase
+ const { data: conflicts } =
+  await supabase
 
-      .from(
-        "appointments"
-      )
+    .from(
+      "appointments"
+    )
 
-      .select("*")
+    .select("*")
 
-            .neq(
-        "status",
-        "Cancelada"
-      )
+          .neq(
+      "status",
+      "Cancelada"
+    )
 
-      .eq(
-        "worker_id",
-        workerId
-      )
+    .eq(
+      "worker_id",
+      workerId
+    )
 
-      .eq(
-        "appointment_date",
-        appointmentDate
-      )
+    .eq(
+      "appointment_date",
+      appointmentDate
+    )
 
-      .neq(
-        "id",
-        Number(event.id)
-      );
+    .eq(
+      "branch_id",
+      selectedBranch
+    )
+
+    .neq(
+      "id",
+      Number(event.id)
+    );
 
   const hasConflict =
     conflicts?.some(
@@ -3022,32 +3086,27 @@ eventDrop={async (info) => {
     return;
   }
 
-  const { error } =
-    await supabase
-
-      .from(
-        "appointments"
-      )
-
-      .update({
-
-        appointment_date:
-          appointmentDate,
-
-        start_time:
-          startTime,
-
-        end_time:
-          endTime,
-
-
-
-      })
-
-      .eq(
-        "id",
-        Number(event.id)
-      );
+ const { error } =
+  await supabase
+    .from(
+      "appointments"
+    )
+    .update({
+      appointment_date:
+        appointmentDate,
+      start_time:
+        startTime,
+      end_time:
+        endTime,
+    })
+    .eq(
+      "id",
+      Number(event.id)
+    )
+    .eq(
+      "branch_id",
+      selectedBranch
+    );
 
   if (error) {
 
@@ -3121,6 +3180,10 @@ eventDrop={async (info) => {
                 .eq(
                   "id",
                   Number(event.id)
+                )
+                .eq(
+                  "branch_id",
+                  selectedBranch
                 );
 
             if (error) {
@@ -3554,37 +3617,7 @@ eventDidMount={(info) => {
 {!isPackageAppointment && (
   <>
 
-              {/* SEDE */}
-              <select
-                value={branchId}
-                onChange={(e) =>
-                  setBranchId(
-                    e.target.value
-                  )
-                }
-                className="w-full border p-4 rounded-2xl"
-              >
-
-                <option value="">
-                  Seleccionar sede
-                </option>
-
-                {branches.map((branch) => (
-
-                  <option
-                    key={branch.id}
-                    value={branch.id}
-                  >
-
-                    {branch.name}
-
-                  </option>
-
-                ))}
-
-              </select>
   </>
-
 )}
 
             </div>

@@ -188,39 +188,53 @@ useEffect(() => {
 
   loadPendingSales();
 
-}, [statusFilter]);
+}, [
+  selectedBranch,
+  statusFilter
+]);
 
 useEffect(() => {
 
   loadFormData();
 
-}, []);
-
+}, [selectedBranch]);
 
 
 const loadFormData = async () => {
 
-  const { data: clientsData } = await supabase
-
-    .from("clients")
-
-    .select("*")
-
-    .eq("active", true)
-
-    .order("full_name");
+const { data: clientsData } = await supabase
+  .from("clients")
+  .select("*")
+  .eq("active", true)
+  .eq("branch_id", selectedBranch)
+  .order("full_name");
 
   setClients(clientsData || []);
 
-  const { data: servicesData } = await supabase
+ const { data: servicesData } = await supabase
+  .from("branch_services")
+  .select(`
+    service_id,
+    price,
+    services(
+      id,
+      name,
+      duration,
+      protocol_url,
+      allow_packages,
+      protocol_text
+    )
+  `)
+  .eq("branch_id", selectedBranch)
+  .eq("active", true)
+  .order("service_id");
 
-    .from("services")
-
-    .select("*")
-
-    .order("name");
-
-  setServices(servicesData || []);
+setServices(
+  (servicesData || []).map((item: any) => ({
+    ...item.services,
+    price: item.price,
+  }))
+);
 
 };
 
@@ -228,9 +242,9 @@ const loadPendingSales = async () => {
 
   let query = supabase
 
-    .from("pending_sales")
+.from("pending_sales")
 
-   .select(`
+.select(`
   *,
   clients(
     full_name
@@ -240,10 +254,15 @@ const loadPendingSales = async () => {
   )
 `)
 
-    .order(
-      "created_at",
-      { ascending: false }
-    );
+.eq(
+  "branch_id",
+  selectedBranch
+)
+
+.order(
+  "created_at",
+  { ascending: false }
+);
 
   if (statusFilter !== "Todos") {
 
@@ -351,23 +370,16 @@ if (sale.sold_by_worker_id) {
 const createAppointmentFromPendingSale =
 async () => {
 
-  if (
+ if (
 
-    !scheduleDate ||
+  !scheduleDate ||
+  !scheduleTime ||
+  !workerId
 
-    !scheduleTime ||
-
-    !workerId ||
-
-    !branchId
-
-  ) {
-
-    alert("Complete todos los datos.");
-
-    return;
-
-  }
+) {
+  alert("Complete todos los datos.");
+  return;
+}
 
   const { data: items } =
 
@@ -483,8 +495,8 @@ async () => {
   worker_id:
     Number(workerId),
 
-  branch_id:
-    Number(branchId),
+branch_id:
+  selectedBranch,
 
   appointment_date:
     scheduleDate,
@@ -577,24 +589,21 @@ if (Number(selectedSale.advance) > 0) {
 }
 
 const { error: pendingError } =
-
   await supabase
-
     .from("pending_sales")
-
     .update({
-
       status:
         "Agendado",
-
       appointment_generated_id:
         appointment.id
-
     })
-
     .eq(
       "id",
       selectedSale.id
+    )
+    .eq(
+      "branch_id",
+      selectedBranch
     );
 
 if (pendingError) {
@@ -653,23 +662,15 @@ const finalTotal = soldTotalValue;
  .from("pending_sales")
 
 .insert({
-
   client_id: Number(clientId),
-
+  branch_id: selectedBranch,
   sold_by_worker_id: null,
-
   original_total: originalTotal,
-
   sold_total: finalTotal,
-
   advance: Number(advance || 0),
-
   sale_type: "Reserva",
-
   origin,
-
   notes
-
 })
 
     .select()
@@ -742,17 +743,22 @@ const deletePendingSale = async (id: number) => {
 
   if (!confirmDelete) return;
 
-  const { error } = await supabase
+ const { error } = await supabase
 
-    .from("pending_sales")
+  .from("pending_sales")
 
-    .update({
+  .update({
 
-      status: "Cancelado"
+    status: "Cancelado"
 
-    })
+  })
 
-    .eq("id", id);
+  .eq("id", id)
+
+  .eq(
+    "branch_id",
+    selectedBranch
+  );
 
   if (error) {
 
@@ -1230,43 +1236,12 @@ value={worker.id}
 
 </select>
 
-<select
-
-value={branchId}
-
-onChange={(e)=>
-
-setBranchId(e.target.value)
-
-}
-
-className="w-full border rounded-xl p-3"
-
->
-
-<option value="">
-
-Seleccionar sede
-
-</option>
-
-{branches.map(branch=>(
-
-<option
-
-key={branch.id}
-
-value={branch.id}
-
->
-
-{branch.name}
-
-</option>
-
-))}
-
-</select>
+<div className="w-full border rounded-xl p-3 bg-gray-100 text-gray-700">
+  {branches.find(
+    (branch) =>
+      Number(branch.id) === Number(selectedBranch)
+  )?.name || "Sede seleccionada"}
+</div>
 
 </div>
 

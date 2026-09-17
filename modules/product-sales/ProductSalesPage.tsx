@@ -144,30 +144,31 @@ async () => {
   const fetchSales =
     async () => {
 
-      const {
-        data,
-        error
-      } =
-        await supabase
-
-          .from(
-            "product_sales"
-          )
-
-          .select(`
-            *,
-            inventory_products(name),
-            workers(name),
-            clients(full_name)
-          `)
-
-          .order(
-            "created_at",
-            {
-              ascending:
-                false,
-            }
-          );
+     const {
+  data,
+  error
+} =
+  await supabase
+    .from(
+      "product_sales"
+    )
+    .select(`
+      *,
+      inventory_products(name),
+      workers(name),
+      clients(full_name)
+    `)
+    .eq(
+      "branch_id",
+      selectedBranch
+    )
+    .order(
+      "created_at",
+      {
+        ascending:
+          false,
+      }
+    );
 
       if (error) {
 
@@ -351,52 +352,48 @@ setSales(
   (productCommission / 100);
 
     const { error } =
-      await supabase
+  await supabase
+    .from(
+      "product_sales"
+    )
+    .insert([
+      {
+        product_id:
+          Number(productId),
 
-        .from(
-          "product_sales"
-        )
+        worker_id:
+          Number(workerId),
 
-        .insert([
-          {
+        client_id:
+          clientId
+            ? Number(clientId)
+            : null,
 
-            product_id:
-              Number(productId),
+        quantity:
+          qty,
 
-            worker_id:
-              Number(workerId),
+        unit_price:
+          total / qty,
 
-            client_id:
-              clientId
-                ? Number(clientId)
-                : null,
+        total:
+          total,
 
-            quantity:
-              qty,
+        commission_percentage:
+          productCommission,
 
-            unit_price:
-              total / qty,
+        commission_amount:
+          commission,
 
-            total:
-              total,
+        sale_origin:
+          saleOrigin,
 
-          commission_percentage:
-  productCommission,
+        created_at:
+          saleDate,
 
-            commission_amount:
-              commission,
-
-            sale_origin:
-              saleOrigin,
-
-              created_at:
-  saleDate,
-
-              
-
-          },
-        ]);
-
+        branch_id:
+          selectedBranch
+      },
+    ]);
     if (error) {
 
       console.log(error);
@@ -523,6 +520,7 @@ useEffect(() => {
   fetchFormData();
 
 }, [
+  selectedBranch,
   productFilter,
   workerFilter,
   fromDate,

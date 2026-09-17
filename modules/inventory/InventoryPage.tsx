@@ -187,11 +187,12 @@ const [
           inventory_categories(name)
         `)
 
-        .eq("active", true)
+    .eq("active", true)
+.eq("branch_id", selectedBranch)
 
-        .order("id", {
-          ascending: false,
-        });
+.order("id", {
+  ascending: false,
+});
 
     if (error) {
 
@@ -362,10 +363,14 @@ if (
 
           })
 
-          .eq(
-            "id",
-            editingProductId
-          );
+         .eq(
+  "id",
+  editingProductId
+)
+.eq(
+  "branch_id",
+  selectedBranch
+);
 
       if (error) {
 
@@ -418,9 +423,12 @@ if (
               productType,
 
               stock:
-              Number(stock),
+                Number(stock),
 
-            },
+              branch_id:
+                selectedBranch,
+
+              },
           ]);
 
       if (error) {
@@ -495,13 +503,17 @@ const addStock = async (
       )
 
       .update({
-        stock: newStock
-      })
+  stock: newStock
+})
 
-      .eq(
-        "id",
-        productId
-      );
+.eq(
+  "id",
+  productId
+)
+.eq(
+  "branch_id",
+  selectedBranch
+);
 
   if (error) {
 
@@ -538,13 +550,16 @@ const addStock = async (
       new_stock:
         newStock,
 
-      notes:
-        "Ingreso manual de stock",
+     notes:
+  "Ingreso manual de stock",
 
-        movement_date:
+movement_date:
   movementDate,
 
-    },
+branch_id:
+  selectedBranch,
+
+},
   ]);
 
   alert(
@@ -575,7 +590,8 @@ const addStock = async (
           active: false,
         })
 
-        .eq("id", id);
+          .eq("id", id)
+.eq("branch_id", selectedBranch);
 
     if (error) {
 
@@ -601,6 +617,7 @@ useEffect(() => {
   fetchProducts();
 
 }, [
+  selectedBranch,
   search,
   filterCategory,
   sortBy,

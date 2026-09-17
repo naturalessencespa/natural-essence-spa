@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import AppointmentsPage from "@/modules/appointments/AppointmentsPage";
 
@@ -33,12 +33,166 @@ import PendingServicesPage from "@/modules/pending-services/PendingServicesPage"
 
 import SystemSettingsPage from "@/modules/system-settings/SystemSettingsPage";
 
+import { supabase } from "@/lib/supabase";
+
 export default function Home() {
 
-const [page, setPage] =
-  useState("dashboard");
+const [page, setPage] = useState("dashboard");
+const [branches, setBranches] = useState<any[]>([]);
+const [selectedBranch, setSelectedBranch] = useState<number>(0);
+const [session, setSession] = useState<any>(null);
+const [profile, setProfile] = useState<any>(null);
+const [loadingAuth, setLoadingAuth] = useState(true);
+const [loginEmail, setLoginEmail] = useState("");
+const [loginPassword, setLoginPassword] = useState("");
+const [loginError, setLoginError] = useState("");
+const [loginLoading, setLoginLoading] = useState(false);
+const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+const [newPassword, setNewPassword] = useState("");
+const [confirmPassword, setConfirmPassword] = useState("");
+const [changePasswordError, setChangePasswordError] = useState("");
+const [changePasswordSuccess, setChangePasswordSuccess] = useState("");
+const [changePasswordLoading, setChangePasswordLoading] = useState(false);
 
-  const [selectedBranch, setSelectedBranch] = useState(1);
+const isAdmin = profile?.role === "admin";
+
+useEffect(() => {
+  let mounted = true;
+
+  const loadUser = async (currentSession: any) => {
+    if (!currentSession?.user) {
+      if (mounted) {
+        setSession(null);
+        setProfile(null);
+        setBranches([]);
+        setSelectedBranch(0);
+        setLoadingAuth(false);
+      }
+      return;
+    }
+
+    setSession(currentSession);
+
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", currentSession.user.id)
+      .eq("active", true)
+      .single();
+
+    if (profileError || !profileData) {
+      await supabase.auth.signOut();
+      if (mounted) {
+        setSession(null);
+        setProfile(null);
+        setLoginError("Tu usuario no tiene un perfil activo en el sistema.");
+        setLoadingAuth(false);
+      }
+      return;
+    }
+
+    if (!mounted) return;
+    setProfile(profileData);
+
+    if (profileData.role === "admin") {
+      const { data, error } = await supabase
+        .from("branches")
+        .select("*")
+        .eq("active", true)
+        .order("id", { ascending: true });
+
+      if (!error) {
+        setBranches(data || []);
+        if (data?.length) setSelectedBranch(Number(data[0].id));
+      } else console.log(error);
+    } else {
+      const branchId = Number(profileData.branch_id);
+      setSelectedBranch(branchId);
+
+      const { data, error } = await supabase
+        .from("branches")
+        .select("*")
+        .eq("id", branchId)
+        .eq("active", true)
+        .single();
+
+      if (!error && data) setBranches([data]);
+      else setBranches([]);
+    }
+
+    setLoadingAuth(false);
+  };
+
+  supabase.auth.getSession().then(({ data }) => loadUser(data.session));
+
+  const { data: authListener } = supabase.auth.onAuthStateChange(
+    (_event, currentSession) => {
+      loadUser(currentSession);
+    }
+  );
+
+  return () => {
+    mounted = false;
+    authListener.subscription.unsubscribe();
+  };
+}, []);
+
+const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoginError("");
+  setLoginLoading(true);
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email: loginEmail.trim(),
+    password: loginPassword,
+  });
+
+  if (error) {
+    setLoginError("Correo o contraseña incorrectos.");
+  }
+  setLoginLoading(false);
+};
+
+const handleLogout = async () => {
+  await supabase.auth.signOut();
+  setPage("dashboard");
+};
+
+const handleChangePassword = async () => {
+  setChangePasswordError("");
+  setChangePasswordSuccess("");
+
+  if (newPassword.length < 6) {
+    setChangePasswordError("La contraseña debe tener mínimo 6 caracteres.");
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    setChangePasswordError("Las contraseñas no coinciden.");
+    return;
+  }
+
+  setChangePasswordLoading(true);
+
+  const { error } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+
+  if (error) {
+    setChangePasswordError(error.message);
+  } else {
+    setChangePasswordSuccess("Contraseña actualizada correctamente.");
+    setNewPassword("");
+    setConfirmPassword("");
+
+    setTimeout(() => {
+      setChangePasswordOpen(false);
+      setChangePasswordSuccess("");
+    }, 1500);
+  }
+
+  setChangePasswordLoading(false);
+};
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -46,6 +200,39 @@ const [
   pendingLaserSale,
   setPendingLaserSale
 ] = useState<any>(null);
+
+  if (loadingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <img src="/logo.png" alt="Natural Essence" className="w-40 mx-auto mb-6 object-contain" />
+          <p className="text-[#243847] font-medium">Cargando sistema...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session || !profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+        <form onSubmit={handleLogin} className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8">
+          <div className="flex justify-center mb-6">
+            <img src="/logo.png" alt="Natural Essence" className="w-44 object-contain" />
+          </div>
+          <h1 className="text-2xl font-bold text-[#243847] text-center mb-2">Iniciar sesión</h1>
+          <p className="text-gray-500 text-center mb-7">Accede al sistema de Natural Essence Spa</p>
+          <div className="space-y-4">
+            <input type="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} placeholder="Correo electrónico" required className="w-full border rounded-2xl px-4 py-3" />
+            <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} placeholder="Contraseña" required className="w-full border rounded-2xl px-4 py-3" />
+            {loginError && <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-3">{loginError}</p>}
+            <button type="submit" disabled={loginLoading} className="w-full bg-[#243847] text-white rounded-2xl px-4 py-3 font-semibold disabled:opacity-60">
+              {loginLoading ? "Ingresando..." : "Ingresar"}
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
 
   return (
 
@@ -389,6 +576,7 @@ md:translate-x-0
 
 </button>
 
+{isAdmin && (
 <button
   onClick={() =>{
     setPage("parametros");
@@ -404,6 +592,7 @@ md:translate-x-0
   Parámetros
 
 </button>
+)}
 
         </div>
 
@@ -434,16 +623,40 @@ className="fixed inset-0 bg-black/40 z-40 md:hidden"
     Natural Essence Spa
   </h1>
 
-  <select
-    value={selectedBranch}
-    onChange={(e) =>
-      setSelectedBranch(Number(e.target.value))
-    }
-    className="w-full md:w-64 border rounded-2xl px-4 py-3 bg-white shadow"
-  >
-    <option value={1}>📍 Los Olivos</option>
-    <option value={2}>📍 San Borja</option>
-  </select>
+  <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+  {isAdmin ? (
+    <select value={selectedBranch} onChange={(e) => setSelectedBranch(Number(e.target.value))} className="w-full md:w-64 border rounded-2xl px-4 py-3 bg-white shadow">
+      {branches.map((branch) => (
+        <option key={branch.id} value={branch.id}>📍 {branch.name}</option>
+      ))}
+    </select>
+  ) : (
+    <div className="w-full md:w-64 border rounded-2xl px-4 py-3 bg-white shadow text-[#243847] font-medium">
+      📍 {branches[0]?.name || "Sede asignada"}
+    </div>
+  )}
+
+  <div className="flex items-center gap-2">
+   <div className="text-right hidden sm:block">
+  <p className="text-sm font-semibold text-[#243847]">
+    {isAdmin ? "Administrador" : profile.full_name}
+  </p>
+    </div>
+    <button
+  onClick={() => {
+    setChangePasswordOpen(true);
+    setChangePasswordError("");
+    setChangePasswordSuccess("");
+  }}
+  className="border rounded-2xl px-4 py-3 bg-white shadow hover:bg-gray-50 text-[#243847] font-medium"
+>
+  Cambiar contraseña
+</button>
+    <button onClick={handleLogout} className="border rounded-2xl px-4 py-3 bg-white shadow hover:bg-gray-50 text-[#243847] font-medium">
+      Cerrar sesión
+    </button>
+  </div>
+</div>
 
 </div>
 
@@ -472,8 +685,10 @@ className="fixed inset-0 bg-black/40 z-40 md:hidden"
         )}
 
         {/* SERVICIOS */}
-    {page === "servicios" && (
-  <ServicesPage />
+{page === "servicios" && (
+  <ServicesPage
+    selectedBranch={selectedBranch}
+  />
 )}
         {/* INVENTARIO */}
         {page === "inventario" && (
@@ -507,14 +722,17 @@ className="fixed inset-0 bg-black/40 z-40 md:hidden"
 />
         )}
 
-        {/* ZONA LÁSER */}
-     {page === "zonas-laser" && (
-  <LaserZonesPage />
+  {page === "zonas-laser" && (
+  <LaserZonesPage
+    selectedBranch={selectedBranch}
+  />
 )}
 
      {/* CALCULADORA LÁSER */}
        {page === "calculadora-laser" && (
-  <LaserQuotePage />
+ <LaserQuotePage
+  selectedBranch={selectedBranch}
+/>
 )}
 
        {/* VENTAS INTERNAS */}
@@ -546,14 +764,85 @@ className="fixed inset-0 bg-black/40 z-40 md:hidden"
 />
         )}
 
-        {page === "parametros" && (
+        {isAdmin && page === "parametros" && (
   <SystemSettingsPage
     selectedBranch={selectedBranch}
   />
 )}
 
       </div>
+{changePasswordOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+    <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
 
+      <h2 className="text-xl font-bold text-[#243847] mb-2">
+        Cambiar contraseña
+      </h2>
+
+      <p className="text-sm text-gray-500 mb-5">
+        Ingresa tu nueva contraseña.
+      </p>
+
+      <div className="space-y-4">
+
+        <input
+          type="password"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          placeholder="Nueva contraseña"
+          className="w-full border rounded-2xl px-4 py-3"
+        />
+
+        <input
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          placeholder="Confirmar nueva contraseña"
+          className="w-full border rounded-2xl px-4 py-3"
+        />
+
+        {changePasswordError && (
+          <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-3">
+            {changePasswordError}
+          </p>
+        )}
+
+        {changePasswordSuccess && (
+          <p className="text-sm text-green-600 bg-green-50 rounded-xl px-4 py-3">
+            {changePasswordSuccess}
+          </p>
+        )}
+
+        <div className="flex gap-3 pt-2">
+
+          <button
+            onClick={() => {
+              setChangePasswordOpen(false);
+              setNewPassword("");
+              setConfirmPassword("");
+              setChangePasswordError("");
+            }}
+            className="flex-1 border rounded-2xl px-4 py-3 font-medium"
+          >
+            Cancelar
+          </button>
+
+          <button
+            onClick={handleChangePassword}
+            disabled={changePasswordLoading}
+            className="flex-1 bg-[#243847] text-white rounded-2xl px-4 py-3 font-semibold disabled:opacity-60"
+          >
+            {changePasswordLoading
+              ? "Guardando..."
+              : "Guardar contraseña"}
+          </button>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+)}
     </div>
 
   );

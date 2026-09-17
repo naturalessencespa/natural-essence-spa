@@ -126,20 +126,25 @@ const [endDate,
     async () => {
 
       const {
-        data,
-        error,
-      } = await supabase
+  data,
+  error,
+} = await supabase
 
-        .from("expenses")
+  .from("expenses")
 
-        .select("*")
+  .select("*")
 
-        .order(
-          "expense_date",
-          {
-            ascending: false,
-          }
-        );
+  .eq(
+    "branch_id",
+    selectedBranch
+  )
+
+  .order(
+    "expense_date",
+    {
+      ascending: false,
+    }
+  );
 
       if (error) {
 
@@ -181,13 +186,13 @@ const [endDate,
 
   };
 
-  useEffect(() => {
+ useEffect(() => {
 
-    fetchExpenses();
+  fetchExpenses();
 
-    fetchInventoryCategories();
+  fetchInventoryCategories();
 
-  }, []);
+}, [selectedBranch]);
 
   const saveExpense =
     async () => {
@@ -205,51 +210,58 @@ const [endDate,
         return;
       }
 
-      const payload = {
+     const payload = {
+  expense_date:
+    expenseDate,
 
-        expense_date:
-          expenseDate,
+  category,
 
-        category,
+  description,
 
-        description,
+  amount:
+    Number(amount),
 
-        amount:
-          Number(amount),
+  payment_method:
+    paymentMethod || null,
 
-        payment_method:
-          paymentMethod || null,
+  quantity:
+    quantity
+      ? Number(quantity)
+      : null,
 
-        quantity:
-          quantity
-            ? Number(quantity)
-            : null,
+  supplier:
+    supplier || null,
 
-        supplier:
-          supplier || null,
+  receipt_number:
+    receiptNumber || null,
 
-        receipt_number:
-          receiptNumber || null,
+  branch_id:
+    selectedBranch,
 
-      };
+};
 
       let originalExpense: Expense | null = null;
 
 if (editingId) {
 
-  const { data } =
-    await supabase
+const { data } =
+  await supabase
 
-      .from("expenses")
+    .from("expenses")
 
-      .select("*")
+    .select("*")
 
-      .eq(
-        "id",
-        editingId
-      )
+    .eq(
+      "id",
+      editingId
+    )
 
-      .single();
+    .eq(
+      "branch_id",
+      selectedBranch
+    )
+
+    .single();
 
   originalExpense = data;
 
@@ -257,21 +269,26 @@ if (editingId) {
 
       if (editingId) {
 
-        const { error } =
-          await supabase
+      const { error } =
+  await supabase
 
-            .from(
-              "expenses"
-            )
+    .from(
+      "expenses"
+    )
 
-            .update(
-              payload
-            )
+    .update(
+      payload
+    )
 
-            .eq(
-              "id",
-              editingId
-            );
+    .eq(
+      "id",
+      editingId
+    )
+
+    .eq(
+      "branch_id",
+      selectedBranch
+    );
 
         if (error) {
 
@@ -300,30 +317,21 @@ if (
     const { error: inventoryUpdateError } =
       await supabase
 
-        .from(
-          "inventory_products"
-        )
-
-        .update({
-
-          name: description,
-
-          category_id: Number(
-            inventoryCategoryId
-          ),
-
-          measure:
-            quantity || "",
-
-          brand:
-            supplier || ""
-
-        })
-
-        .eq(
-          "id",
-          originalExpense.inventory_product_id
-        );
+      .from("inventory_products")
+.update({
+  name: description,
+  category_id: Number(inventoryCategoryId),
+  measure: quantity || "",
+  brand: supplier || "",
+})
+.eq(
+  "id",
+  originalExpense.inventory_product_id
+)
+.eq(
+  "branch_id",
+  selectedBranch
+);
 
     if (inventoryUpdateError) {
 
@@ -349,41 +357,44 @@ if (
         "inventory_products"
       )
 
-      .insert({
+   .insert({
 
-        name:
-          description,
+  name:
+    description,
 
-        category_id:
-          Number(
-            inventoryCategoryId
-          ),
+  category_id:
+    Number(
+      inventoryCategoryId
+    ),
 
-        description:
-          "",
+  description:
+    "",
 
-        measure:
-          quantity || "",
+  measure:
+    quantity || "",
 
-        stock_status:
-          "Lleno",
+  stock_status:
+    "Lleno",
 
-        brand:
-          supplier || "",
+  brand:
+    supplier || "",
 
-        active:
-          true,
+  active:
+    true,
 
-        notes:
-          "Creado automáticamente desde Gastos",
+  notes:
+    "Creado automáticamente desde Gastos",
 
-        product_type:
-          "cabina",
+  product_type:
+    "cabina",
 
-        stock:
-          1
+  stock:
+    1,
 
-      })
+  branch_id:
+    selectedBranch
+
+})
 
       .select()
 
@@ -399,23 +410,22 @@ if (
 
     }
 
-    await supabase
-
-      .from(
-        "expenses"
-      )
-
-      .update({
-
-        inventory_product_id:
-          inventoryProduct.id
-
-      })
-
-      .eq(
-        "id",
-        editingId
-      );
+   await supabase
+  .from(
+    "expenses"
+  )
+  .update({
+    inventory_product_id:
+      inventoryProduct.id
+  })
+  .eq(
+    "id",
+    editingId
+  )
+  .eq(
+    "branch_id",
+    selectedBranch
+  );
 
   }
 
@@ -430,36 +440,34 @@ if (
 
 ){
 
+await supabase
+  .from("inventory_products")
+  .delete()
+  .eq(
+    "id",
+    originalExpense?.inventory_product_id
+  )
+  .eq(
+    "branch_id",
+    selectedBranch
+  );
+
   await supabase
-
-    .from(
-      "inventory_products"
-    )
-
-    .delete()
-
-    .eq(
-      "id",
-      originalExpense?.inventory_product_id
-    );
-
-  await supabase
-
-    .from(
-      "expenses"
-    )
-
-    .update({
-
-      inventory_product_id:
-        null
-
-    })
-
-    .eq(
-      "id",
-      editingId
-    );
+  .from(
+    "expenses"
+  )
+  .update({
+    inventory_product_id:
+      null
+  })
+  .eq(
+    "id",
+    editingId
+  )
+  .eq(
+    "branch_id",
+    selectedBranch
+  );
 
 }
 
@@ -480,41 +488,44 @@ if (
       "inventory_products"
     )
 
-    .insert({
+.insert({
 
-      name:
-        description,
+  name:
+    description,
 
-      category_id:
-        Number(
-          inventoryCategoryId
-        ),
+  category_id:
+    Number(
+      inventoryCategoryId
+    ),
 
-      description:
-        "",
+  description:
+    "",
 
-      measure:
-        quantity || "",
+  measure:
+    quantity || "",
 
-      stock_status:
-        "Lleno",
+  stock_status:
+    "Lleno",
 
-      brand:
-        supplier || "",
+  brand:
+    supplier || "",
 
-      active:
-        true,
+  active:
+    true,
 
-      notes:
-        "Creado automáticamente desde Gastos",
+  notes:
+    "Creado automáticamente desde Gastos",
 
-      product_type:
-        "cabina",
+  product_type:
+    "cabina",
 
-      stock:
-        1
+  stock:
+    1,
 
-    })
+  branch_id:
+    selectedBranch
+
+})
 
     .select()
 
@@ -583,41 +594,44 @@ if (
       "inventory_products"
     )
 
-    .insert({
+  .insert({
 
-      name:
-        description,
+  name:
+    description,
 
-      category_id:
-        Number(
-          inventoryCategoryId
-        ),
+  category_id:
+    Number(
+      inventoryCategoryId
+    ),
 
-      description:
-        "",
+  description:
+    "",
 
-      measure:
-        quantity || "",
+  measure:
+    quantity || "",
 
-      stock_status:
-        "Lleno",
+  stock_status:
+    "Lleno",
 
-      brand:
-        supplier || "",
+  brand:
+    supplier || "",
 
-      active:
-        true,
+  active:
+    true,
 
-      notes:
-        "Creado automáticamente desde Gastos",
+  notes:
+    "Creado automáticamente desde Gastos",
 
-      product_type:
-        "cabina",
+  product_type:
+    "cabina",
 
-      stock:
-        1
+  stock:
+    1,
 
-    })
+  branch_id:
+    selectedBranch
+
+})
 
     .select()
 
@@ -710,33 +724,39 @@ if (
       expense?.inventory_product_id
     ) {
 
-      await supabase
-
-        .from(
-          "inventory_products"
-        )
-
-        .delete()
-
-        .eq(
-          "id",
-          expense.inventory_product_id
-        );
+     await supabase
+  .from(
+    "inventory_products"
+  )
+  .delete()
+  .eq(
+    "id",
+    expense.inventory_product_id
+  )
+  .eq(
+    "branch_id",
+    selectedBranch
+  );
 
     }
 
-    await supabase
+   await supabase
 
-      .from(
-        "expenses"
-      )
+  .from(
+    "expenses"
+  )
 
-      .delete()
+  .delete()
 
-      .eq(
-        "id",
-        id
-      );
+  .eq(
+    "id",
+    id
+  )
+
+  .eq(
+    "branch_id",
+    selectedBranch
+  );
 
     fetchExpenses();
 
@@ -793,23 +813,18 @@ async (
   expense.inventory_product_id
 ) {
 
-  const {
-    data: inventoryProduct
-  } = await supabase
-
-    .from(
-      "inventory_products"
-    )
-
-    .select(
-      "category_id"
-    )
-
+ const { data: inventoryProduct } =
+  await supabase
+    .from("inventory_products")
+    .select("category_id")
     .eq(
       "id",
       expense.inventory_product_id
     )
-
+    .eq(
+      "branch_id",
+      selectedBranch
+    )
     .single();
 
   setInventoryCategoryId(

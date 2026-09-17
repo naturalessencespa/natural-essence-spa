@@ -124,12 +124,11 @@ const toggleSection = (
 
     
 
-  useEffect(() => {
+ useEffect(() => {
 
     loadAppointments();
 
-  }, [startDate, endDate]);
-
+  }, [selectedBranch, startDate, endDate]);
 
 
 
@@ -165,15 +164,20 @@ const toggleSection = (
             startDate
           )
 
-          .lte(
+                    .lte(
             "appointment_date",
             endDate
           )
 
           .eq(
-    "status",
-    "Atendida"
-  )
+            "status",
+            "Atendida"
+          )
+
+          .eq(
+            "branch_id",
+            selectedBranch
+          )
 
           
 
@@ -541,19 +545,24 @@ const toggleSection = (
   );
 
   const { data: allAppointments } =
-    await supabase
+  await supabase
 
-      .from("appointments")
+    .from("appointments")
 
-      .select(`
-        appointment_date,
-        clients(full_name)
-      `)
+    .select(`
+      appointment_date,
+      clients(full_name)
+    `)
 
-      .eq(
-        "status",
-        "Atendida"
-      );
+    .eq(
+      "status",
+      "Atendida"
+    )
+
+    .eq(
+      "branch_id",
+      selectedBranch
+    );
 
       console.log("allAppointments");
   console.log(
@@ -633,26 +642,32 @@ const toggleSection = (
   );
 
   const {
-    data: additionalSalesData
-  } = await supabase
+  data: additionalSalesData
+} = await supabase
 
-    .from(
-      "appointment_services"
-    )
+  .from(
+    "appointment_services"
+  )
 
-    .select(`
-      appointment_id,
-      sold_price,
-      services(name),
-      commission_amount,
-      workers(name),
-      appointments(
-        appointment_date,
-        clients(
-          full_name
-        )
+  .select(`
+    appointment_id,
+    sold_price,
+    services(name),
+    commission_amount,
+    workers(name),
+    appointments!inner(
+      branch_id,
+      appointment_date,
+      clients(
+        full_name
       )
-    `);
+    )
+  `)
+
+  .eq(
+    "appointments.branch_id",
+    selectedBranch
+  );
 
   const filteredAdditionalSales =
 
@@ -878,6 +893,11 @@ const {
   .lte(
     "created_at",
     endDate + "T23:59:59"
+  )
+
+  .eq(
+    "branch_id",
+    selectedBranch
   );
 
 const filteredProductSales =
