@@ -34,10 +34,16 @@ export default function WorkersPage({
   const [name, setName] =
     useState("");
 
-  const [phone, setPhone] =
-    useState("");
+ const [phone, setPhone] =
+  useState("");
 
-    const [
+const [accountNumber, setAccountNumber] =
+  useState("");
+
+const [cci, setCci] =
+  useState("");
+
+const [
   birthDate,
   setBirthDate
 ] = useState("");
@@ -199,9 +205,14 @@ const days = [
 
             name,
 
-            phone,
+       phone,
 
-            birth_date:
+account_number:
+  accountNumber,
+
+cci,
+
+birth_date:
   birthDate || null,
 
 address,
@@ -216,8 +227,7 @@ address,
             termination_date:
               terminationDate || null,
 
-            branch_id:
-              parseInt(branchId),
+           branch_id: selectedBranch,
 
             photo_url:
               photoUrl,
@@ -260,11 +270,15 @@ address,
 
               name,
 
-              phone,
+           phone,
 
-              birth_date:
+account_number:
+  accountNumber,
+
+cci,
+
+birth_date:
   birthDate || null,
-
 address,
 
               speciality,
@@ -314,9 +328,13 @@ address,
 
     setName("");
 
-    setPhone("");
+  setPhone("");
 
-    setBirthDate("");
+setAccountNumber("");
+
+setCci("");
+
+setBirthDate("");
 
 setAddress("");
 
@@ -536,7 +554,11 @@ if (overridesError) {
 
             setPhone("");
 
-            setBirthDate("");
+setAccountNumber("");
+
+setCci("");
+
+setBirthDate("");
 
 setAddress("");
 
@@ -548,7 +570,7 @@ setAddress("");
 
             setTerminationDate("");
 
-            setBranchId("");
+           setBranchId(selectedBranch.toString());
 
             setPhotoUrl("");
 
@@ -678,13 +700,21 @@ setAddress("");
                         worker.name
                       );
 
-                      setPhone(
-                        worker.phone || ""
-                      );
+                     setPhone(
+  worker.phone || ""
+);
 
-                      setBirthDate(
-                        worker.birth_date || ""
-                      );
+setAccountNumber(
+  worker.account_number || ""
+);
+
+setCci(
+  worker.cci || ""
+);
+
+setBirthDate(
+  worker.birth_date || ""
+);
 
                       setAddress(
                         worker.address || ""
@@ -894,6 +924,43 @@ setOverrides(
                   className="w-full border p-4 rounded-2xl"
                 />
                  </div>
+                 {/* DATOS BANCARIOS */}
+
+<div>
+
+  <label className="block mb-2 font-medium text-[#243847]">
+    Número de cuenta
+  </label>
+
+  <input
+    type="text"
+    placeholder="Número de cuenta"
+    value={accountNumber}
+    onChange={(e) =>
+      setAccountNumber(e.target.value)
+    }
+    className="w-full border p-4 rounded-2xl"
+  />
+
+</div>
+
+<div>
+
+  <label className="block mb-2 font-medium text-[#243847]">
+    CCI
+  </label>
+
+  <input
+    type="text"
+    placeholder="Código de Cuenta Interbancario (CCI)"
+    value={cci}
+    onChange={(e) =>
+      setCci(e.target.value)
+    }
+    className="w-full border p-4 rounded-2xl"
+  />
+
+</div>
                 {/* FECHA NACIMIENTO */}
 <div>
 
@@ -1066,43 +1133,22 @@ setOverrides(
               </div>
 
               {/* SEDE */}
-              <div>
+<div>
+  <label className="block mb-2 font-medium text-[#243847]">
+    Sede
+  </label>
 
-                <label className="block mb-2 font-medium text-[#243847]">
-                  Sede
-                </label>
-
-                <select
-                  value={branchId}
-                  onChange={(e) =>
-                    setBranchId(
-                      e.target.value
-                    )
-                  }
-                  className="w-full border p-4 rounded-2xl"
-                >
-
-                  <option value="">
-                    Seleccionar sede
-                  </option>
-
-                  {branches.map((branch) => (
-
-                    <option
-                      key={branch.id}
-                      value={branch.id}
-                    >
-
-                      {branch.name}
-
-                    </option>
-
-                  ))}
-
-                </select>
-
-              </div>
-
+  <input
+    type="text"
+    value={
+      branches.find(
+        (branch) => branch.id === selectedBranch
+      )?.name || ""
+    }
+    disabled
+    className="w-full border p-4 rounded-2xl bg-gray-100"
+  />
+</div>
               {/* FOTO */}
               <div className="flex flex-col items-start">
 

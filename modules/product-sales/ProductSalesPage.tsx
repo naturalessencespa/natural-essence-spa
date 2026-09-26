@@ -255,29 +255,12 @@ setSales(
     const fetchFormData =
   async () => {
 
-    const {
-      data: productsData
-    } =
-      await supabase
-
-        .from(
-  "inventory_products"
-)
-
-.select("*")
-
-.in(
-  "product_type",
-  [
-    "venta",
-    "mixto"
-  ]
-)
-
-        .eq(
-          "active",
-          true
-        );
+  const { data: productsData } = await supabase
+  .from("inventory_products")
+  .select("*")
+  .in("product_type", ["venta", "mixto"])
+  .eq("active", true)
+  .eq("branch_id", selectedBranch);
 
     const {
       data: workersData
@@ -295,21 +278,21 @@ setSales(
           true
         );
 
-    const {
-      data: clientsData
-    } =
-      await supabase
-
-        .from(
-          "clients"
-        )
-
-        .select("*")
-
-        .eq(
-          "active",
-          true
-        );
+  const {
+  data: clientsData
+} = await supabase
+  .from(
+    "clients"
+  )
+  .select("*")
+  .eq(
+    "active",
+    true
+  )
+  .eq(
+    "branch_id",
+    selectedBranch
+  );
 
     setProducts(
       productsData || []
@@ -409,18 +392,18 @@ setSales(
 const {
   data: currentProduct
 } = await supabase
-
   .from(
     "inventory_products"
   )
-
   .select("stock")
-
   .eq(
     "id",
     Number(productId)
   )
-
+  .eq(
+    "branch_id",
+    selectedBranch
+  )
   .single();
 
 // NUEVO STOCK
@@ -440,53 +423,37 @@ const newStock =
 
 // ACTUALIZAR STOCK
 await supabase
-
   .from(
     "inventory_products"
   )
-
   .update({
     stock: newStock
   })
-
   .eq(
     "id",
     Number(productId)
+  )
+  .eq(
+    "branch_id",
+    selectedBranch
   );
 
 // MOVIMIENTO INVENTARIO
 await supabase
 
-  .from(
-    "inventory_movements"
-  )
-
-  .insert([
-    {
-
-      product_id:
-        Number(productId),
-
-      movement_type:
-        "venta",
-
-      quantity:
-        qty,
-
-      previous_stock:
-        currentProduct?.stock || 0,
-
-      new_stock:
-        newStock,
-
-      notes:
-        "Venta producto",
-
-      movement_date:
-        saleDate
-
-    },
-  ]);
+  .from("inventory_movements")
+.insert([
+  {
+    product_id: Number(productId),
+    movement_type: "venta",
+    quantity: qty,
+    previous_stock: currentProduct?.stock || 0,
+    new_stock: newStock,
+    notes: "Venta producto",
+    movement_date: saleDate,
+    branch_id: selectedBranch
+  },
+]);
     alert(
       "Venta guardada"
     );
