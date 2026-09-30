@@ -258,6 +258,12 @@ const [
   setPendingServiceAppointment
 ] = useState<any>(null);
 
+const [calendarRange, setCalendarRange] = useState({
+  start: "",
+  end: "",
+});
+
+
 const loadAdditionalSaleCommission =
 async () => {
 
@@ -294,192 +300,164 @@ async () => {
 };
 
   // OBTENER CITAS
-  const fetchAppointments = async () => {
+const fetchAppointments = async (
+  rangeStart = calendarRange.start,
+  rangeEnd = calendarRange.end
+) => {
 
-    const { data, error } =
-      await supabase
+  const branchIdToLoad = Number(selectedBranch);
 
-        .from("appointments")
+  if (!branchIdToLoad) {
+    setEvents([]);
+    return;
+  }
 
-        .select(`
-  *,
-  clients(full_name),
-  services(
-    name,
-    price
-  ),
-  workers(
-    name,
-    color
-  ),
-appointment_reserved_services(
-  service_id,
-  services(
-    name,
-    duration
-  )
-)
-`)
-            .eq("branch_id", selectedBranch)
-        
-                        .neq(
-          "status",
-          "Cancelada"
+  console.log(
+    "CARGANDO CITAS:",
+    "SEDE:",
+    branchIdToLoad,
+    "DESDE:",
+    rangeStart,
+    "HASTA:",
+    rangeEnd
+  );
+
+  let query = supabase
+    .from("appointments")
+    .select(`
+      *,
+      clients(full_name),
+      services(
+        name,
+        price
+      ),
+      workers(
+        name,
+        color
+      ),
+      appointment_reserved_services(
+        service_id,
+        services(
+          name,
+          duration
         )
-        ;
+      )
+    `)
+    .eq("branch_id", branchIdToLoad)
+    .neq("status", "Cancelada");
 
-    if (error) {
+  // Solo cargar el período que está viendo el calendario
+  if (rangeStart && rangeEnd) {
+    query = query
+      .gte("appointment_date", rangeStart)
+      .lt("appointment_date", rangeEnd);
+  }
 
-      console.log(error);
+  const { data, error } = await query
+    .order("appointment_date", { ascending: true })
+    .order("start_time", { ascending: true });
 
-      return;
-    }
+  if (error) {
+    console.log("ERROR CARGANDO CITAS:", error);
+    alert("Error cargando citas: " + error.message);
+    return;
+  }
 
-    const formattedEvents =
-      (data || []).map(
-        (appointment) => ({
+  console.log(
+    "CITAS ENCONTRADAS:",
+    data?.length || 0,
+    "SEDE:",
+    branchIdToLoad
+  );
 
-          id: appointment.id,
-title:
+  const formattedEvents = (data || []).map(
+    (appointment) => ({
 
-  (
-    appointment.package_id
+      id: appointment.id,
 
-      ? "🎁 "
+      title:
+        (appointment.package_id ? "🎁 " : "") +
+        (appointment.status === "Atendida" ? "✅ " : "") +
+        "S/" +
+        (
+          appointment.final_price ??
+          appointment.services?.price ??
+          0
+        ) +
+        " - " +
+        appointment.clients?.full_name +
+        " - " +
+        (
+          appointment.appointment_reserved_services?.length > 0
+            ? appointment.appointment_reserved_services
+                .map((item: any) => item.services?.name)
+                .join(" + ")
+            : appointment.services?.name
+        ) +
+        (
+          appointment.notes
+            ? " - " + appointment.notes
+            : ""
+        ),
 
-      : ""
+      start: new Date(
+        appointment.appointment_date +
+        "T" +
+        appointment.start_time
+      ),
 
-  )
+      end: new Date(
+        appointment.appointment_date +
+        "T" +
+        appointment.end_time
+      ),
 
-  +
+      backgroundColor:
+        appointment.workers?.color || "#243847",
 
-  (
-    appointment.status ===
-    "Atendida"
+      borderColor:
+        appointment.workers?.color || "#243847",
 
-      ? "✅ "
+      extendedProps: {
 
-      : ""
+        id: appointment.id,
 
-  )
+        client_id:
+          appointment.client_id,
 
-  +
+        service_id:
+          appointment.service_id,
 
-  "S/" +
+        package_id:
+          appointment.package_id,
 
- (
-  appointment.final_price ??
+        reserved_services:
+          appointment.appointment_reserved_services,
 
-  appointment.services
-    ?.price ??
+        worker_id:
+          appointment.worker_id,
 
-  0
-)
+        branch_id:
+          appointment.branch_id,
 
-  +
+        final_price:
+          appointment.final_price,
 
-  " - " +
+        status:
+          appointment.status,
 
-  appointment.clients
-  ?.full_name +
+      },
 
-" - " +
+    })
+  );
 
-(
-  appointment
-    .appointment_reserved_services
-    ?.length > 0
+  console.log(
+    "EVENTOS FORMATEADOS:",
+    formattedEvents.length
+  );
 
-    ? appointment
-        .appointment_reserved_services
-        .map(
-          (item: any) =>
-            item.services?.name
-        )
-        .join(" + ")
-
-    : appointment.services
-        ?.name
-)
-
-+
-
-(
-
-  appointment.notes
-
-    ? " - " +
-      appointment.notes
-
-    : ""
-
-)
-
-+
-
-" - " +
-
-appointment.workers?.name?.split(" ")[0],
-
-          start: new Date(
-            appointment.appointment_date +
-            "T" +
-            appointment.start_time
-          ),
-
-          end: new Date(
-            appointment.appointment_date +
-            "T" +
-            appointment.end_time
-          ),
-
-         backgroundColor:
-
-
-  appointment.workers
-    ?.color ||
-  "#243847",
-
-borderColor:
-  appointment.workers
-    ?.color ||
-  "#243847",
-
-          extendedProps: {
-
-            id: appointment.id,
-
-            client_id:
-              appointment.client_id,
-
-            service_id:
-              appointment.service_id,
-
-              package_id: appointment.package_id,
-
-                reserved_services:
-    appointment
-      .appointment_reserved_services,
-
-            worker_id:
-              appointment.worker_id,
-
-            branch_id:
-              appointment.branch_id,
-
-            final_price:
-              appointment.final_price,
-
-            status:
-              appointment.status,
-
-          },
-
-        })
-      );
-
-    setEvents(formattedEvents);
-  };
+  setEvents(formattedEvents);
+};
 
   // OBTENER DATOS FORMULARIO
   const fetchFormData = async () => {
@@ -601,6 +579,15 @@ if (
         service.id
       )
   );
+
+const activeBranchId = Number(selectedBranch);
+
+if (!activeBranchId) {
+  alert("No se ha seleccionado una sede.");
+  return;
+}
+
+console.log("GUARDANDO CITA EN SEDE:", activeBranchId);
 
 const originalPrice =
   selectedServicesData.reduce(
@@ -727,7 +714,7 @@ const endTime =
     )
     .eq(
       "branch_id",
-      selectedBranch
+      activeBranchId
     );
 
     if (validationError) {
@@ -814,7 +801,7 @@ const endTime =
     )
     .eq(
       "branch_id",
-      selectedBranch
+      activeBranchId
     );
 
  const hasConflict =
@@ -878,7 +865,7 @@ const endTime =
         ),
 
          branch_id:
-        selectedBranch,
+        activeBranchId,
 
       appointment_date:
         appointmentDate,
@@ -903,7 +890,7 @@ const endTime =
     )
     .eq(
       "branch_id",
-      selectedBranch
+      activeBranchId
     );
 
 if (error) {
@@ -1006,7 +993,7 @@ alert(
           ),
 
        branch_id:
-  selectedBranch,
+  activeBranchId,
 
 appointment_date:
   appointmentDate,
@@ -1155,7 +1142,6 @@ useEffect(() => {
 
   loadAdditionalSaleCommission();
 
-  fetchAppointments();
 
 }, [selectedBranch]);
 
@@ -2755,6 +2741,20 @@ if (appointment?.package_id) {
         <FullCalendar
  
           locale={esLocale}
+
+          datesSet={(info) => {
+
+  const start = info.startStr.slice(0, 10);
+  const end = info.endStr.slice(0, 10);
+
+  setCalendarRange({
+    start,
+    end,
+  });
+
+  fetchAppointments(start, end);
+
+}}
 
           dayHeaderFormat={{
   weekday: "short",

@@ -195,53 +195,33 @@ const days = [
 
     // EDITAR
     if (editingWorkerId) {
-
-      const { error } =
-        await supabase
-
-          .from("workers")
-
-          .update({
-
-            name,
-
-       phone,
-
-account_number:
-  accountNumber,
-
-cci,
-
-birth_date:
-  birthDate || null,
-
-address,
-
-            speciality,
-
-            status,
-
-            hire_date:
-              hireDate || null,
-
-            termination_date:
-              terminationDate || null,
-
-           branch_id: selectedBranch,
-
-            photo_url:
-              photoUrl,
-
-            notes,
-
-            color,
-
-          })
-
-          .eq(
-            "id",
-            editingWorkerId
-          );
+const { error } =
+  await supabase
+    .from("workers")
+    .update({
+      name,
+      phone,
+      account_number: accountNumber,
+      cci,
+      birth_date: birthDate || null,
+      address,
+      speciality,
+      status,
+      hire_date: hireDate || null,
+      termination_date: terminationDate || null,
+      branch_id: Number(branchId),
+      photo_url: photoUrl,
+      notes,
+      color,
+    })
+    .eq(
+      "id",
+      editingWorkerId
+    )
+    .eq(
+      "branch_id",
+      Number(branchId)
+    );
 
       if (error) {
 
