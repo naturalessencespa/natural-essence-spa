@@ -14,6 +14,8 @@ import esLocale from "@fullcalendar/core/locales/es";
 
 import { supabase } from "@/lib/supabase";
 
+import Select from "react-select";
+
 
 type Props = {
   selectedBranch: number;
@@ -3274,81 +3276,163 @@ eventDidMount={(info) => {
                 <>
 
 
-              {/* CLIENTE */}
-                  <div className="space-y-2">
+           {/* CLIENTE */}
 
-  <input
-    type="text"
-    placeholder="🔍 Buscar cliente..."
-    value={clientSearch}
-    onChange={(e) =>
-      setClientSearch(
-        e.target.value
-      )
+<div>
+
+  <label className="block mb-2 font-medium text-gray-700">
+    Cliente
+  </label>
+
+  <Select
+    value={
+      clients
+        .map((client) => ({
+          value: String(client.id),
+          label: client.full_name,
+          phone: client.phone || "",
+        }))
+        .find(
+          (option) =>
+            option.value === String(clientId)
+        ) || null
     }
-    className="w-full border p-4 rounded-2xl"
-  />
 
-  <select
-    value={clientId}
-    onChange={(e) =>
+    onChange={(selectedOption: any) => {
+
       setClientId(
-        e.target.value
-      )
+        selectedOption
+          ? String(selectedOption.value)
+          : ""
+      );
+
+    }}
+
+    options={clients
+      .map((client) => ({
+        value: String(client.id),
+        label: client.full_name,
+        phone: client.phone || "",
+      }))
+      .sort((a, b) =>
+        a.label.localeCompare(
+          b.label,
+          "es",
+          {
+            sensitivity: "base",
+          }
+        )
+      )}
+
+    placeholder="Buscar cliente..."
+
+    isClearable
+
+    isSearchable
+
+    noOptionsMessage={() =>
+      "No se encontró ningún cliente"
     }
-    className="w-full border p-4 rounded-2xl"
-  >
 
-    <option value="">
-      Seleccionar cliente
-    </option>
+    filterOption={(
+      option,
+      inputValue
+    ) => {
 
-    {clients
+      const search =
+        inputValue
+          .toLowerCase()
+          .trim();
 
-      .filter(
-        (client) =>
+      const name =
+        option.data.label
+          .toLowerCase();
 
-          client.full_name
-            ?.toLowerCase()
-            .includes(
-              clientSearch
-                .toLowerCase()
-            )
+      const phone =
+        String(
+          option.data.phone || ""
+        ).toLowerCase();
 
-          ||
+      return (
+        name.includes(search) ||
+        phone.includes(search)
+      );
 
-          client.phone
-            ?.includes(
-              clientSearch
-            )
-      )
+    }}
 
-      .sort(
-        (a, b) =>
-          a.full_name.localeCompare(
-            b.full_name
-          )
-      )
+    formatOptionLabel={(option: any) => (
 
-      .map((client) => (
+      <div className="flex flex-col">
 
-        <option
-          key={client.id}
-          value={client.id}
-        >
+        <span className="font-medium">
+          {option.label}
+        </span>
 
-          {client.full_name}
-          {" - "}
-          {client.phone || ""}
+        {option.phone && (
+          <span className="text-sm text-gray-500">
+            {option.phone}
+          </span>
+        )}
 
-        </option>
+      </div>
 
-      ))}
+    )}
 
-  </select>
+    styles={{
+
+      control: (base) => ({
+
+        ...base,
+
+        minHeight: "52px",
+
+        borderRadius: "16px",
+
+        borderColor: "#d1d5db",
+
+        boxShadow: "none",
+
+        fontSize: "16px",
+
+      }),
+
+      menu: (base) => ({
+
+        ...base,
+
+        zIndex: 9999,
+
+      }),
+
+      option: (
+        base,
+        state
+      ) => ({
+
+        ...base,
+
+        padding:
+          "12px 16px",
+
+        backgroundColor:
+          state.isFocused
+            ? "#f3f4f6"
+            : "white",
+
+        color:
+          "#243847",
+
+      }),
+
+    }}
+
+  />
 
 </div>
 
+{/* SERVICIO */}
+
+ 
               {/* SERVICIO */}
            <div className="border rounded-2xl p-4">
 
