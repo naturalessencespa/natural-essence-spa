@@ -3366,38 +3366,99 @@ setSessionFrequency(
                     Cliente
                   </label>
 
-                  <select
-                    value={clientId}
-                    onChange={(e) =>
-                      setClientId(
-                        e.target.value
-                      )
-                    }
-                    className="w-full border p-4 rounded-2xl"
-                  >
+                 <Select
+  value={
+    clients
+      .map((client) => ({
+        value: String(client.id),
+        label: client.full_name,
+        phone: client.phone || "",
+      }))
+      .find(
+        (option) => option.value === String(clientId)
+      ) || null
+  }
+  onChange={(selectedOption: any) => {
+    setClientId(
+      selectedOption
+        ? String(selectedOption.value)
+        : ""
+    );
+  }}
+  options={clients
+    .map((client) => ({
+      value: String(client.id),
+      label: client.full_name,
+      phone: client.phone || "",
+    }))
+    .sort((a, b) =>
+      a.label.localeCompare(
+        b.label,
+        "es",
+        { sensitivity: "base" }
+      )
+    )}
+  placeholder="Buscar cliente..."
+  isClearable
+  isSearchable
+  noOptionsMessage={() =>
+    "No se encontró ningún cliente"
+  }
+  filterOption={(option, inputValue) => {
+    const search = inputValue
+      .toLowerCase()
+      .trim();
 
-                    <option value="">
-                      Seleccione cliente
-                    </option>
+    const name = option.data.label
+      .toLowerCase();
 
-                    {clients.map(
-                      (client) => (
+    const phone = String(
+      option.data.phone || ""
+    ).toLowerCase();
 
-                        <option
-                          key={client.id}
-                          value={client.id}
-                        >
+    return (
+      name.includes(search) ||
+      phone.includes(search)
+    );
+  }}
+  formatOptionLabel={(option: any) => (
+    <div className="flex flex-col">
+      <span className="font-medium">
+        {option.label}
+      </span>
 
-                          {
-                            client.full_name
-                          }
+      {option.phone && (
+        <span className="text-sm text-gray-500">
+          {option.phone}
+        </span>
+      )}
+    </div>
+  )}
+  styles={{
+    control: (base) => ({
+      ...base,
+      minHeight: "52px",
+      borderRadius: "16px",
+      borderColor: "#d1d5db",
+      boxShadow: "none",
+      fontSize: "16px",
+    }),
 
-                        </option>
+    menu: (base) => ({
+      ...base,
+      zIndex: 9999,
+    }),
 
-                      )
-                    )}
-
-                  </select>
+    option: (base, state) => ({
+      ...base,
+      padding: "12px 16px",
+      backgroundColor: state.isFocused
+        ? "#f3f4f6"
+        : "white",
+      color: "#243847",
+    }),
+  }}
+/>
 
                 </div>
 

@@ -1120,11 +1120,11 @@ setOverrides(
 
   <input
     type="text"
-    value={
-      branches.find(
-        (branch) => branch.id === selectedBranch
-      )?.name || ""
-    }
+  value={
+  branches.find(
+    (branch) => branch.id === Number(branchId)
+  )?.name || ""
+}
     disabled
     className="w-full border p-4 rounded-2xl bg-gray-100"
   />
