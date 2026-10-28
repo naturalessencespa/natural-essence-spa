@@ -306,6 +306,33 @@ setSales(
       clientsData || []
     );
   };
+
+  const deleteProductSale = async (sale: any) => {
+  const confirmar = window.confirm(
+    `¿Eliminar esta venta?\n\nProducto: ${
+      sale.inventory_products?.name || "Producto"
+    }\nCantidad: ${sale.quantity}\nTotal: S/ ${sale.total}`
+  );
+
+  if (!confirmar) return;
+
+  const { error } = await supabase
+    .from("product_sales")
+    .delete()
+    .eq("id", sale.id)
+    .eq("branch_id", selectedBranch);
+
+  if (error) {
+    console.log(error);
+    alert("No se pudo eliminar la venta");
+    return;
+  }
+
+  alert("Venta eliminada correctamente");
+
+  fetchSales();
+};
+
   const saveProductSale =
   async () => {
 
@@ -645,7 +672,9 @@ useEffect(() => {
               <th className="p-4 text-left">
                 Origen
               </th>
-
+              <th className="p-4 text-left">
+                Acciones
+              </th>
             </tr>
 
           </thead>
@@ -734,6 +763,15 @@ useEffect(() => {
                     {
                       sale.sale_origin
                     }
+
+                    <td className="p-4">
+                      <button
+                        onClick={() => deleteProductSale(sale)}
+                        className="bg-red-100 text-red-600 px-3 py-2 rounded-xl hover:bg-red-200"
+                      >
+                        🗑️ Eliminar
+                      </button>
+                    </td>
 
                   </td>
 

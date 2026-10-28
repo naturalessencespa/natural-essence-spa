@@ -544,14 +544,12 @@ const toggleSection = (
 
   );
 
-  const { data: allAppointments } =
+ const { data: allAppointments } =
   await supabase
-
     .from("appointments")
-
     .select(`
       appointment_date,
-      clients(full_name)
+      clients(full_name, phone)
     `)
 
     .eq(
@@ -571,12 +569,19 @@ const toggleSection = (
 
   const clientsLastVisit: any = {};
 
+  const clientsPhones: any = {};
+
   (allAppointments || []).forEach(
     (appointment) => {
 
       const client =
         (appointment.clients as any)?.full_name ||
   "Sin nombre";
+
+  const phone =
+  (appointment.clients as any)?.phone || "";
+
+  clientsPhones[client] = phone;
 
       if (!client) return;
 
@@ -620,6 +625,7 @@ const toggleSection = (
 
         return {
           client,
+          phone: clientsPhones[client] || "",
           lastVisit,
           days
         };
@@ -1143,6 +1149,24 @@ setProductSalesTotal(
     "Ventas Adicionales"
   );
 
+  const inactiveClientsSheet = XLSX.utils.json_to_sheet(
+  inactiveClients.map((client) => ({
+    Cliente: client.client,
+    Teléfono: client.phone,
+    "Última visita": new Date(client.lastVisit)
+      .toLocaleDateString("es-PE", {
+        timeZone: "UTC",
+      }),
+    "Días sin venir": client.days,
+  }))
+);
+
+XLSX.utils.book_append_sheet(
+  workbook,
+  inactiveClientsSheet,
+  "Clientes Inactivos"
+);
+
     XLSX.writeFile(
       workbook,
       `Reporte_${startDate}_${endDate}.xlsx`
@@ -1270,217 +1294,125 @@ setProductSalesTotal(
 
         </div>
 
-        <div className="bg-white rounded-3xl shadow mt-8 p-4 md:p-6">
-
-    <h2 className="text-xl md:text-2xl font-bold text-[#243847] mb-4">
-
-      Citas Atendidas
-
+<div className="bg-white rounded-3xl shadow mt-8 p-4 md:p-6">
+  <button
+    type="button"
+    onClick={() => toggleSection("appointments")}
+    className="w-full flex items-center justify-between text-left"
+  >
+    <h2 className="text-xl md:text-2xl font-bold text-[#243847]">
+      Citas Atendidas ({todayAppointments.length})
     </h2>
 
-    <div className="overflow-x-auto">
+    <span className="text-xl text-gray-500">
+      {sections.appointments ? "−" : "+"}
+    </span>
+  </button>
 
+  {sections.appointments && (
+    <div className="overflow-x-auto mt-4">
       <table className="w-full min-w-[900px]">
-
-    <thead>
-
-      <tr>
-
-        <th className="text-left p-3">
-          Fecha
-        </th>
-
-        <th className="text-left p-3">
-          Hora
-        </th>
-
-        <th className="text-left p-3">
-          Cliente
-        </th>
-
-        <th className="text-left p-3">
-          Teléfono
-        </th>
-
-        <th className="text-left p-3">
-          Servicio
-        </th>
-
-        <th className="text-left p-3">
-          Precio
-        </th>
-
-        <th className="text-left p-3">
-          Trabajadora
-        </th>
-
-
-      </tr>
-
-    </thead>
-
-    <tbody>
-
-      {todayAppointments.map(
-        (appointment) => (
-
-          <tr
-            key={appointment.id}
-            className="border-t"
-          >
-
-    <td className="p-3">
-    {appointment.appointment_date
-      ?.split("-")
-      .reverse()
-      .join("/")}
-  </td>
-            <td className="p-3">
-
-              {
-                appointment.start_time
-              }
-
-            </td>
-
-            <td className="p-3">
-
-
-              {
-                  appointment.clients?.full_name
-              }
-
-            </td>
-
-            <td className="p-3">
-
-              {
-                appointment.clients?.phone
-              }
-
-            </td>
-  <td className="p-3">
-
-  {
-    appointment
-      .appointment_reserved_services
-      ?.length > 0
-
-      ? appointment
-          .appointment_reserved_services
-          .map(
-            (item: any) =>
-              item.services?.name
-          )
-          .join(" + ")
-
-      : appointment.services?.name
-  }
-
-  </td>
-
-  <td className="p-3 font-semibold">
-
-    S/ {
-      Number(
-        appointment.final_price || 0
-      ).toFixed(2)
-    }
-
-  </td>
-            <td className="p-3">
-
-              {
-                appointment.workers?.name
-        ?.split(" ")[0]
-              }
-
-            </td>
-
+        <thead>
+          <tr>
+            <th className="text-left p-3">Fecha</th>
+            <th className="text-left p-3">Hora</th>
+            <th className="text-left p-3">Cliente</th>
+            <th className="text-left p-3">Teléfono</th>
+            <th className="text-left p-3">Servicio</th>
+            <th className="text-left p-3">Precio</th>
+            <th className="text-left p-3">Trabajadora</th>
           </tr>
+        </thead>
 
-        )
-      )}
-
-    </tbody>
-
-  </table>
-
+        <tbody>
+          {todayAppointments.map((appointment) => (
+            <tr key={appointment.id} className="border-t">
+              <td className="p-3">
+                {appointment.appointment_date
+                  ?.split("-")
+                  .reverse()
+                  .join("/")}
+              </td>
+              <td className="p-3">{appointment.start_time}</td>
+              <td className="p-3">
+                {appointment.clients?.full_name}
+              </td>
+              <td className="p-3">
+                {appointment.clients?.phone}
+              </td>
+              <td className="p-3">
+                {appointment.appointment_reserved_services?.length > 0
+                  ? appointment.appointment_reserved_services
+                      .map((item: any) => item.services?.name)
+                      .filter(Boolean)
+                      .join(" + ")
+                  : appointment.services?.name}
+              </td>
+              <td className="p-3 font-semibold">
+                S/ {Number(appointment.final_price || 0).toFixed(2)}
+              </td>
+              <td className="p-3">
+                {appointment.workers?.name?.split(" ")[0]}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
+  )}
+</div>
 
-  </div>
-
-      <div className="bg-white rounded-3xl shadow mt-8 p-4 md:p-6">
-
-    <h2 className="text-xl md:text-2xl font-bold text-[#243847] mb-4">
-      Ventas por Día
+     
+<div className="bg-white rounded-3xl shadow mt-8 p-4 md:p-6">
+  <button
+    type="button"
+    onClick={() => toggleSection("salesByDay")}
+    className="w-full flex items-center justify-between text-left"
+  >
+    <h2 className="text-xl md:text-2xl font-bold text-[#243847]">
+      Ventas por Día ({salesByDay.length})
     </h2>
 
-    <div className="overflow-x-auto">
+    <span className="text-xl font-bold text-[#243847]">
+      {sections.salesByDay ? "−" : "+"}
+    </span>
+  </button>
 
+  {sections.salesByDay && (
+    <div className="overflow-x-auto mt-4">
       <table className="w-full min-w-[450px]">
+        <thead>
+          <tr>
+            <th className="text-left p-3">Fecha</th>
+            <th className="text-left p-3">Ventas</th>
+          </tr>
+        </thead>
 
-      <thead>
+        <tbody>
+          {salesByDay
+            .slice()
+            .sort(
+              (a, b) =>
+                new Date(a.date).getTime() -
+                new Date(b.date).getTime()
+            )
+            .map((item) => (
+              <tr key={item.date} className="border-t">
+                <td className="p-3">
+                  {item.date?.split("-").reverse().join("/")}
+                </td>
 
-        <tr>
+                <td className="p-3 font-semibold">
+                  S/ {Number(item.sales).toFixed(2)}
+                </td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+</div>
 
-          <th className="text-left p-3">
-            Fecha
-          </th>
-
-          <th className="text-left p-3">
-            Ventas
-          </th>
-
-        </tr>
-
-      </thead>
-
-      <tbody>
-
-        {salesByDay
-          .sort(
-            (a, b) =>
-              new Date(a.date).getTime() -
-              new Date(b.date).getTime()
-          )
-          .map((item) => (
-
-            <tr
-              key={item.date}
-              className="border-t"
-            >
-
-              <td className="p-3">
-
-          {item.date
-    ?.split("-")
-    .reverse()
-    .join("/")}
-
-              </td>
-
-              <td className="p-3 font-semibold">
-
-                S/ {
-                  Number(
-                    item.sales
-                  ).toFixed(2)
-                }
-
-              </td>
-
-            </tr>
-
-        ))}
-
-      </tbody>
-
-    </table>
-
-  </div>
-
-  </div>
   <div className="bg-white rounded-3xl shadow mt-8 p-4 md:p-6">
 
     <h2 className="text-xl md:text-2xl font-bold text-[#243847] mb-4">
@@ -1788,74 +1720,55 @@ setProductSalesTotal(
   </div>
 
 
-  <div className="bg-white rounded-3xl shadow mt-8 p-4 md:p-6">
-
-    <h2 className="text-xl md:text-2xl font-bold text-[#243847] mb-4">
-      Clientes Inactivos
+ 
+<div className="bg-white rounded-3xl shadow mt-8 p-4 md:p-6">
+  <button
+    type="button"
+    onClick={() => toggleSection("inactiveClients")}
+    className="w-full flex items-center justify-between text-left"
+  >
+    <h2 className="text-xl md:text-2xl font-bold text-[#243847]">
+      Clientes Inactivos ({inactiveClients.length})
     </h2>
 
-    <div className="overflow-x-auto">
+    <span className="text-xl font-bold text-[#243847]">
+      {sections.inactiveClients ? "−" : "+"}
+    </span>
+  </button>
 
+  {sections.inactiveClients && (
+    <div className="overflow-x-auto mt-4">
       <table className="w-full min-w-[650px]">
+        <thead>
+          <tr>
+            <th className="text-left p-3">Cliente</th>
+            <th className="text-left p-3">Última Visita</th>
+            <th className="text-left p-3">Días Sin Venir</th>
+          </tr>
+        </thead>
 
-      <thead>
-
-        <tr>
-
-          <th className="text-left p-3">
-            Cliente
-          </th>
-
-          <th className="text-left p-3">
-            Última Visita
-          </th>
-
-          <th className="text-left p-3">
-            Días Sin Venir
-          </th>
-
-        </tr>
-
-      </thead>
-
-      <tbody>
-
-        {inactiveClients
-          .slice(0, 20)
-          .map((client) => (
-
-            <tr
-              key={client.client}
-              className="border-t"
-            >
+        <tbody>
+          {inactiveClients.map((client) => (
+            <tr key={client.client} className="border-t">
+              <td className="p-3">{client.client}</td>
 
               <td className="p-3">
-                {client.client}
-              </td>
-
-              <td className="p-3">
-                {new Date(
-                  client.lastVisit
-                ).toLocaleDateString(
-                  "es-PE"
-                )}
+                {new Date(client.lastVisit).toLocaleDateString("es-PE", {
+                  timeZone: "UTC",
+                })}
               </td>
 
               <td className="p-3 font-semibold">
                 {client.days}
               </td>
-
             </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+</div>
 
-        ))}
-
-      </tbody>
-
-    </table>
-
-  </div>
-
-  </div>
 
   <div className="bg-white rounded-3xl shadow mt-8 p-4 md:p-6">
 
