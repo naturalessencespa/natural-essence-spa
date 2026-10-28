@@ -137,66 +137,45 @@ const toggleSection = (
 
 
 
-      const { data, error } =
-        await supabase
+     let data: any[] = [];
+let from = 0;
+const pageSize = 1000;
 
-          .from("appointments")
-
-        .select(`
-    *,
-    clients(full_name, phone),
-    services(name),
-    workers(name),
-    client_packages(
-      internal_sale
-    ),
-    appointment_reserved_services(
-      service_id,
-      services(
-        name,
-        price
+while (true) {
+  const { data: page, error } = await supabase
+    .from("appointments")
+    .select(`
+      *,
+      clients(full_name, phone),
+      services(name),
+      workers(name),
+      client_packages(internal_sale),
+      appointment_reserved_services(
+        service_id,
+        services(name, price)
       )
-    )
-  `)
+    `)
+    .gte("appointment_date", startDate)
+    .lte("appointment_date", endDate)
+    .eq("status", "Atendida")
+    .eq("branch_id", selectedBranch)
+    .order("appointment_date", { ascending: true })
+    .order("start_time", { ascending: true })
+    .range(from, from + pageSize - 1);
 
-          .gte(
-            "appointment_date",
-            startDate
-          )
+  if (error) {
+    console.error("Error al cargar citas:", error);
+    return;
+  }
 
-                    .lte(
-            "appointment_date",
-            endDate
-          )
+  data.push(...(page || []));
 
-          .eq(
-            "status",
-            "Atendida"
-          )
+  if (!page || page.length < pageSize) {
+    break;
+  }
 
-          .eq(
-            "branch_id",
-            selectedBranch
-          )
-
-          
-
-          .order(
-            "appointment_date",
-          { ascending: true }
-          )
-          .order(
-            "start_time",
-            { ascending: true }
-                  );
-
-      if (error) {
-
-        console.log(error);
-
-        return;
-      }
-
+  from += pageSize;
+}
   const { data: additionalAppointments } =
     await supabase
 
